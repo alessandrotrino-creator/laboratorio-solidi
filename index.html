@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio dei Solidi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+:root{
+  --bg:#EDF1F7; --surface:#FFFFFF; --surface-2:#F4F7FB; --ink:#16203A; --muted:#58647E; --line:#D6DDE9;
+  --accent:#2F5BD8; --accent-ink:#FFFFFF; --accent-soft:#E3EAFD;
+  --hl:#D6336C; --hl-soft:#FCE3EC;
+  --base:#F2A33A; --lat1:#4A94E6; --lat2:#7CC0F2; --curve:#35B0A0;
+  --scene:#F8FAFD; --grid:#DFE6F0; --grid-strong:#C3CFE0; --edge:#1B2640;
+  --font-body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --font-display:"Baloo 2","Nunito","Segoe UI",sans-serif;
+  --fs:15px; --ls:0; --lh:1.5;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1320; --surface:#151E30; --surface-2:#1B2640; --ink:#E7EDF7; --muted:#9CA9C0; --line:#29354E;
+    --accent:#7C9CFF; --accent-ink:#0D1320; --accent-soft:#1F2C4D;
+    --hl:#FF6A99; --hl-soft:#3A1D2B;
+    --scene:#111A2B; --grid:#1D2940; --grid-strong:#2E3D5A; --edge:#0A0F1A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1320; --surface:#151E30; --surface-2:#1B2640; --ink:#E7EDF7; --muted:#9CA9C0; --line:#29354E;
+  --accent:#7C9CFF; --accent-ink:#0D1320; --accent-soft:#1F2C4D;
+  --hl:#FF6A99; --hl-soft:#3A1D2B;
+  --scene:#111A2B; --grid:#1D2940; --grid-strong:#2E3D5A; --edge:#0A0F1A;
+  color-scheme:dark;
+}
+body.legible{
+  --font-body:"Atkinson Hyperlegible","Verdana",sans-serif;
+  --font-display:"Atkinson Hyperlegible","Verdana",sans-serif;
+  --fs:17px; --ls:.02em; --lh:1.7;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font-family:var(--font-body);font-size:var(--fs);letter-spacing:var(--ls);line-height:var(--lh)}
+button,input{font:inherit;letter-spacing:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;line-height:1.15}
+var{font-style:italic;font-family:inherit}
+.app{max-width:1440px;margin:0 auto;padding-inline:16px;padding-block:12px 28px;display:flex;flex-direction:column;gap:14px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand svg{width:40px;height:40px;flex:none}
+.brand h1{font-size:1.55rem;font-weight:700}
+.brand p{margin:0;color:var(--muted);font-size:.85rem}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tab{border:0;background:transparent;border-radius:9px;padding:6px 12px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tab.active{background:var(--accent);color:var(--accent-ink)}
+.tab:disabled{cursor:default;opacity:.75}
+.soon{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:0 5px}
+.prefs{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:6px 12px;font-weight:700;color:var(--muted);min-width:44px}
+.seg button.on{background:var(--accent-soft);color:var(--accent)}
+.seg-label{font-size:.8rem;color:var(--muted);font-weight:700;margin-right:-4px}
+.switch{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-weight:700;font-size:.9rem;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:34px;height:20px;border-radius:20px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(14px)}
+
+/* layout */
+.work{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:14px;align-items:start}
+.stage{position:sticky;top:12px;display:flex;flex-direction:column;gap:10px}
+.viewport{position:relative;height:clamp(380px,calc(100vh - 210px),760px);background:var(--scene);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.viewport canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.viewport canvas:active{cursor:grabbing}
+.solid-title{position:absolute;top:14px;left:16px;pointer-events:none}
+.solid-title h2{font-size:2rem;font-weight:700}
+.solid-title p{margin:0;color:var(--muted);font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
+.view-btns{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:6px}
+.vbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 12px;font-weight:700;font-size:.85rem;text-align:left}
+.vbtn:hover{border-color:var(--accent);color:var(--accent)}
+.hint{position:absolute;bottom:10px;left:16px;margin:0;font-size:.8rem;color:var(--muted);pointer-events:none}
+.legend{position:absolute;bottom:10px;right:14px;display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:flex-end;font-size:.8rem;font-weight:700;color:var(--muted);pointer-events:none}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.2)}
+
+.net-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.net-bar .net-slider{flex:2 1 220px}
+.net-bar .opa-slider{flex:1 1 160px}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.preset{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--surface-2);border-radius:10px;padding:5px 10px;font-weight:700}
+.preset:hover{border-color:var(--accent)}
+.preset.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.preset .sw{display:inline-flex}
+.preset .sw i{width:10px;height:14px;display:inline-block}
+.preset .sw i:first-child{border-radius:3px 0 0 3px}
+.preset .sw i:last-child{border-radius:0 3px 3px 0}
+.pickers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cpick{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:5px 8px;cursor:pointer}
+.cpick input{appearance:none;-webkit-appearance:none;width:30px;height:26px;border:1px solid var(--line);border-radius:7px;padding:0;background:none;cursor:pointer;flex:none}
+.cpick input::-webkit-color-swatch-wrapper{padding:0}
+.cpick input::-webkit-color-swatch{border:0;border-radius:6px}
+.cpick input::-moz-color-swatch{border:0;border-radius:6px}
+.play{display:inline-flex;align-items:center;gap:8px;border:0;background:var(--accent);color:var(--accent-ink);border-radius:11px;padding:9px 16px;font-weight:800;white-space:nowrap}
+.play svg{width:16px;height:16px}
+.play:disabled{opacity:.45;cursor:default}
+.net-slider{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.net-slider label{font-weight:800;font-family:var(--font-display);font-size:1.05rem}
+.ends{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);font-weight:700}
+.note{margin:0;background:var(--surface-2);border:1px dashed var(--line);border-radius:12px;padding:10px 14px;color:var(--muted)}
+
+input[type=range]{width:100%;accent-color:var(--accent);height:28px;margin:0;cursor:pointer}
+
+/* panel */
+.panel{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card h3{font-size:1.15rem;font-weight:700}
+.small{margin:0;font-size:.82rem;color:var(--muted)}
+.pick-group{display:flex;flex-direction:column;gap:6px}
+.pick-group + .pick-group{margin-top:6px}
+.pick-group h4{margin:0;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.pick-row{display:flex;flex-wrap:wrap;gap:6px}
+.pick{border:1.5px solid var(--line);background:var(--surface-2);border-radius:10px;padding:6px 11px;font-weight:700}
+.pick:hover{border-color:var(--accent)}
+.pick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.dim{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px}
+.dim label{font-weight:700}
+.dim output{font-weight:800;font-variant-numeric:tabular-nums;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:1px 9px;min-width:64px;text-align:center}
+.dim input{grid-column:1 / -1}
+.sides{display:flex;flex-direction:column;gap:6px}
+.sides .lbl{font-weight:700}
+.sides .seg button{min-width:40px}
+.sides small{color:var(--muted)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--surface-2);border-radius:999px;padding:5px 12px 5px 9px;font-weight:700}
+.chip .dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.chip[aria-pressed="true"]{border-color:var(--hl);background:var(--hl-soft);color:var(--hl)}
+.chip[aria-pressed="true"] .dot{background:var(--hl)}
+.chip em{font-style:italic;font-weight:800}
+
+.calc-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ghost{border:1.5px solid var(--line);background:var(--surface-2);border-radius:10px;padding:5px 11px;font-weight:700;font-size:.88rem}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.lines{display:flex;flex-direction:column}
+.line{padding:9px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.line:first-child{border-top:0;padding-top:2px}
+.line .lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:800}
+.eq{font-size:1.08rem;font-variant-numeric:tabular-nums;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}
+.eq .sym{font-weight:800}
+.eq .op{color:var(--muted)}
+.eq .step{color:var(--muted)}
+.eq .res{font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:7px;padding:0 7px}
+.eq var{cursor:pointer;border-radius:4px;padding:0 1px}
+.eq var.hl{background:var(--hl-soft);color:var(--hl);font-weight:800}
+.reveal{border:1.5px dashed var(--accent);background:transparent;color:var(--accent);border-radius:7px;padding:0 12px;font-weight:800;line-height:1.4}
+.reveal:hover{background:var(--accent-soft)}
+body.simple .extra{display:none}
+body.simple .step, body.simple .op.stepop{display:none}
+body.simple .hint{display:none}
+
+[hidden]{display:none!important}
+:root{--ok:#178A55; --ok-soft:#DDF3E8; --warn:#B87400; --warn-soft:#FBEFD6; --bad:#C93B53; --bad-soft:#FBE3E7}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--ok:#4FD08F; --ok-soft:#173527; --warn:#F2B347; --warn-soft:#3A2C12; --bad:#FF7A90; --bad-soft:#3D1C24} }
+:root[data-theme="dark"]{--ok:#4FD08F; --ok-soft:#173527; --warn:#F2B347; --warn-soft:#3A2C12; --bad:#FF7A90; --bad-soft:#3D1C24}
+
+/* esercizi */
+.exview{display:grid;grid-template-columns:320px minmax(0,1fr);gap:14px;align-items:start}
+.ex-set{position:sticky;top:12px}
+.levels{display:flex;flex-direction:column;gap:6px}
+.level{text-align:left;border:1.5px solid var(--line);background:var(--surface-2);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:1px}
+.level b{font-family:var(--font-display);font-size:1.08rem}
+.level span{font-size:.82rem;color:var(--muted)}
+.level:hover{border-color:var(--accent)}
+.level.on{border-color:var(--accent);background:var(--accent-soft)}
+.level.on b{color:var(--accent)}
+.score{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.score div{border-radius:10px;padding:6px 8px;text-align:center;font-size:.75rem;font-weight:700;line-height:1.25}
+.score b{display:block;font-size:1.35rem;font-family:var(--font-display)}
+.score .s1{background:var(--ok-soft);color:var(--ok)}
+.score .s2{background:var(--warn-soft);color:var(--warn)}
+.score .s3{background:var(--bad-soft);color:var(--bad)}
+.ex-main{gap:14px;padding:18px 20px}
+.ex-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.ex-head h2{font-size:1.5rem;margin-right:auto}
+.badge{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;border-radius:7px;padding:2px 8px;background:var(--accent-soft);color:var(--accent)}
+.dots{display:flex;gap:5px}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--line);display:block}
+.dots i.first{background:var(--ok)} .dots i.retry{background:var(--warn)} .dots i.shown{background:var(--bad)}
+.dots i.cur{box-shadow:0 0 0 2.5px var(--surface),0 0 0 4.5px var(--accent)}
+.ex-text{margin:0;font-size:1.15rem;line-height:1.6;max-width:68ch}
+.ex-text b{font-weight:800;white-space:nowrap}
+.ex-tip{margin:0;font-size:.85rem;color:var(--muted)}
+.asks{display:flex;flex-direction:column;gap:8px}
+.ask{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--surface-2)}
+.ask-lbl{font-weight:700;min-width:170px}
+.ask-lbl .sym{font-weight:800}
+.ask-in{display:inline-flex;align-items:center;gap:8px}
+.ask input{width:130px;font-size:1.1rem;font-weight:700;border:1.5px solid var(--line);border-radius:9px;padding:5px 10px;background:var(--surface);font-variant-numeric:tabular-nums}
+.ask .unit{font-weight:700;color:var(--muted)}
+.ask .mark{font-weight:800;font-size:1.1rem;margin-left:auto}
+.ask.ok{border-color:var(--ok);background:var(--ok-soft)} .ask.ok .mark{color:var(--ok)}
+.ask.bad{border-color:var(--bad);background:var(--bad-soft)} .ask.bad .mark{color:var(--bad)}
+.ask .exp{font-size:.88rem;color:var(--muted);font-weight:700}
+.ex-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ex-actions .spacer{flex:1}
+.feedback{margin:0;font-weight:700;border-radius:10px;padding:8px 12px}
+.feedback.ok{background:var(--ok-soft);color:var(--ok)}
+.feedback.bad{background:var(--bad-soft);color:var(--bad)}
+.hint-box{border:1.5px dashed var(--accent);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.hint-box h4{margin:0;font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent)}
+.hint-box .chips span{background:var(--accent-soft);border-radius:8px;padding:2px 10px;font-weight:700;font-variant-numeric:tabular-nums}
+.sol-box{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+.summary{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.summary .big{font-family:var(--font-display);font-size:2.4rem;font-weight:700;line-height:1}
+@media (max-width:980px){
+  .exview{grid-template-columns:1fr}
+  .ex-set{position:static}
+}
+@media (max-width:980px){
+  .work{grid-template-columns:1fr}
+  .stage{position:static}
+  .viewport{height:clamp(340px,62vh,600px)}
+}
+@media (max-width:520px){
+  .net-bar{flex-wrap:wrap}
+  .solid-title h2{font-size:1.5rem}
+  .legend{display:none}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+
+/* ---------- radice quadrata disegnata ---------- */
+.rad{display:inline-block;position:relative;padding-left:.66em;white-space:nowrap;vertical-align:baseline}
+.rad > svg{position:absolute;left:0;top:0;height:100%;width:.7em;overflow:visible;color:inherit}
+.rad-in{display:block;border-top:1.5px solid currentColor;padding:.14em .14em 0 .1em;line-height:1.2}
+.rad-idx{position:absolute;left:.02em;top:-.05em;font-size:.58em;font-weight:800;line-height:1}
+.rad .rad{padding-left:.6em}
+
+/* ---------- calcoli collegati al 3D ---------- */
+.line.clickable{cursor:pointer;border-radius:10px;padding-inline:8px;margin-inline:-8px}
+.line.clickable:hover{background:var(--surface-2)}
+.line.sel{background:var(--hl-soft)!important;box-shadow:inset 3px 0 0 var(--hl)}
+.line .lbl .dotc{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:0;border:1px solid rgba(0,0,0,.2)}
+.note-line{font-size:.92rem;font-weight:700;color:var(--hl)}
+.note-line .nt{display:flex;gap:8px;align-items:flex-start}
+.guide-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:10px}
+
+/* ---------- formule ---------- */
+.exp-list{display:flex;flex-direction:column;gap:6px}
+.exp{text-align:left;border:1.5px solid var(--line);background:var(--surface-2);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:1px}
+.exp b{font-family:var(--font-display);font-size:1.05rem}
+.exp span{font-size:.82rem;color:var(--muted)}
+.exp:hover{border-color:var(--accent)}
+.exp.on{border-color:var(--accent);background:var(--accent-soft)}
+.exp.on b{color:var(--accent)}
+.bar-lbl{font-weight:800;font-family:var(--font-display);font-size:1.05rem}
+.bar-status{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+.steps li.done{color:var(--muted)}
+.steps li.now{font-weight:800}
+.formula-box{border:2px solid var(--accent);background:var(--accent-soft);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.formula-box .big{font-size:1.25rem;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.formula-box.locked{border-style:dashed;background:transparent}
+.formula-box.locked .big{color:var(--muted)}
+.meter{height:12px;border-radius:12px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:#3FA9F5;border-radius:12px;transition:width .2s}
+
+/* ---------- viste per dispositivo ---------- */
+.devsel select{font:inherit;font-weight:700;border:0;background:transparent;color:var(--ink);cursor:pointer;padding:0 2px}
+.prefs-toggle{display:none}
+.vbtn.fs{display:none}
+body[data-dev="pc"] .vbtn.fs, body[data-dev="lim"] .vbtn.fs{display:block}
+
+/* comandi grandi per dita e penne */
+body.touch .pick, body.touch .chip, body.touch .ghost, body.touch .vbtn, body.touch .seg button, body.touch .tab, body.touch .level, body.touch .preset, body.touch .reveal{min-height:44px}
+body.touch .switch{min-height:44px}
+body.touch input[type=range]{-webkit-appearance:none;appearance:none;height:44px;background:transparent}
+body.touch input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:10px;background:var(--line)}
+body.touch input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--accent);border:3px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.3);margin-top:-10px}
+body.touch input[type=range]::-moz-range-track{height:10px;border-radius:10px;background:var(--line)}
+body.touch input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--surface)}
+body.touch .ask input{min-height:46px;font-size:1.2rem}
+body.touch .play{min-height:48px}
+
+/* tablet */
+body[data-dev="tablet"] .app{max-width:1180px}
+body[data-dev="tablet"] .work{grid-template-columns:minmax(0,1fr) 370px}
+body[data-dev="tablet"] .exview{grid-template-columns:280px minmax(0,1fr)}
+@media (orientation: portrait){
+  body[data-dev="tablet"] .work, body[data-dev="tablet"] .exview{grid-template-columns:1fr}
+  body[data-dev="tablet"] .stage, body[data-dev="tablet"] .ex-set{position:static}
+  body[data-dev="tablet"] .viewport{height:min(56vh,640px)}
+}
+
+/* LIM */
+body[data-dev="lim"]{--fs:19px}
+body[data-dev="lim"].legible{--fs:21px}
+body[data-dev="lim"] .app{max-width:none}
+body[data-dev="lim"] .work{grid-template-columns:minmax(0,1fr) 500px}
+body[data-dev="lim"] .exview{grid-template-columns:340px minmax(0,1fr)}
+body[data-dev="lim"] .viewport{height:calc(100vh - 190px);min-height:460px}
+body[data-dev="lim"] .solid-title h2{font-size:2.6rem}
+body[data-dev="lim"] .eq{font-size:1.3rem}
+body[data-dev="lim"] .ex-text{font-size:1.5rem}
+body[data-dev="lim"] .ex-head h2{font-size:1.9rem}
+body[data-dev="lim"] .pick, body[data-dev="lim"] .chip, body[data-dev="lim"] .ghost, body[data-dev="lim"] .vbtn{min-height:52px;padding-inline:16px}
+body[data-dev="lim"] .play{min-height:56px;padding-inline:22px;font-size:1.1rem}
+body[data-dev="lim"] .card{border-width:2px}
+
+/* smartphone */
+body[data-dev="phone"] .app{max-width:520px;gap:10px}
+body[data-dev="phone"] .brand p{display:none}
+body[data-dev="phone"] .brand h1{font-size:1.3rem}
+body[data-dev="phone"] .prefs-toggle{display:inline-flex;align-items:center}
+body[data-dev="phone"] .prefs{display:none;width:100%}
+body[data-dev="phone"].prefs-open .prefs{display:flex}
+body[data-dev="phone"] .tabs{width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+body[data-dev="phone"] .tab{white-space:nowrap}
+body[data-dev="phone"] .work, body[data-dev="phone"] .exview{grid-template-columns:1fr}
+body[data-dev="phone"] .stage, body[data-dev="phone"] .ex-set{position:static}
+body[data-dev="phone"] .viewport{height:min(56vh,460px);min-height:300px}
+body[data-dev="phone"] .solid-title{top:10px;left:12px}
+body[data-dev="phone"] .solid-title h2{font-size:1.3rem}
+body[data-dev="phone"] .solid-title p{font-size:.78rem}
+body[data-dev="phone"] .view-btns{flex-direction:row;top:auto;bottom:10px;right:10px;left:10px;justify-content:flex-end}
+body[data-dev="phone"] .vbtn{padding:6px 10px;font-size:.8rem}
+body[data-dev="phone"] .legend, body[data-dev="phone"] .hint{display:none}
+body[data-dev="phone"] .net-bar{padding:10px 12px}
+body[data-dev="phone"] .card{padding:12px 14px}
+body[data-dev="phone"] .ex-main{padding:14px}
+body[data-dev="phone"] .ex-head h2{font-size:1.25rem}
+body[data-dev="phone"] .ex-text{font-size:1.05rem}
+body[data-dev="phone"] .ask-lbl{min-width:0;width:100%}
+body[data-dev="phone"] .ask-in{flex:1}
+body[data-dev="phone"] .ask input{width:100%;flex:1}
+body[data-dev="phone"] .pickers{grid-template-columns:1fr}
+body[data-dev="phone"] .eq{font-size:1rem}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <polygon points="20,4 35,12 20,20 5,12" fill="#F2A33A"/>
+        <polygon points="5,12 20,20 20,37 5,29" fill="#4A94E6"/>
+        <polygon points="35,12 20,20 20,37 35,29" fill="#7CC0F2"/>
+        <polygon points="20,4 35,12 35,29 20,37 5,29 5,12" fill="none" stroke="#1B2640" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M5 12 L20 20 L35 12 M20 20 L20 37" fill="none" stroke="#1B2640" stroke-width="1.6"/>
+      </svg>
+      <div>
+        <h1>Laboratorio dei Solidi</h1>
+        <p>Geometria solida · classe terza</p>
+      </div>
+    </div>
+    <button class="ghost prefs-toggle" id="prefsToggle" aria-expanded="false" aria-controls="prefs">Impostazioni</button>
+    <nav class="tabs" aria-label="Moduli">
+      <button class="tab active" data-view="solidi" aria-current="page">Solidi</button>
+      <button class="tab" data-view="esercizi">Esercizi</button>
+      <button class="tab" data-view="formule">Formule</button>
+      <button class="tab" data-view="composti">Rotazione e composti</button>
+    </nav>
+    <div class="prefs" id="prefs">
+      <label class="switch devsel"><span>Vista</span>
+        <select id="optDevice" aria-label="Vista ottimizzata per">
+          <option value="auto">Automatica</option>
+          <option value="pc">PC</option>
+          <option value="lim">LIM</option>
+          <option value="tablet">Tablet</option>
+          <option value="phone">Smartphone</option>
+        </select>
+      </label>
+      <span class="seg-label">π</span>
+      <div class="seg" role="group" aria-label="Come scrivere π">
+        <button id="piSym" class="on" title="Lascia π nei risultati">π</button>
+        <button id="piNum" title="Usa π = 3,14">3,14</button>
+      </div>
+      <label class="switch"><input type="checkbox" id="optLegible"><span>Alta leggibilità</span></label>
+      <label class="switch"><input type="checkbox" id="optSimple"><span>Semplificata</span></label>
+    </div>
+  </header>
+
+  <main class="work" id="viewLab">
+    <section class="stage" aria-label="Vista 3D">
+      <div class="viewport" id="viewport">
+        <canvas id="scene" aria-label="Modello 3D del solido: trascina per ruotarlo"></canvas>
+        <div class="solid-title">
+          <h2 id="solidName">Cubo</h2>
+          <p id="solidCounts"></p>
+        </div>
+        <div class="view-btns">
+          <button class="vbtn" id="vFront">Di fronte</button>
+          <button class="vbtn" id="vTop">Dall'alto</button>
+          <button class="vbtn" id="vReset">Ripristina</button>
+          <button class="vbtn fs" id="vFull">Schermo intero</button>
+        </div>
+        <p class="hint" id="hint3d">Trascina per ruotare · rotellina per ingrandire</p>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="net-bar">
+        <button class="play" id="netPlay">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path id="playIcon" d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+          <span id="playText">Apri</span>
+        </button>
+        <div class="net-slider">
+          <label for="netT">Sviluppo piano</label>
+          <input type="range" id="netT" min="0" max="1000" value="0">
+          <div class="ends"><span>Solido chiuso</span><span>Sviluppo steso</span></div>
+        </div>
+        <div class="net-slider opa-slider">
+          <label for="opa">Trasparenza</label>
+          <input type="range" id="opa" min="0" max="85" value="0">
+          <div class="ends"><span>Pieno</span><span>Vedo l'interno</span></div>
+        </div>
+      </div>
+      <p class="note" id="netNote" hidden>La sfera non ha uno sviluppo piano: la sua superficie non si può stendere su un foglio senza strapparla o deformarla. Per questo le carte geografiche deformano sempre qualcosa.</p>
+    </section>
+
+    <aside class="panel">
+      <section class="card">
+        <h3>Scegli il solido</h3>
+        <div id="picker"></div>
+      </section>
+      <section class="card">
+        <h3>Misure</h3>
+        <div id="dims" style="display:flex;flex-direction:column;gap:10px"></div>
+      </section>
+      <section class="card">
+        <h3>Elementi</h3>
+        <p class="small" id="elHint">Tocca un elemento per vederlo sul solido.</p>
+        <div class="chips" id="elements"></div>
+      </section>
+      <section class="card">
+        <div class="calc-head">
+          <h3>Calcoli</h3>
+          <button class="ghost" id="toggleRes">Nascondi risultati</button>
+        </div>
+        <div class="lines" id="calc"></div>
+        <p class="small" id="calcNote"></p>
+      </section>
+      <section class="card">
+        <h3>Aspetto</h3>
+        <div class="presets" id="presets"></div>
+        <div class="pickers">
+          <label class="cpick"><input type="color" id="c_base"><span>Basi</span></label>
+          <label class="cpick"><input type="color" id="c_lat1"><span>Facce laterali 1</span></label>
+          <label class="cpick"><input type="color" id="c_lat2"><span>Facce laterali 2</span></label>
+          <label class="cpick"><input type="color" id="c_curve"><span>Superficie curva</span></label>
+        </div>
+        <p class="small">Nei poliedri regolari le facce usano questi stessi colori, alternati.</p>
+      </section>
+    </aside>
+  </main>
+
+  <section class="exview" id="viewEx" hidden>
+    <aside class="card ex-set">
+      <h3>Livello</h3>
+      <div class="levels" id="exLevels"></div>
+      <h3>Argomento</h3>
+      <div class="pick-row" id="exCats"></div>
+      <h3>Questa serie</h3>
+      <div class="score" id="exScore"></div>
+      <button class="ghost" id="exNewSeries">Ricomincia la serie</button>
+      <p class="small">Le risposte si correggono da sole e non vengono salvate da nessuna parte.</p>
+    </aside>
+    <section class="card ex-main" id="exMain" aria-live="polite"></section>
+  </section>
+
+  <section class="work" id="viewFo" hidden>
+    <section class="stage" aria-label="Esperimento 3D">
+      <div class="viewport" id="foVp">
+        <canvas id="foCanvas" aria-label="Esperimento 3D: trascina per ruotare"></canvas>
+        <div class="solid-title"><h2 id="foTitle"></h2><p id="foSub"></p></div>
+        <div class="view-btns"><button class="vbtn" id="foReset">Ripristina</button></div>
+      </div>
+      <div class="net-bar" id="foBar"></div>
+    </section>
+    <aside class="panel">
+      <section class="card"><h3>Esperimenti</h3><div class="exp-list" id="foList"></div></section>
+      <section class="card" id="foInfo" aria-live="polite"></section>
+    </aside>
+  </section>
+
+  <section class="work" id="viewCo" hidden>
+    <section class="stage" aria-label="Solido 3D">
+      <div class="viewport" id="coVp">
+        <canvas id="coCanvas" aria-label="Solido 3D: trascina per ruotare"></canvas>
+        <div class="solid-title"><h2 id="coTitle"></h2><p id="coSub"></p></div>
+        <div class="view-btns"><button class="vbtn" id="coFront">Di fronte</button><button class="vbtn" id="coReset">Ripristina</button></div>
+        <div class="legend" id="coLegend"></div>
+      </div>
+      <div class="net-bar" id="coBar"></div>
+    </section>
+    <aside class="panel">
+      <section class="card">
+        <div class="seg" role="group" aria-label="Tipo di solido" id="coMode" style="align-self:flex-start">
+          <button data-m="rot" class="on">Solidi di rotazione</button><button data-m="comp">Solidi composti</button>
+        </div>
+        <div class="exp-list" id="coList"></div>
+      </section>
+      <section class="card"><h3>Misure</h3><div id="coDims" style="display:flex;flex-direction:column;gap:10px"></div></section>
+      <section class="card">
+        <div class="calc-head"><h3>Calcoli</h3><div class="ex-actions"><button class="ghost" id="coGuide">Esempio passo passo</button><button class="ghost" id="coToggleRes">Nascondi risultati</button></div></div>
+        <p class="small" id="coHint">Tocca una riga per vederla evidenziata sul solido.</p>
+        <div class="lines" id="coCalc"></div>
+        <div class="guide-nav" id="coNav" hidden><button class="ghost" id="coPrev">Indietro</button><span class="bar-status" id="coStep"></span><button class="play" id="coNext">Avanti</button></div>
+        <p class="small" id="coNote"></p>
+      </section>
+    </aside>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+
+/* ---------- impostazioni ---------- */
+const S = {
+  solid:'cubo', dims:{}, sides:{prisma:6, piramide:4},
+  t:0, pi:'sym', hidden:false, revealed:new Set(), el:null,
+  legible:false, simple:false, opacity:1, device:'auto',
+  colors:{base:'#F2A33A', lat1:'#4A94E6', lat2:'#7CC0F2', curve:'#35B0A0'}
+};
+const PRESETS = [
+  {name:'Colorato', c:{base:'#F2A33A', lat1:'#4A94E6', lat2:'#7CC0F2', curve:'#35B0A0'}},
+  {name:'Pastello', c:{base:'#F7C98B', lat1:'#A9C8F0', lat2:'#D3E6F8', curve:'#A6DCCF'}},
+  {name:'Contrasto', c:{base:'#FFC400', lat1:'#0050D0', lat2:'#00A6E6', curve:'#008A6C'}},
+  {name:'Grigi', c:{base:'#B5B9C0', lat1:'#DADDE2', lat2:'#F1F2F4', curve:'#C9CDD3'}}
+];
+try{
+  const saved = JSON.parse(localStorage.getItem('labsolidi-prefs')||'{}');
+  if(saved.pi) S.pi = saved.pi;
+  S.legible = !!saved.legible; S.simple = !!saved.simple;
+  if(['auto','pc','lim','tablet','phone'].includes(saved.device)) S.device = saved.device;
+  if(typeof saved.opacity === 'number') S.opacity = Math.max(0.15, Math.min(1, saved.opacity));
+  if(saved.colors) Object.keys(S.colors).forEach(k=>{ if(/^#[0-9a-f]{6}$/i.test(saved.colors[k]||'')) S.colors[k] = saved.colors[k]; });
+}catch(e){}
+function savePrefs(){ try{ localStorage.setItem('labsolidi-prefs', JSON.stringify({pi:S.pi, legible:S.legible, simple:S.simple, opacity:S.opacity, colors:S.colors, device:S.device})); }catch(e){} }
+
+/* ---------- numeri ---------- */
+const PI_NUM = 3.14;
+const FISSO = {3:0.289, 4:0.5, 5:0.688, 6:0.866, 8:1.207};
+const POLYGON = {3:'triangolo equilatero', 4:'quadrato', 5:'pentagono regolare', 6:'esagono regolare', 8:'ottagono regolare'};
+const r2 = x => Math.round(x*100)/100;
+function fmt(x, d=2){
+  const p = Math.pow(10,d); const v = Math.round(x*p)/p;
+  let s = v.toFixed(d);
+  if(s.indexOf('.')>=0) s = s.replace(/0+$/,'').replace(/\.$/,'');
+  return s.replace('.',',');
+}
+const approx = x => Math.abs(x - r2(x)) > 1e-7;
+/* radice con la linea che copre tutto il radicando: √(…) e √x diventano un segno disegnato */
+const RAD_SVG = '<svg viewBox="0 0 12 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0.5 14 L3 12.6 L6.2 23.2 L11 0.8 L13 0.8" fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+function rad(s){
+  if(typeof s !== 'string' || (s.indexOf('√') < 0 && s.indexOf('∛') < 0)) return s;
+  let out = '', i = 0;
+  while(i < s.length){
+    const ch = s[i];
+    if(ch !== '√' && ch !== '∛'){ out += ch; i++; continue; }
+    let j = i + 1, inner, k;
+    if(s[j] === '('){
+      let depth = 0;
+      for(k = j; k < s.length; k++){ if(s[k] === '(') depth++; else if(s[k] === ')'){ depth--; if(depth === 0) break; } }
+      inner = s.slice(j+1, k); i = k + 1;
+    } else {
+      k = j;
+      while(k < s.length){
+        if(s[k] === '<'){ const e = s.indexOf('>', k); k = e < 0 ? s.length : e + 1; continue; }
+        if(/[\s)·:+−]/.test(s[k])) break;
+        k++;
+      }
+      inner = s.slice(j, k); i = k;
+    }
+    out += `<span class="rad" role="math" aria-label="radice${ch==='∛'?' cubica':''} di">${ch==='∛' ? '<span class="rad-idx">3</span>' : ''}${RAD_SVG}<span class="rad-in">${rad(inner)}</span></span>`;
+  }
+  return out;
+}
+const vv = (k, t) => `<var data-v="${k}">${t}</var>`;
+
+/* ---------- colori ---------- */
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || getComputedStyle(document.body).getPropertyValue(name).trim(); }
+const COL = {};
+function syncColors(){
+  const c = S.colors;
+  COL.base = c.base; COL.curve = c.curve;
+  COL.lat = [c.lat1, c.lat2, '#' + new THREE.Color(c.lat1).multiplyScalar(0.72).getHexString()];
+  COL.plat = [c.base, c.lat1, c.curve, c.lat2, '#E0679A', '#8C79E8'];
+}
+
+/* ---------- geometria: involucro convesso ---------- */
+const V3 = (x,y,z) => new THREE.Vector3(x,y,z);
+function hull(verts){
+  const n = verts.length, faces = [], seen = new Set(), eps = 1e-5;
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) for(let k=j+1;k<n;k++){
+    const a=verts[i], b=verts[j], c=verts[k];
+    const nr = new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a));
+    if(nr.length() < 1e-9) continue;
+    nr.normalize(); let d = nr.dot(a), pos=0, neg=0;
+    for(let m=0;m<n;m++){ const s = nr.dot(verts[m]) - d; if(s>eps) pos++; else if(s<-eps) neg++; }
+    if(pos && neg) continue;
+    if(pos){ nr.negate(); d = -d; }
+    const on = []; for(let m=0;m<n;m++) if(Math.abs(nr.dot(verts[m]) - d) < eps) on.push(m);
+    const key = on.slice().sort((p,q)=>p-q).join(',');
+    if(seen.has(key)) continue; seen.add(key);
+    const cen = new THREE.Vector3(); on.forEach(m=>cen.add(verts[m])); cen.divideScalar(on.length);
+    const u = new THREE.Vector3().subVectors(verts[on[0]], cen).normalize();
+    const w = new THREE.Vector3().crossVectors(nr, u);
+    on.sort((p,q)=>{
+      const dp = new THREE.Vector3().subVectors(verts[p],cen), dq = new THREE.Vector3().subVectors(verts[q],cen);
+      return Math.atan2(dp.dot(w), dp.dot(u)) - Math.atan2(dq.dot(w), dq.dot(u));
+    });
+    faces.push({idx:on, n:nr.clone(), c:cen});
+  }
+  return faces;
+}
+function edgeMap(faces){
+  const m = new Map();
+  faces.forEach((f,fi)=>{ f.idx.forEach((a,i)=>{ const b = f.idx[(i+1)%f.idx.length]; const k = a<b? a+'_'+b : b+'_'+a; if(!m.has(k)) m.set(k,{a,b,faces:[]}); m.get(k).faces.push(fi); }); });
+  return m;
+}
+function restOnFace(verts){
+  const f = hull(verts)[0];
+  const q = new THREE.Quaternion().setFromUnitVectors(f.n, V3(0,-1,0));
+  verts.forEach(v=>v.applyQuaternion(q));
+  const box = new THREE.Box3().setFromPoints(verts);
+  const off = V3(-(box.min.x+box.max.x)/2, -box.min.y, -(box.min.z+box.max.z)/2);
+  verts.forEach(v=>v.add(off));
+  return verts;
+}
+function scaleToEdge(verts, l){
+  let md = Infinity;
+  for(let i=0;i<verts.length;i++) for(let j=i+1;j<verts.length;j++) md = Math.min(md, verts[i].distanceTo(verts[j]));
+  return verts.map(v=>v.multiplyScalar(l/md));
+}
+
+/* ---------- materiali ---------- */
+let faceMats = [];
+function faceMat(color){
+  const m = new THREE.MeshLambertMaterial({color, side:THREE.DoubleSide, transparent:true, opacity:1, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1});
+  faceMats.push(m); return m;
+}
+let edgeMat = null;
+function lineMat(){ return edgeMat; }
+
+/* ---------- poliedri con sviluppo ---------- */
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+function buildPoly(verts, opts){
+  const faces = hull(verts), edges = edgeMap(faces);
+  const F = faces.length;
+  const adj = Array.from({length:F},()=>[]);
+  edges.forEach(e=>{ if(e.faces.length===2){ adj[e.faces[0]].push({f:e.faces[1], e}); adj[e.faces[1]].push({f:e.faces[0], e}); } });
+  let root = 0; faces.forEach((f,i)=>{ if(f.n.y < faces[root].n.y) root = i; });
+
+  function hingeData(parent){
+    const info = [];
+    for(let f=0; f<F; f++){
+      if(f===root){ info.push(null); continue; }
+      const p = parent[f];
+      const link = adj[f].find(x=>x.f===p);
+      const A = verts[link.e.a], B = verts[link.e.b];
+      const axis = new THREE.Vector3().subVectors(B,A).normalize();
+      const nf = faces[f].n, np = faces[p].n;
+      const delta = Math.acos(Math.max(-1, Math.min(1, nf.dot(np))));
+      const test = nf.clone().applyQuaternion(new THREE.Quaternion().setFromAxisAngle(axis, delta));
+      const ang = test.dot(np) > 0.999 ? delta : -delta;
+      info.push({p, A:A.clone(), axis, ang});
+    }
+    return info;
+  }
+  function orderOf(parent){
+    const order = [root], kids = Array.from({length:F},()=>[]);
+    parent.forEach((p,f)=>{ if(f!==root && p>=0) kids[p].push(f); });
+    for(let i=0;i<order.length;i++) kids[order[i]].forEach(k=>order.push(k));
+    return order;
+  }
+  function matrices(info, order, t){
+    const mats = new Array(F);
+    mats[root] = new THREE.Matrix4();
+    for(const f of order){
+      if(f===root) continue;
+      const h = info[f];
+      const local = new THREE.Matrix4().makeTranslation(h.A.x,h.A.y,h.A.z)
+        .multiply(new THREE.Matrix4().makeRotationAxis(h.axis, h.ang*t))
+        .multiply(new THREE.Matrix4().makeTranslation(-h.A.x,-h.A.y,-h.A.z));
+      mats[f] = mats[h.p].clone().multiply(local);
+    }
+    return mats;
+  }
+  function overlaps(info, order){
+    const mats = matrices(info, order, 1);
+    const polys = faces.map((f,fi)=>{
+      const pts = f.idx.map(i=>verts[i].clone().applyMatrix4(mats[fi]));
+      const c = pts.reduce((s,p)=>s.add(p), V3(0,0,0)).divideScalar(pts.length);
+      return pts.map(p=>[c.x+(p.x-c.x)*0.95, c.z+(p.z-c.z)*0.95]);
+    });
+    for(let i=0;i<F;i++) for(let j=i+1;j<F;j++) if(sat(polys[i], polys[j])) return true;
+    return false;
+  }
+  function sat(A,B){
+    for(const P of [A,B]){
+      for(let i=0;i<P.length;i++){
+        const p = P[i], q = P[(i+1)%P.length], nx = -(q[1]-p[1]), ny = q[0]-p[0];
+        let a0=Infinity,a1=-Infinity,b0=Infinity,b1=-Infinity;
+        A.forEach(v=>{ const s=v[0]*nx+v[1]*ny; a0=Math.min(a0,s); a1=Math.max(a1,s); });
+        B.forEach(v=>{ const s=v[0]*nx+v[1]*ny; b0=Math.min(b0,s); b1=Math.max(b1,s); });
+        if(a1 <= b0+1e-6 || b1 <= a0+1e-6) return false;
+      }
+    }
+    return true;
+  }
+
+  // albero di sviluppo
+  let parent;
+  if(opts.parent){ parent = opts.parent(faces, adj, root); }
+  else {
+    const rnd = mulberry(opts.seed||7);
+    let best = null;
+    for(let tries=0; tries<3000; tries++){
+      const par = new Array(F).fill(-1), vis = new Array(F).fill(false); vis[root]=true;
+      const front = adj[root].map(x=>[root,x.f]);
+      while(front.length){
+        const k = Math.floor(rnd()*front.length); const [p,f] = front.splice(k,1)[0];
+        if(vis[f]) continue; vis[f]=true; par[f]=p; adj[f].forEach(x=>{ if(!vis[x.f]) front.push([f,x.f]); });
+      }
+      const inf = hingeData(par), ord = orderOf(par);
+      best = par;
+      if(!overlaps(inf, ord)) break;
+    }
+    parent = best;
+  }
+  const info = hingeData(parent), order = orderOf(parent);
+
+  // colori
+  const colors = opts.colors ? opts.colors(faces, adj) : faces.map(()=>COL.lat[0]);
+
+  // mesh
+  const group = new THREE.Group(); const items = [];
+  faces.forEach((f,fi)=>{
+    const pos = []; const P = f.idx.map(i=>verts[i]);
+    for(let i=1;i<P.length-1;i++) pos.push(P[0].x,P[0].y,P[0].z, P[i].x,P[i].y,P[i].z, P[i+1].x,P[i+1].y,P[i+1].z);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); g.computeVertexNormals();
+    const mesh = new THREE.Mesh(g, faceMat(colors[fi])); mesh.matrixAutoUpdate = false;
+    const lp = []; P.forEach(p=>lp.push(p.x,p.y,p.z));
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp,3));
+    const line = new THREE.LineLoop(lg, lineMat()); line.matrixAutoUpdate = false;
+    group.add(mesh); group.add(line); items.push({mesh,line});
+  });
+  function update(t){
+    const mats = matrices(info, order, t);
+    items.forEach((it,fi)=>{ it.mesh.matrix.copy(mats[fi]); it.line.matrix.copy(mats[fi]); it.mesh.matrixWorldNeedsUpdate = true; it.line.matrixWorldNeedsUpdate = true; });
+  }
+  update(0);
+  return {group, update, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
+}
+
+function prismColors(faces, adj){
+  const lat = faces.map((f,i)=>({i, a:Math.atan2(f.n.x, f.n.z), isLat: Math.abs(f.n.y) < 0.99}));
+  const lats = lat.filter(x=>x.isLat).sort((p,q)=>p.a-q.a);
+  const out = faces.map(()=>COL.base);
+  const n = lats.length;
+  lats.forEach((x,k)=>{ let c = k%2; if(n%2===1 && k===n-1) c = 2; out[x.i] = COL.lat[c]; });
+  return out;
+}
+function greedyColors(faces, adj){
+  const out = new Array(faces.length).fill(null);
+  faces.forEach((f,i)=>{ const used = new Set(adj[i].map(x=>out[x.f]).filter(Boolean)); out[i] = COL.plat.find(c=>!used.has(c)) || COL.plat[i%COL.plat.length]; });
+  return out;
+}
+function prismParent(faces, adj, root){
+  const par = new Array(faces.length).fill(-1);
+  let top = -1; faces.forEach((f,i)=>{ if(f.n.y > 0.99) top = i; });
+  adj[root].forEach(x=>{ par[x.f] = root; });
+  if(top >= 0){
+    let front = -1, best = -Infinity;
+    adj[top].forEach(x=>{ if(faces[x.f].n.z > best){ best = faces[x.f].n.z; front = x.f; } });
+    par[top] = front;
+  }
+  return par;
+}
+function pyramidParent(faces, adj, root){
+  const par = new Array(faces.length).fill(-1);
+  adj[root].forEach(x=>{ par[x.f] = root; });
+  return par;
+}
+
+function ringVerts(n, l, y){
+  const R = l/(2*Math.sin(Math.PI/n)), out = [];
+  for(let i=0;i<n;i++){ const a = -Math.PI/n + 2*Math.PI*i/n; out.push(V3(R*Math.sin(a), y, R*Math.cos(a))); }
+  return out;
+}
+function boxVerts(a,b,c){
+  const out=[]; for(const y of [0,c]) for(const x of [-a/2,a/2]) for(const z of [-b/2,b/2]) out.push(V3(x,y,z));
+  return out;
+}
+
+/* ---------- solidi di rotazione ---------- */
+const T = (x,y,z) => new THREE.Matrix4().makeTranslation(x,y,z);
+const Rx = a => new THREE.Matrix4().makeRotationX(a);
+function discPair(r, normalUp){
+  const g = new THREE.CircleGeometry(r, 72); g.rotateX(normalUp ? -Math.PI/2 : Math.PI/2);
+  const mesh = new THREE.Mesh(g, faceMat(COL.base)); mesh.matrixAutoUpdate = false;
+  const lp = []; for(let i=0;i<96;i++){ const a = 2*Math.PI*i/96; lp.push(r*Math.cos(a), 0, r*Math.sin(a)); }
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp,3));
+  const line = new THREE.LineLoop(lg, lineMat()); line.matrixAutoUpdate = false;
+  return {mesh, line, set(m){ mesh.matrix.copy(m); line.matrix.copy(m); mesh.matrixWorldNeedsUpdate = true; line.matrixWorldNeedsUpdate = true; }};
+}
+function buildCylinder(r, h){
+  const N = 96, group = new THREE.Group();
+  const pos = new Float32Array((N+1)*2*3);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const idx = []; for(let j=0;j<N;j++){ const a=j*2,b=a+1,c=a+2,d=a+3; idx.push(a,c,b, b,c,d); } g.setIndex(idx);
+  const lat = new THREE.Mesh(g, faceMat(COL.curve)); group.add(lat);
+  const opos = new Float32Array((N+1)*2*3);
+  const og = new THREE.BufferGeometry(); og.setAttribute('position', new THREE.BufferAttribute(opos,3));
+  const outline = new THREE.LineLoop(og, lineMat()); group.add(outline);
+  const top = discPair(r, true), bot = discPair(r, false);
+  group.add(top.mesh, top.line, bot.mesh, bot.line);
+  function update(t){
+    const flat = t > 0.9995, R = r/(1-Math.min(t,0.9995));
+    for(let j=0;j<=N;j++){
+      const s = -Math.PI*r + 2*Math.PI*r*j/N;
+      let x, z;
+      if(flat){ x = s; z = -r; } else { const f = s/R; x = R*Math.sin(f); z = -r + R*(1-Math.cos(f)); }
+      pos.set([x,0,z, x,h,z], j*6);
+      opos.set([x,0,z], j*3);
+      opos.set([x,h,z], ((N+1)*2-1-j)*3);
+    }
+    g.attributes.position.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere();
+    og.attributes.position.needsUpdate = true; og.computeBoundingSphere();
+    top.set(T(0,h,-r).multiply(Rx(-Math.PI/2*t)).multiply(T(0,0,r)));
+    bot.set(T(0,0,-r).multiply(Rx(Math.PI/2*t)).multiply(T(0,0,r)));
+  }
+  update(0);
+  return {group, update, netKind:'curve'};
+}
+function buildCone(r, h){
+  const a = Math.hypot(r,h), Th = 2*Math.PI*r/a, N = 96, K = 12, group = new THREE.Group();
+  const pos = new Float32Array((K+1)*(N+1)*3);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const idx = [];
+  for(let k=0;k<K;k++) for(let j=0;j<N;j++){ const p=k*(N+1)+j, q=p+1, s=p+(N+1), u=s+1; idx.push(p,s,q, q,s,u); }
+  g.setIndex(idx);
+  const lat = new THREE.Mesh(g, faceMat(COL.curve)); group.add(lat);
+  const opos = new Float32Array((N+2)*3);
+  const og = new THREE.BufferGeometry(); og.setAttribute('position', new THREE.BufferAttribute(opos,3));
+  const outline = new THREE.LineLoop(og, lineMat()); group.add(outline);
+  const base = discPair(r, false); group.add(base.mesh, base.line);
+  const thF = Math.atan2(h, -r);
+  function update(t){
+    const rp = r + (a-r)*t, hp = Math.sqrt(Math.max(0, a*a - rp*rp));
+    const beta = Math.atan2(-r, -h) - Math.atan2(-rp, -hp), cb = Math.cos(beta), sb = Math.sin(beta);
+    for(let k=0;k<=K;k++){
+      const rho = a*k/K;
+      for(let j=0;j<=N;j++){
+        const psi = -Th/2 + Th*j/N, f = psi*a/rp;
+        const lx = (rho/a)*rp*Math.sin(f), ly = -(rho/a)*hp, lz = -(rho/a)*rp*Math.cos(f);
+        const y = ly*cb - lz*sb, z = ly*sb + lz*cb;
+        pos.set([lx, y+h, z], (k*(N+1)+j)*3);
+      }
+    }
+    opos.set([0,h,0], 0);
+    for(let j=0;j<=N;j++){ const o=(K*(N+1)+j)*3; opos.set([pos[o],pos[o+1],pos[o+2]], (j+1)*3); }
+    g.attributes.position.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere();
+    og.attributes.position.needsUpdate = true; og.computeBoundingSphere();
+    base.set(T(0,0,-r).multiply(Rx(thF*t)).multiply(T(0,0,r)));
+  }
+  update(0);
+  return {group, update, netKind:'curve'};
+}
+function buildSphere(r){
+  const group = new THREE.Group();
+  const g = new THREE.SphereGeometry(r, 64, 40);
+  const m = new THREE.Mesh(g, faceMat(COL.curve)); m.position.y = r; group.add(m);
+  const lp=[]; for(let i=0;i<128;i++){ const a=2*Math.PI*i/128; lp.push(r*Math.cos(a), r, r*Math.sin(a)); }
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp,3));
+  const eq = new THREE.LineLoop(lg, new THREE.LineDashedMaterial({color:edgeMat.color, dashSize:0.25, gapSize:0.18, transparent:true, opacity:.55}));
+  eq.computeLineDistances(); group.add(eq);
+  return {group, update(){}, netKind:null};
+}
+
+/* ---------- definizione dei solidi ---------- */
+const PHI = (1+Math.sqrt(5))/2;
+function platonicVerts(kind){
+  if(kind==='tetraedro') return [V3(1,1,1),V3(1,-1,-1),V3(-1,1,-1),V3(-1,-1,1)];
+  if(kind==='ottaedro') return [V3(1,0,0),V3(-1,0,0),V3(0,1,0),V3(0,-1,0),V3(0,0,1),V3(0,0,-1)];
+  if(kind==='icosaedro'){ const o=[]; for(const s1 of [-1,1]) for(const s2 of [-1,1]){ o.push(V3(0,s1,s2*PHI), V3(s1,s2*PHI,0), V3(s2*PHI,0,s1)); } return o; }
+  const o=[]; for(const x of [-1,1]) for(const y of [-1,1]) for(const z of [-1,1]) o.push(V3(x,y,z));
+  const ip = 1/PHI; for(const s1 of [-1,1]) for(const s2 of [-1,1]) o.push(V3(0,s1*ip,s2*PHI), V3(s1*ip,s2*PHI,0), V3(s1*PHI,0,s2*ip));
+  return o;
+}
+const PLAT = {
+  tetraedro:{name:'Tetraedro', F:4, faceName:'triangolo equilatero', fA:0.433, kV:0.118, seed:3},
+  ottaedro:{name:'Ottaedro', F:8, faceName:'triangolo equilatero', fA:0.433, kV:0.471, seed:11},
+  dodecaedro:{name:'Dodecaedro', F:12, faceName:'pentagono regolare', fA:1.720, kV:7.663, seed:5},
+  icosaedro:{name:'Icosaedro', F:20, faceName:'triangolo equilatero', fA:0.433, kV:2.182, seed:9}
+};
+
+const SOLIDS = {
+  cubo:{ name:'Cubo', dims:[{k:'l',label:'Spigolo',min:1,max:10,def:4}],
+    build:d=>buildPoly(boxVerts(d.l,d.l,d.l), {parent:prismParent, colors:prismColors}),
+    elements:d=>[
+      {k:'l', label:'Spigolo', main:'l', val:d.l, a:V3(-d.l/2,0,d.l/2), b:V3(d.l/2,0,d.l/2)},
+      {k:'d', label:'Diagonale', main:'d', val:d.l*1.732, a:V3(-d.l/2,0,d.l/2), b:V3(d.l/2,d.l,-d.l/2)}],
+    calc:d=>{ const l=d.l; return [
+      {label:'Area di base', sym:'A<sub>b</sub>', f:`${vv('l','l')}²`, s:()=>`${fmt(l)}²`, val:l*l, unit:'cm²'},
+      {label:'Area laterale', sym:'A<sub>l</sub>', f:`4 · ${vv('l','l')}²`, s:()=>`4 · ${fmt(l)}²`, val:4*l*l, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`6 · ${vv('l','l')}²`, s:()=>`6 · ${fmt(l)}²`, val:6*l*l, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`${vv('l','l')}³`, s:()=>`${fmt(l)}³`, val:l*l*l, unit:'cm³'},
+      {label:'Diagonale', sym:vv('d','d'), f:`${vv('l','l')} · √3`, s:()=>`${fmt(l)} · 1,732`, val:l*1.732, unit:'cm', extra:true}]; },
+    note:()=>'Il cubo è anche uno dei cinque poliedri regolari: ha 6 facce quadrate tutte uguali.'
+  },
+  parallelepipedo:{ name:'Parallelepipedo', dims:[{k:'a',label:'Lunghezza',min:1,max:10,def:5},{k:'b',label:'Larghezza',min:1,max:10,def:3},{k:'c',label:'Altezza',min:1,max:10,def:4}],
+    build:d=>buildPoly(boxVerts(d.a,d.b,d.c), {parent:prismParent, colors:prismColors}),
+    elements:d=>{ const {a,b,c}=d; return [
+      {k:'a', label:'Lunghezza', main:'a', val:a, a:V3(-a/2,0,b/2), b:V3(a/2,0,b/2)},
+      {k:'b', label:'Larghezza', main:'b', val:b, a:V3(a/2,0,b/2), b:V3(a/2,0,-b/2)},
+      {k:'c', label:'Altezza', main:'c', val:c, a:V3(a/2,0,b/2), b:V3(a/2,c,b/2)},
+      {k:'d', label:'Diagonale', main:'d', val:Math.sqrt(a*a+b*b+c*c), a:V3(-a/2,0,b/2), b:V3(a/2,c,-b/2)}]; },
+    calc:d=>{ const {a,b,c}=d, p2=2*(a+b), Ab=a*b, Al=p2*c, At=Al+2*Ab, Vo=Ab*c, dg=Math.sqrt(a*a+b*b+c*c); return [
+      {label:'Perimetro di base', sym:'2p', f:`2 · (${vv('a','a')} + ${vv('b','b')})`, s:()=>`2 · (${fmt(a)} + ${fmt(b)})`, val:p2, unit:'cm'},
+      {label:'Area di base', sym:'A<sub>b</sub>', f:`${vv('a','a')} · ${vv('b','b')}`, s:()=>`${fmt(a)} · ${fmt(b)}`, val:Ab, unit:'cm²'},
+      {label:'Area laterale', sym:'A<sub>l</sub>', f:`2p · ${vv('c','c')}`, s:()=>`${fmt(p2)} · ${fmt(c)}`, val:Al, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>l</sub> + 2 · A<sub>b</sub>`, s:()=>`${fmt(Al)} + 2 · ${fmt(Ab)}`, val:At, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`A<sub>b</sub> · ${vv('c','c')}`, s:()=>`${fmt(Ab)} · ${fmt(c)}`, val:Vo, unit:'cm³'},
+      {label:'Diagonale', sym:vv('d','d'), f:`√(${vv('a','a')}² + ${vv('b','b')}² + ${vv('c','c')}²)`, s:()=>`√(${fmt(a)}² + ${fmt(b)}² + ${fmt(c)}²)`, val:dg, unit:'cm', extra:true}]; },
+    note:()=>'La diagonale si trova applicando due volte il teorema di Pitagora.'
+  },
+  prisma:{ name:'Prisma regolare', sides:true, dims:[{k:'l',label:'Spigolo di base',min:1,max:10,def:4},{k:'h',label:'Altezza',min:1,max:12,def:6}],
+    build:(d,n)=>buildPoly([...ringVerts(n,d.l,0), ...ringVerts(n,d.l,d.h)], {parent:prismParent, colors:prismColors}),
+    elements:(d,n)=>{ const ap=d.l/(2*Math.tan(Math.PI/n)), l=d.l; return [
+      {k:'l', label:'Spigolo di base', main:'l', val:l, a:V3(-l/2,0,ap), b:V3(l/2,0,ap)},
+      {k:'ab', label:'Apotema di base', main:'a', sub:'b', val:r2(l*FISSO[n]), a:V3(0,0,0), b:V3(0,0,ap)},
+      {k:'h', label:'Altezza', main:'h', val:d.h, a:V3(l/2,0,ap), b:V3(l/2,d.h,ap)}]; },
+    calc:(d,n)=>{ const {l,h}=d, f=FISSO[n], p2=n*l, ab=r2(l*f), Ab = n===4 ? l*l : p2*ab/2, Al=p2*h, At=Al+2*Ab, Vo=Ab*h; return [
+      {label:'Perimetro di base', sym:'2p', f:`${n} · ${vv('l','l')}`, s:()=>`${n} · ${fmt(l)}`, val:p2, unit:'cm'},
+      {label:'Apotema di base', sym:vv('ab','a<sub>b</sub>'), f:`${vv('l','l')} · ${fmt(f,3)}`, s:()=>`${fmt(l)} · ${fmt(f,3)}`, val:ab, unit:'cm', extra:n===4},
+      n===4
+        ? {label:'Area di base', sym:'A<sub>b</sub>', f:`${vv('l','l')}²`, s:()=>`${fmt(l)}²`, val:Ab, unit:'cm²'}
+        : {label:'Area di base', sym:'A<sub>b</sub>', f:`(2p · ${vv('ab','a<sub>b</sub>')}) : 2`, s:()=>`(${fmt(p2)} · ${fmt(ab)}) : 2`, val:Ab, unit:'cm²'},
+      {label:'Area laterale', sym:'A<sub>l</sub>', f:`2p · ${vv('h','h')}`, s:()=>`${fmt(p2)} · ${fmt(h)}`, val:Al, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>l</sub> + 2 · A<sub>b</sub>`, s:()=>`${fmt(Al)} + 2 · ${fmt(Ab)}`, val:At, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`A<sub>b</sub> · ${vv('h','h')}`, s:()=>`${fmt(Ab)} · ${fmt(h)}`, val:Vo, unit:'cm³'}]; },
+    note:(d,n)=>`Il numero ${fmt(FISSO[n],3)} è il numero fisso del ${POLYGON[n]}: moltiplicato per il lato dà l'apotema di base.`
+  },
+  piramide:{ name:'Piramide regolare', sides:true, dims:[{k:'l',label:'Spigolo di base',min:1,max:10,def:6},{k:'h',label:'Altezza',min:1,max:12,def:4}],
+    build:(d,n)=>buildPoly([...ringVerts(n,d.l,0), V3(0,d.h,0)], {parent:pyramidParent, colors:prismColors}),
+    elements:(d,n)=>{ const ap=d.l/(2*Math.tan(Math.PI/n)), l=d.l, ab=r2(l*FISSO[n]); return [
+      {k:'l', label:'Spigolo di base', main:'l', val:l, a:V3(-l/2,0,ap), b:V3(l/2,0,ap)},
+      {k:'ab', label:'Apotema di base', main:'a', sub:'b', val:ab, a:V3(0,0,0), b:V3(0,0,ap)},
+      {k:'h', label:'Altezza', main:'h', val:d.h, a:V3(0,0,0), b:V3(0,d.h,0)},
+      {k:'a', label:'Apotema', main:'a', val:r2(Math.sqrt(d.h*d.h+ab*ab)), a:V3(0,0,ap), b:V3(0,d.h,0)}]; },
+    calc:(d,n)=>{ const {l,h}=d, f=FISSO[n], p2=n*l, ab=r2(l*f), a=r2(Math.sqrt(h*h+ab*ab)), Ab = n===4 ? l*l : p2*ab/2, Al=p2*a/2, At=Ab+Al, Vo=Ab*h/3; return [
+      {label:'Apotema di base', sym:vv('ab','a<sub>b</sub>'), f:`${vv('l','l')} · ${fmt(f,3)}`, s:()=>`${fmt(l)} · ${fmt(f,3)}`, val:ab, unit:'cm'},
+      {label:'Apotema (Pitagora)', sym:vv('a','a'), f:`√(${vv('h','h')}² + ${vv('ab','a<sub>b</sub>')}²)`, s:()=>`√(${fmt(h)}² + ${fmt(ab)}²)`, val:a, unit:'cm'},
+      {label:'Perimetro di base', sym:'2p', f:`${n} · ${vv('l','l')}`, s:()=>`${n} · ${fmt(l)}`, val:p2, unit:'cm'},
+      n===4
+        ? {label:'Area di base', sym:'A<sub>b</sub>', f:`${vv('l','l')}²`, s:()=>`${fmt(l)}²`, val:Ab, unit:'cm²'}
+        : {label:'Area di base', sym:'A<sub>b</sub>', f:`(2p · ${vv('ab','a<sub>b</sub>')}) : 2`, s:()=>`(${fmt(p2)} · ${fmt(ab)}) : 2`, val:Ab, unit:'cm²'},
+      {label:'Area laterale', sym:'A<sub>l</sub>', f:`(2p · ${vv('a','a')}) : 2`, s:()=>`(${fmt(p2)} · ${fmt(a)}) : 2`, val:Al, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>b</sub> + A<sub>l</sub>`, s:()=>`${fmt(Ab)} + ${fmt(Al)}`, val:At, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`(A<sub>b</sub> · ${vv('h','h')}) : 3`, s:()=>`(${fmt(Ab)} · ${fmt(h)}) : 3`, val:Vo, unit:'cm³'}]; },
+    note:(d,n)=>`L'apotema è l'ipotenusa del triangolo rettangolo che ha per cateti l'altezza e l'apotema di base. ${fmt(FISSO[n],3)} è il numero fisso del ${POLYGON[n]}.`
+  },
+  cilindro:{ name:'Cilindro', dims:[{k:'r',label:'Raggio',min:1,max:8,def:3},{k:'h',label:'Altezza',min:1,max:12,def:5}],
+    build:d=>buildCylinder(d.r,d.h),
+    elements:d=>[
+      {k:'r', label:'Raggio', main:'r', val:d.r, a:V3(0,0,0), b:V3(d.r,0,0)},
+      {k:'h', label:'Altezza', main:'h', val:d.h, a:V3(0,0,0), b:V3(0,d.h,0)}],
+    calc:d=>{ const {r,h}=d; return [
+      {label:'Area di base', sym:'A<sub>b</sub>', f:`π · ${vv('r','r')}²`, s:c=>`${c.P} · ${fmt(r)}²`, val:r*r, pi:true, unit:'cm²'},
+      {label:'Area laterale', sym:'A<sub>l</sub>', f:`2 · π · ${vv('r','r')} · ${vv('h','h')}`, s:c=>`2 · ${c.P} · ${fmt(r)} · ${fmt(h)}`, val:2*r*h, pi:true, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>l</sub> + 2 · A<sub>b</sub>`, s:c=>`${c.pc(2*r*h)} + 2 · ${c.pc(r*r)}`, val:2*r*h+2*r*r, pi:true, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`π · ${vv('r','r')}² · ${vv('h','h')}`, s:c=>`${c.P} · ${fmt(r)}² · ${fmt(h)}`, val:r*r*h, pi:true, unit:'cm³'}]; },
+    note:()=>'Aprendo il cilindro, la superficie laterale diventa un rettangolo: la base è lunga quanto la circonferenza (2πr), l\'altezza è h.'
+  },
+  cono:{ name:'Cono', dims:[{k:'r',label:'Raggio',min:1,max:8,def:3},{k:'h',label:'Altezza',min:1,max:12,def:4}],
+    build:d=>buildCone(d.r,d.h),
+    elements:d=>[
+      {k:'r', label:'Raggio', main:'r', val:d.r, a:V3(0,0,0), b:V3(d.r,0,0)},
+      {k:'h', label:'Altezza', main:'h', val:d.h, a:V3(0,0,0), b:V3(0,d.h,0)},
+      {k:'a', label:'Apotema', main:'a', val:r2(Math.hypot(d.r,d.h)), a:V3(d.r,0,0), b:V3(0,d.h,0)}],
+    calc:d=>{ const {r,h}=d, a=r2(Math.hypot(r,h)); return [
+      {label:'Apotema (Pitagora)', sym:vv('a','a'), f:`√(${vv('r','r')}² + ${vv('h','h')}²)`, s:()=>`√(${fmt(r)}² + ${fmt(h)}²)`, val:Math.hypot(r,h), unit:'cm'},
+      {label:'Area di base', sym:'A<sub>b</sub>', f:`π · ${vv('r','r')}²`, s:c=>`${c.P} · ${fmt(r)}²`, val:r*r, pi:true, unit:'cm²'},
+      {label:'Area laterale', sym:'A<sub>l</sub>', f:`π · ${vv('r','r')} · ${vv('a','a')}`, s:c=>`${c.P} · ${fmt(r)} · ${fmt(a)}`, val:r*a, pi:true, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>b</sub> + A<sub>l</sub>`, s:c=>`${c.pc(r*r)} + ${c.pc(r*a)}`, val:r*r+r*a, pi:true, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`(π · ${vv('r','r')}² · ${vv('h','h')}) : 3`, s:c=>`(${c.P} · ${fmt(r)}² · ${fmt(h)}) : 3`, val:r*r*h/3, pi:true, unit:'cm³'}]; },
+    note:()=>'Aprendo il cono, la superficie laterale diventa un settore circolare con raggio uguale all\'apotema a.'
+  },
+  sfera:{ name:'Sfera', dims:[{k:'r',label:'Raggio',min:1,max:8,def:3}],
+    build:d=>buildSphere(d.r),
+    elements:d=>[{k:'r', label:'Raggio', main:'r', val:d.r, a:V3(0,d.r,0), b:V3(d.r,d.r,0)}],
+    calc:d=>{ const r=d.r; return [
+      {label:'Superficie', sym:'S', f:`4 · π · ${vv('r','r')}²`, s:c=>`4 · ${c.P} · ${fmt(r)}²`, val:4*r*r, pi:true, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`(4 · π · ${vv('r','r')}³) : 3`, s:c=>`(4 · ${c.P} · ${fmt(r)}³) : 3`, val:4*r*r*r/3, pi:true, unit:'cm³'}]; },
+    note:()=>'La superficie della sfera è uguale a quella di 4 cerchi massimi.'
+  }
+};
+Object.keys(PLAT).forEach(k=>{
+  const P = PLAT[k];
+  SOLIDS[k] = { name:P.name, platonic:true, dims:[{k:'l',label:'Spigolo',min:1,max:8,def:k==='dodecaedro'?2:(k==='icosaedro'?3:4)}],
+    build:d=>buildPoly(restOnFace(scaleToEdge(platonicVerts(k), d.l)), {seed:P.seed, colors:greedyColors}),
+    elements:(d,n,built)=>{
+      let bottom = built.faces.reduce((b,f)=> f.n.y < b.n.y ? f : b);
+      let best = null;
+      bottom.idx.forEach((ia,i)=>{ const A=built.verts[ia], B=built.verts[bottom.idx[(i+1)%bottom.idx.length]]; const z=(A.z+B.z)/2; if(!best || z>best.z) best={A,B,z}; });
+      return [{k:'l', label:'Spigolo', main:'l', val:d.l, a:best.A.clone(), b:best.B.clone()}];
+    },
+    calc:d=>{ const l=d.l, Af=P.fA*l*l, At=P.F*Af, Vo=P.kV*l*l*l; return [
+      {label:`Area di una faccia (${P.faceName})`, sym:'A<sub>f</sub>', f:`${fmt(P.fA,3)} · ${vv('l','l')}²`, s:()=>`${fmt(P.fA,3)} · ${fmt(l)}²`, val:Af, unit:'cm²'},
+      {label:'Area totale', sym:'A<sub>t</sub>', f:`${P.F} · A<sub>f</sub>`, s:()=>`${P.F} · ${fmt(Af)}`, val:At, unit:'cm²'},
+      {label:'Volume', sym:'V', f:`${fmt(P.kV,3)} · ${vv('l','l')}³`, s:()=>`${fmt(P.kV,3)} · ${fmt(l)}³`, val:Vo, unit:'cm³'}]; },
+    note:()=>`Le ${P.F} facce sono ${P.faceName === 'pentagono regolare' ? 'pentagoni regolari' : 'triangoli equilateri'} tutti uguali. ${fmt(P.fA,3)} e ${fmt(P.kV,3)} sono numeri fissi: si moltiplicano per l² e per l³.`
+  };
+});
+const GROUPS = [
+  {g:'Poliedri', items:['cubo','parallelepipedo','prisma','piramide']},
+  {g:'Solidi di rotazione', items:['cilindro','cono','sfera']},
+  {g:'Poliedri regolari', items:['tetraedro','ottaedro','dodecaedro','icosaedro']}
+];
+const SHORT = {prisma:'Prisma', piramide:'Piramide'};
+Object.keys(SOLIDS).forEach(k=>{ S.dims[k] = {}; SOLIDS[k].dims.forEach(d=>S.dims[k][d.k]=d.def); });
+
+/* ---------- scena 3D ---------- */
+const canvas = $('#scene'), vp = $('#viewport');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 500);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a97ad, 0.62));
+const sun = new THREE.DirectionalLight(0xffffff, 0.62); sun.position.set(4,6,5); camera.add(sun);
+edgeMat = new THREE.LineBasicMaterial({color:0x1B2640});
+let grid = null, current = null, helpers = new THREE.Group(); scene.add(helpers);
+const cam = {theta:0.62, phi:1.05, dist:20, zoom:1, target:V3(0,2,0), goal:{theta:0.62, phi:1.05}};
+let boundsDirty = true, fitR = 5, fitC = V3(0,2,0), minY = 0;
+
+function applyTheme(){
+  renderer.setClearColor(new THREE.Color(css('--scene')||'#F8FAFD'));
+  edgeMat.color.set(css('--edge')||'#1B2640');
+  if(grid){ scene.remove(grid); grid.geometry.dispose(); }
+  grid = new THREE.GridHelper(60, 60, new THREE.Color(css('--grid-strong')||'#C3CFE0'), new THREE.Color(css('--grid')||'#DFE6F0'));
+  scene.add(grid); grid.position.y = minY - 0.01;
+  refreshHelpers();
+  VIEWERS.forEach(v=>v.theme());
+}
+const VIEWERS = [];
+function resize(){
+  const w = vp.clientWidth, h = vp.clientHeight;
+  if(!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(vp);
+
+function disposeGroup(g){
+  g.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material && o.material!==edgeMat){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+}
+function rebuild(){
+  if(current){ scene.remove(current.group); disposeGroup(current.group); }
+  faceMats = [];
+  const def = SOLIDS[S.solid], d = S.dims[S.solid], n = S.sides[S.solid];
+  current = def.build(d, n);
+  scene.add(current.group);
+  current.update(current.netKind ? S.t : 0);
+  current.elements = def.elements(d, n, current);
+  if(S.el && !current.elements.find(e=>e.k===S.el)) S.el = null;
+  boundsDirty = true;
+  refreshHelpers();
+}
+function computeBounds(){
+  current.group.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(current.group);
+  const sph = box.getBoundingSphere(new THREE.Sphere());
+  fitR = Math.max(sph.radius, 1.5); fitC = sph.center; minY = Math.min(0, box.min.y);
+  if(grid) grid.position.y = minY - 0.01;
+  boundsDirty = false;
+}
+
+/* etichette ed elementi evidenziati */
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function labelSprite(el, color){
+  const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+  const fam = S.legible ? "'Atkinson Hyperlegible', Verdana, sans-serif" : "'Baloo 2', Nunito, sans-serif";
+  const F1 = `italic 700 60px ${fam}`, F2 = `italic 700 36px ${fam}`, F3 = `700 60px ${fam}`;
+  const val = ' = ' + (approx(el.val) ? '≈ ' : '') + fmt(el.val) + ' cm';
+  ctx.font = F1; const w1 = ctx.measureText(el.main).width;
+  ctx.font = F2; const w2 = el.sub ? ctx.measureText(el.sub).width + 2 : 0;
+  ctx.font = F3; const w3 = ctx.measureText(val).width;
+  const H = 96, pad = 24; cv.width = Math.ceil(pad*2 + w1 + w2 + w3); cv.height = H;
+  ctx.fillStyle = color; roundRect(ctx,0,0,cv.width,H,22); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
+  let x = pad; ctx.font = F1; ctx.fillText(el.main, x, 66); x += w1;
+  if(el.sub){ ctx.font = F2; ctx.fillText(el.sub, x+1, 80); x += w2; }
+  ctx.font = F3; ctx.fillText(val, x, 66);
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
+  sp.renderOrder = 12; sp.userData.aspect = cv.width/H;
+  return sp;
+}
+function refreshHelpers(){
+  while(helpers.children.length){ const c = helpers.children.pop(); disposeGroup(c); }
+  const active = S.el && current && S.t < 0.01;
+  const op = active ? Math.min(S.opacity, 0.32) : S.opacity;
+  faceMats.forEach(m=>{ m.opacity = op; m.depthWrite = op > 0.99; m.needsUpdate = true; });
+  $('#elHint').textContent = (S.el && S.t >= 0.01) ? 'Richiudi il solido per vedere l\'elemento evidenziato.' : 'Tocca un elemento per vederlo sul solido.';
+  if(!active) return;
+  const el = current.elements.find(e=>e.k===S.el); if(!el) return;
+  const color = css('--hl') || '#D6336C';
+  const size = Math.max(...Object.values(S.dims[S.solid]));
+  const rad = Math.max(0.05, size*0.012);
+  const dir = new THREE.Vector3().subVectors(el.b, el.a), len = dir.length();
+  const mat = new THREE.MeshBasicMaterial({color, depthTest:false, transparent:true});
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 14), mat);
+  cyl.position.copy(el.a).addScaledVector(dir, 0.5);
+  cyl.quaternion.setFromUnitVectors(V3(0,1,0), dir.clone().normalize()); cyl.renderOrder = 11;
+  helpers.add(cyl);
+  [el.a, el.b].forEach(p=>{ const s = new THREE.Mesh(new THREE.SphereGeometry(rad*2.1, 16, 12), mat.clone()); s.position.copy(p); s.renderOrder = 11; helpers.add(s); });
+  const sp = labelSprite(el, color);
+  const mid = el.a.clone().addScaledVector(dir, 0.5);
+  const out = V3(mid.x, 0, mid.z); if(out.length() < 0.01) out.set(1,0,0.6); out.normalize();
+  const devK = {lim:1.35, phone:1.2, tablet:1.1}[document.body.dataset.dev] || 1;
+  const k = Math.max(0.55, size*0.11) * devK;
+  sp.position.copy(mid).addScaledVector(out, k*0.9).add(V3(0, k*0.5, 0));
+  sp.scale.set(k*sp.userData.aspect, k, 1);
+  helpers.add(sp);
+}
+
+/* controlli camera */
+const pts = new Map(); let drag = null, pinch = null;
+const pinchDist = ()=>{ const [a,b] = [...pts.values()]; return Math.hypot(a.x-b.x, a.y-b.y); };
+canvas.addEventListener('pointerdown', e=>{
+  canvas.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(pts.size===1){ drag = {x:e.clientX, y:e.clientY}; pinch = null; }
+  else if(pts.size===2){ drag = null; pinch = {d:pinchDist(), zoom:cam.zoom}; }
+});
+canvas.addEventListener('pointermove', e=>{
+  if(!pts.has(e.pointerId)) return;
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(pinch && pts.size===2){ cam.zoom = Math.max(0.35, Math.min(3, pinch.zoom * pinch.d / Math.max(20, pinchDist()))); return; }
+  if(!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = {x:e.clientX, y:e.clientY};
+  const sens = e.pointerType==='mouse' ? 0.009 : 0.011;
+  cam.goal.theta -= dx*sens; cam.goal.phi = Math.max(0.04, Math.min(2.2, cam.goal.phi - dy*sens));
+  cam.theta = cam.goal.theta; cam.phi = cam.goal.phi;
+});
+const endDrag = e=>{
+  pts.delete(e.pointerId);
+  if(pts.size<2) pinch = null;
+  if(pts.size===1){ const p = [...pts.values()][0]; drag = {x:p.x, y:p.y}; } else drag = null;
+};
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('wheel', e=>{ e.preventDefault(); cam.zoom = Math.max(0.35, Math.min(3, cam.zoom*Math.exp(e.deltaY*0.0012))); }, {passive:false});
+function setView(theta, phi){ cam.goal.theta = cam.theta + (((theta - cam.theta) % (2*Math.PI)) + 3*Math.PI) % (2*Math.PI) - Math.PI; cam.goal.phi = phi; }
+$('#vFront').onclick = ()=>setView(0, 1.42);
+$('#vTop').onclick = ()=>setView(0, 0.05);
+$('#vReset').onclick = ()=>{ setView(0.62, 1.05); cam.zoom = 1; };
+
+/* animazione dello sviluppo */
+let anim = null;
+function setT(t, fromSlider){
+  S.t = Math.max(0, Math.min(1, t));
+  if(!fromSlider) $('#netT').value = Math.round(S.t*1000);
+  if(current && current.netKind) current.update(S.t);
+  boundsDirty = true;
+  refreshHelpers();
+  updatePlayBtn();
+}
+function updatePlayBtn(){
+  const open = S.t > 0.5;
+  $('#playText').textContent = open ? 'Richiudi' : 'Apri';
+  $('#playIcon').setAttribute('d', open ? 'M12 2.5v11l-9-5.5z' : 'M4 2.5v11l9-5.5z');
+}
+const ease = x => x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+$('#netPlay').onclick = ()=>{
+  const from = S.t, to = S.t > 0.5 ? 0 : 1, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dur = reduce ? 1 : 2600*Math.abs(to-from) + 200;
+  if(to===1){ if(current.netKind==='poly') setView(cam.goal.theta, 0.55); else setView(0, 1.3); }
+  anim = {from, to, start:performance.now(), dur};
+};
+$('#netT').addEventListener('input', e=>{ anim = null; setT(e.target.value/1000, true); });
+
+function loop(now){
+  requestAnimationFrame(loop);
+  if(anim){
+    const k = Math.min(1, (now - anim.start)/anim.dur);
+    setT(anim.from + (anim.to - anim.from)*ease(k));
+    if(k>=1) anim = null;
+  }
+  if(!current || !vp.clientWidth) return;
+  if(boundsDirty) computeBounds();
+  cam.theta += (cam.goal.theta - cam.theta)*0.14;
+  cam.phi += (cam.goal.phi - cam.phi)*0.14;
+  const fov = camera.fov*Math.PI/180;
+  const aspectFix = Math.min(1, camera.aspect);
+  const want = fitR/Math.sin(fov/2)/aspectFix*1.08*cam.zoom;
+  cam.dist += (want - cam.dist)*0.12;
+  cam.target.lerp(fitC, 0.12);
+  const sp = Math.sin(cam.phi);
+  camera.position.set(cam.target.x + cam.dist*sp*Math.sin(cam.theta), cam.target.y + cam.dist*Math.cos(cam.phi), cam.target.z + cam.dist*sp*Math.cos(cam.theta));
+  camera.lookAt(cam.target);
+  renderer.render(scene, camera);
+}
+
+/* ---------- interfaccia ---------- */
+function renderPicker(){
+  $('#picker').innerHTML = GROUPS.map(g=>`<div class="pick-group"><h4>${g.g}</h4><div class="pick-row">${
+    g.items.map(k=>`<button class="pick${k===S.solid?' on':''}" data-k="${k}" aria-pressed="${k===S.solid}">${SHORT[k]||SOLIDS[k].name}</button>`).join('')
+  }</div></div>`).join('');
+  $('#picker').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>selectSolid(b.dataset.k));
+}
+function renderDims(){
+  const def = SOLIDS[S.solid], d = S.dims[S.solid];
+  let html = def.dims.map(x=>`<div class="dim"><label for="d_${x.k}">${x.label} <var>${x.k}</var></label><output id="o_${x.k}">${fmt(d[x.k])} cm</output><input type="range" id="d_${x.k}" min="${x.min}" max="${Math.max(x.max, Math.ceil(d[x.k]))}" step="1" value="${d[x.k]}"></div>`).join('');
+  if(def.sides){
+    const n = S.sides[S.solid];
+    html += `<div class="sides"><span class="lbl">Poligono di base</span><div class="seg" role="group" aria-label="Numero di lati della base">${
+      [3,4,5,6,8].map(k=>`<button data-n="${k}" class="${k===n?'on':''}" aria-pressed="${k===n}">${k}</button>`).join('')
+    }</div><small>${POLYGON[n][0].toUpperCase()+POLYGON[n].slice(1)} · ${n} lati</small></div>`;
+  }
+  $('#dims').innerHTML = html;
+  def.dims.forEach(x=>{
+    $('#d_'+x.k).addEventListener('input', e=>{
+      d[x.k] = +e.target.value; $('#o_'+x.k).textContent = fmt(d[x.k])+' cm';
+      S.revealed.clear(); rebuild(); renderElements(); renderCalc();
+    });
+  });
+  $('#dims').querySelectorAll('.sides button').forEach(b=>b.onclick = ()=>{
+    S.sides[S.solid] = +b.dataset.n; S.revealed.clear(); rebuild(); renderDims(); renderElements(); renderCalc(); renderHeader();
+  });
+}
+function renderElements(){
+  $('#elements').innerHTML = current.elements.map(e=>`<button class="chip" data-k="${e.k}" aria-pressed="${S.el===e.k}"><span class="dot"></span>${e.label} <em>${e.main}${e.sub?`<sub>${e.sub}</sub>`:''}</em></button>`).join('');
+  $('#elements').querySelectorAll('.chip').forEach(b=>b.onclick = ()=>toggleEl(b.dataset.k));
+}
+function toggleEl(k){
+  S.el = S.el===k ? null : k;
+  if(S.el && S.t >= 0.01){ anim = null; setT(0); }
+  refreshHelpers(); renderElements(); markVars();
+}
+function markVars(){
+  $('#calc').querySelectorAll('var[data-v]').forEach(v=>v.classList.toggle('hl', v.dataset.v===S.el));
+}
+function renderCalc(){
+  const def = SOLIDS[S.solid], d = S.dims[S.solid], n = S.sides[S.solid];
+  const lines = def.calc(d, n), sym = S.pi==='sym';
+  const ctx = { P: sym ? 'π' : '3,14', pc: c => sym ? `${approx(c)?'≈':''}${fmt(c)}π` : fmt(c*PI_NUM) };
+  $('#calc').innerHTML = lines.map((L,i)=>{
+    const value = L.pi && !sym ? L.val*PI_NUM : L.val;
+    const isApprox = approx(value);
+    const resTxt = (L.pi && sym) ? `${L.val===1?'':fmt(L.val)}π ${L.unit}` : `${fmt(value)} ${L.unit}`;
+    const sub = L.s ? L.s(ctx) : '';
+    const showRes = !S.hidden || S.revealed.has(i);
+    const res = showRes ? `<span class="res">${resTxt}</span>` : `<button class="reveal" data-i="${i}" aria-label="Mostra il risultato: ${L.label}">?</button>`;
+    return `<div class="line${L.extra?' extra':''}"><div class="lbl">${L.label}</div><div class="eq"><span class="sym">${L.sym}</span><span class="op">=</span><span>${rad(L.f)}</span>${
+      sub ? `<span class="op stepop">=</span><span class="step">${rad(sub)}</span>` : ''
+    }<span class="op">${isApprox?'≈':'='}</span>${res}</div></div>`;
+  }).join('');
+  $('#calc').querySelectorAll('.reveal').forEach(b=>b.onclick = ()=>{ S.revealed.add(+b.dataset.i); renderCalc(); });
+  $('#calc').querySelectorAll('var[data-v]').forEach(v=>{
+    if(current.elements.find(e=>e.k===v.dataset.v)){ v.title = 'Evidenzia sul solido'; v.onclick = ()=>toggleEl(v.dataset.v); }
+  });
+  $('#calcNote').textContent = def.note ? def.note(d, n) : '';
+  $('#toggleRes').textContent = S.hidden ? 'Mostra tutti i risultati' : 'Nascondi risultati';
+  markVars();
+}
+function renderHeader(){
+  const def = SOLIDS[S.solid], n = S.sides[S.solid];
+  let name = def.name;
+  if(def.sides){ const adj = {3:'triangolare',4:'quadrangolare',5:'pentagonale',6:'esagonale',8:'ottagonale'}[n]; name = (S.solid==='prisma'?'Prisma ':'Piramide ') + adj; }
+  $('#solidName').textContent = name;
+  let counts = '';
+  if(current.counts) counts = `${current.counts.F} facce · ${current.counts.V} vertici · ${current.counts.S} spigoli`;
+  else if(S.solid==='cilindro') counts = '2 basi circolari · 1 superficie laterale curva';
+  else if(S.solid==='cono') counts = '1 base circolare · 1 superficie laterale curva · 1 vertice';
+  else counts = '1 superficie curva · nessuno spigolo';
+  $('#solidCounts').textContent = counts;
+  let leg;
+  if(def.platonic) leg = `<span><i style="background:${COL.plat[0]}"></i><i style="background:${COL.plat[1]}"></i><i style="background:${COL.plat[2]}"></i>Facce</span>`;
+  else if(current.netKind==='poly') leg = `<span><i style="background:${COL.base}"></i>${S.solid==='piramide'?'Base':'Basi'}</span><span><i style="background:${COL.lat[0]}"></i><i style="background:${COL.lat[1]}"></i>Facce laterali</span>`;
+  else if(current.netKind==='curve') leg = `<span><i style="background:${COL.base}"></i>${S.solid==='cono'?'Base':'Basi'}</span><span><i style="background:${COL.curve}"></i>Superficie laterale</span>`;
+  else leg = `<span><i style="background:${COL.curve}"></i>Superficie sferica</span>`;
+  $('#legend').innerHTML = leg;
+  const hasNet = !!current.netKind;
+  $('#netNote').hidden = hasNet;
+  $('#netT').disabled = !hasNet; $('#netPlay').disabled = !hasNet;
+}
+function selectSolid(k){
+  S.solid = k; S.el = null; S.revealed.clear(); anim = null;
+  if(!SOLIDS[k].build || k==='sfera'){ S.t = 0; $('#netT').value = 0; }
+  rebuild(); renderPicker(); renderDims(); renderElements(); renderCalc(); renderHeader(); updatePlayBtn();
+  if(current.netKind) setT(S.t);
+}
+
+/* preferenze */
+function applyPrefs(){
+  document.body.classList.toggle('legible', S.legible);
+  document.body.classList.toggle('simple', S.simple);
+  $('#optLegible').checked = S.legible; $('#optSimple').checked = S.simple;
+  $('#piSym').classList.toggle('on', S.pi==='sym'); $('#piNum').classList.toggle('on', S.pi==='num');
+  $('#piSym').setAttribute('aria-pressed', S.pi==='sym'); $('#piNum').setAttribute('aria-pressed', S.pi==='num');
+}
+$('#piSym').onclick = ()=>{ S.pi='sym'; savePrefs(); applyPrefs(); renderCalc(); exRefresh(); coRefresh(); };
+$('#piNum').onclick = ()=>{ S.pi='num'; savePrefs(); applyPrefs(); renderCalc(); exRefresh(); coRefresh(); };
+$('#optLegible').onchange = e=>{ S.legible = e.target.checked; savePrefs(); applyPrefs(); refreshHelpers(); };
+$('#optSimple').onchange = e=>{ S.simple = e.target.checked; savePrefs(); applyPrefs(); exRefresh(); };
+$('#toggleRes').onclick = ()=>{ S.hidden = !S.hidden; S.revealed.clear(); renderCalc(); };
+
+/* trasparenza e colori */
+$('#opa').value = Math.round((1 - S.opacity)*100);
+$('#opa').addEventListener('input', e=>{ S.opacity = 1 - e.target.value/100; refreshHelpers(); savePrefs(); });
+function renderColors(){
+  Object.keys(S.colors).forEach(k=>{ $('#c_'+k).value = S.colors[k]; });
+  $('#presets').innerHTML = PRESETS.map((p,i)=>{
+    const on = Object.keys(p.c).every(k=>p.c[k].toLowerCase()===S.colors[k].toLowerCase());
+    return `<button class="preset${on?' on':''}" data-i="${i}" aria-pressed="${on}"><span class="sw"><i style="background:${p.c.base}"></i><i style="background:${p.c.lat1}"></i><i style="background:${p.c.lat2}"></i><i style="background:${p.c.curve}"></i></span>${p.name}</button>`;
+  }).join('');
+  $('#presets').querySelectorAll('.preset').forEach(b=>b.onclick = ()=>{ S.colors = Object.assign({}, PRESETS[+b.dataset.i].c); colorsChanged(); });
+}
+let colorTimer = null;
+function colorsChanged(){
+  syncColors(); savePrefs(); renderColors();
+  clearTimeout(colorTimer);
+  colorTimer = setTimeout(()=>{ rebuild(); renderHeader(); }, 30);
+}
+Object.keys(S.colors).forEach(k=>{
+  $('#c_'+k).addEventListener('input', e=>{ S.colors[k] = e.target.value; colorsChanged(); });
+});
+syncColors(); renderColors();
+
+/* =========================================================
+   MODULO 2 · ESERCIZI
+   ========================================================= */
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function distinct(n, a, b){ const s = new Set(); while(s.size<n) s.add(rnd(a,b)); return [...s]; }
+const TRIPLES = [[3,4,5],[4,3,5],[6,8,10],[8,6,10],[5,12,13],[12,5,13],[9,12,15],[12,9,15],[8,15,17],[15,8,17],[12,16,20],[16,12,20]];
+const tripleMax = m => pick(TRIPLES.filter(t=>t[0]<=m));
+const MATERIALS = [{n:'ferro',ps:7.8},{n:'alluminio',ps:2.7},{n:'vetro',ps:2.5},{n:'marmo',ps:2.7},{n:'legno di abete',ps:0.5},{n:'sughero',ps:0.25},{n:'piombo',ps:11.3},{n:'rame',ps:8.9},{n:'ghiaccio',ps:0.92}];
+const NU = (x,u) => `<b>${fmt(x)} ${u}</b>`;
+const A = (label, sym, val, unit, pi=false) => ({label, sym, val, unit, pi});
+const L = (label, sym, f, s, val, unit, pi=false) => ({label, sym, f, s: typeof s==='function' ? s : ()=>s, val, unit, pi});
+const Ab_ = 'A<sub>b</sub>', Al_ = 'A<sub>l</sub>', At_ = 'A<sub>t</sub>', ab_ = 'a<sub>b</sub>', ps_ = 'p<sub>s</sub>';
+const pesoLine = (Vnum, ps, withPi) => L(withPi ? 'Peso (con π = 3,14)' : 'Peso', 'P', `V · ${ps_}`, `${fmt(Vnum)} · ${fmt(ps)}`, Vnum*ps, 'g');
+
+const GENS = [
+/* ---------------- BASE ---------------- */
+{lvl:1, cat:'cubo', make(){ const l = rnd(2,12); return {
+  lab:{solid:'cubo', dims:{l}},
+  text:()=>`Un cubo ha lo spigolo lungo ${NU(l,'cm')}. Calcola l'area totale e il volume.`,
+  hint:['A<sub>t</sub> = 6 · l²','V = l³'],
+  asks:[A('Area totale',At_,6*l*l,'cm²'), A('Volume','V',l**3,'cm³')],
+  sol:[L('Area di una faccia','A<sub>f</sub>','l²',`${l}²`,l*l,'cm²'), L('Area totale',At_,'6 · A<sub>f</sub>',`6 · ${l*l}`,6*l*l,'cm²'), L('Volume','V','l³',`${l}³`,l**3,'cm³')]}; }},
+{lvl:1, cat:'cubo', make(){ const [a,b,c] = distinct(3,2,12), p2=2*(a+b), Ab=a*b, Al=p2*c, At=Al+2*Ab, V=Ab*c; return {
+  lab:{solid:'parallelepipedo', dims:{a,b,c}},
+  text:()=>`Un parallelepipedo rettangolo ha le dimensioni di base di ${NU(a,'cm')} e ${NU(b,'cm')} e l'altezza di ${NU(c,'cm')}. Calcola l'area laterale, l'area totale e il volume.`,
+  hint:['2p = 2 · (a + b)','A<sub>l</sub> = 2p · h','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>','V = A<sub>b</sub> · h'],
+  asks:[A('Area laterale',Al_,Al,'cm²'), A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Perimetro di base','2p','2 · (a + b)',`2 · (${a} + ${b})`,p2,'cm'), L('Area di base',Ab_,'a · b',`${a} · ${b}`,Ab,'cm²'), L('Area laterale',Al_,'2p · h',`${p2} · ${c}`,Al,'cm²'), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,`${Al} + 2 · ${Ab}`,At,'cm²'), L('Volume','V',`${Ab_} · h`,`${Ab} · ${c}`,V,'cm³')]}; }},
+{lvl:1, cat:'prismi', make(){ const l=rnd(2,10), h=rnd(3,15), p2=4*l, Ab=l*l, Al=p2*h, At=Al+2*Ab, V=Ab*h; return {
+  lab:{solid:'prisma', dims:{l,h}, sides:4},
+  text:()=>`Un prisma quadrangolare regolare ha lo spigolo di base di ${NU(l,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola l'area laterale, l'area totale e il volume.`,
+  hint:['A<sub>b</sub> = l²','A<sub>l</sub> = 2p · h','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>','V = A<sub>b</sub> · h'],
+  asks:[A('Area laterale',Al_,Al,'cm²'), A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'), L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Area laterale',Al_,'2p · h',`${p2} · ${h}`,Al,'cm²'), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,`${Al} + 2 · ${Ab}`,At,'cm²'), L('Volume','V',`${Ab_} · h`,`${Ab} · ${h}`,V,'cm³')]}; }},
+{lvl:1, cat:'prismi', make(){ const l=pick([4,6,8,10]), ab=r2(l*0.866), h=rnd(5,15), p2=6*l, Ab=p2*ab/2, Al=p2*h, At=Al+2*Ab, V=Ab*h; return {
+  lab:{solid:'prisma', dims:{l,h}, sides:6},
+  text:()=>`Un prisma esagonale regolare ha lo spigolo di base di ${NU(l,'cm')}, l'apotema di base di ${NU(ab,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola l'area di base, l'area totale e il volume.`,
+  hint:['2p = 6 · l','A<sub>b</sub> = (2p · a<sub>b</sub>) : 2','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>','V = A<sub>b</sub> · h'],
+  asks:[A('Area di base',Ab_,Ab,'cm²'), A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Perimetro di base','2p','6 · l',`6 · ${l}`,p2,'cm'), L('Area di base',Ab_,`(2p · ${ab_}) : 2`,`(${p2} · ${fmt(ab)}) : 2`,Ab,'cm²'), L('Area laterale',Al_,'2p · h',`${p2} · ${h}`,Al,'cm²'), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,`${fmt(Al)} + 2 · ${fmt(Ab)}`,At,'cm²'), L('Volume','V',`${Ab_} · h`,`${fmt(Ab)} · ${h}`,V,'cm³')]}; }},
+{lvl:1, cat:'piramidi', make(){ const [ab,h,a]=tripleMax(12), l=2*ab, p2=4*l, Ab=l*l, Al=p2*a/2, At=Ab+Al, V=Ab*h/3; return {
+  lab:{solid:'piramide', dims:{l,h}, sides:4},
+  text:()=>`Una piramide quadrangolare regolare ha lo spigolo di base di ${NU(l,'cm')}, l'apotema di ${NU(a,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola l'area laterale, l'area totale e il volume.`,
+  hint:['A<sub>l</sub> = (2p · a) : 2','A<sub>t</sub> = A<sub>b</sub> + A<sub>l</sub>','V = (A<sub>b</sub> · h) : 3'],
+  asks:[A('Area laterale',Al_,Al,'cm²'), A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'), L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Area laterale',Al_,'(2p · a) : 2',`(${p2} · ${a}) : 2`,Al,'cm²'), L('Area totale',At_,`${Ab_} + ${Al_}`,`${Ab} + ${Al}`,At,'cm²'), L('Volume','V',`(${Ab_} · h) : 3`,`(${Ab} · ${h}) : 3`,V,'cm³')]}; }},
+{lvl:1, cat:'cilindro', make(){ const r=rnd(2,8), h=rnd(3,12); return {
+  lab:{solid:'cilindro', dims:{r,h}},
+  text:()=>`Un cilindro ha il raggio di base di ${NU(r,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola l'area laterale, l'area totale e il volume.`,
+  hint:['A<sub>b</sub> = π · r²','A<sub>l</sub> = 2 · π · r · h','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>','V = π · r² · h'],
+  asks:[A('Area laterale',Al_,2*r*h,'cm²',true), A('Area totale',At_,2*r*h+2*r*r,'cm²',true), A('Volume','V',r*r*h,'cm³',true)],
+  sol:[L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale',Al_,'2 · π · r · h',c=>`2 · ${c.P} · ${r} · ${h}`,2*r*h,'cm²',true), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,c=>`${c.pc(2*r*h)} + 2 · ${c.pc(r*r)}`,2*r*h+2*r*r,'cm²',true), L('Volume','V','π · r² · h',c=>`${c.P} · ${r}² · ${h}`,r*r*h,'cm³',true)]}; }},
+{lvl:1, cat:'cono', make(){ const [r,h,a]=tripleMax(12); return {
+  lab:{solid:'cono', dims:{r,h}},
+  text:()=>`Un cono ha il raggio di base di ${NU(r,'cm')}, l'altezza di ${NU(h,'cm')} e l'apotema di ${NU(a,'cm')}. Calcola l'area laterale, l'area totale e il volume.`,
+  hint:['A<sub>l</sub> = π · r · a','A<sub>t</sub> = A<sub>b</sub> + A<sub>l</sub>','V = (π · r² · h) : 3'],
+  asks:[A('Area laterale',Al_,r*a,'cm²',true), A('Area totale',At_,r*a+r*r,'cm²',true), A('Volume','V',r*r*h/3,'cm³',true)],
+  sol:[L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale',Al_,'π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true), L('Area totale',At_,`${Ab_} + ${Al_}`,c=>`${c.pc(r*r)} + ${c.pc(r*a)}`,r*r+r*a,'cm²',true), L('Volume','V','(π · r² · h) : 3',c=>`(${c.P} · ${r}² · ${h}) : 3`,r*r*h/3,'cm³',true)]}; }},
+{lvl:1, cat:'sfera', make(){ const r=pick([3,6,9,12]); return {
+  lab:{solid:'sfera', dims:{r}},
+  text:()=>`Una sfera ha il raggio di ${NU(r,'cm')}. Calcola la superficie e il volume.`,
+  hint:['S = 4 · π · r²','V = (4 · π · r³) : 3'],
+  asks:[A('Superficie','S',4*r*r,'cm²',true), A('Volume','V',4*r**3/3,'cm³',true)],
+  sol:[L('Superficie','S','4 · π · r²',c=>`4 · ${c.P} · ${r}²`,4*r*r,'cm²',true), L('Volume','V','(4 · π · r³) : 3',c=>`(4 · ${c.P} · ${r}³) : 3`,4*r**3/3,'cm³',true)]}; }},
+
+/* ---------------- MEDIO ---------------- */
+{lvl:2, cat:'cubo', make(){ const l=rnd(2,12), At=6*l*l; return {
+  lab:{solid:'cubo', dims:{l}},
+  text:()=>`L'area totale di un cubo è ${NU(At,'cm²')}. Calcola la lunghezza dello spigolo e il volume.`,
+  hint:['A<sub>f</sub> = A<sub>t</sub> : 6','l = √A<sub>f</sub>','V = l³'],
+  asks:[A('Spigolo','l',l,'cm'), A('Volume','V',l**3,'cm³')],
+  sol:[L('Area di una faccia','A<sub>f</sub>',`${At_} : 6`,`${At} : 6`,l*l,'cm²'), L('Spigolo','l','√A<sub>f</sub>',`√${l*l}`,l,'cm'), L('Volume','V','l³',`${l}³`,l**3,'cm³')]}; }},
+{lvl:2, cat:'cubo', make(){ const [a,b,c]=distinct(3,2,12), Ab=a*b, V=Ab*c, p2=2*(a+b), Al=p2*c, At=Al+2*Ab; return {
+  lab:{solid:'parallelepipedo', dims:{a,b,c}},
+  text:()=>`Un parallelepipedo rettangolo ha le dimensioni di base di ${NU(a,'cm')} e ${NU(b,'cm')} e il volume di ${NU(V,'cm³')}. Calcola l'altezza e l'area totale.`,
+  hint:['h = V : A<sub>b</sub>','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>'],
+  asks:[A('Altezza','h',c,'cm'), A('Area totale',At_,At,'cm²')],
+  sol:[L('Area di base',Ab_,'a · b',`${a} · ${b}`,Ab,'cm²'), L('Altezza','h',`V : ${Ab_}`,`${V} : ${Ab}`,c,'cm'), L('Perimetro di base','2p','2 · (a + b)',`2 · (${a} + ${b})`,p2,'cm'), L('Area laterale',Al_,'2p · h',`${p2} · ${c}`,Al,'cm²'), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,`${Al} + 2 · ${Ab}`,At,'cm²')]}; }},
+{lvl:2, cat:'cubo', make(){ const [a,b,c]=distinct(3,2,10), m=pick(MATERIALS), V=a*b*c; return {
+  lab:{solid:'parallelepipedo', dims:{a,b,c}},
+  text:()=>`Un blocco di <b>${m.n}</b> (peso specifico ${NU(m.ps,'g/cm³')}) ha la forma di un parallelepipedo rettangolo con dimensioni ${NU(a,'cm')}, ${NU(b,'cm')} e ${NU(c,'cm')}. Calcola il volume e il peso in grammi.`,
+  hint:['V = a · b · c','P = V · p<sub>s</sub>'],
+  asks:[A('Volume','V',V,'cm³'), A('Peso','P',V*m.ps,'g')],
+  sol:[L('Volume','V','a · b · c',`${a} · ${b} · ${c}`,V,'cm³'), pesoLine(V,m.ps,false)]}; }},
+{lvl:2, cat:'prismi', make(){ const l=rnd(3,10), h=rnd(4,15), Ab=l*l, p2=4*l, Al=p2*h, V=Ab*h; return {
+  lab:{solid:'prisma', dims:{l,h}, sides:4},
+  text:()=>`Un prisma quadrangolare regolare ha l'area di base di ${NU(Ab,'cm²')} e l'area laterale di ${NU(Al,'cm²')}. Calcola l'altezza e il volume.`,
+  hint:['l = √A<sub>b</sub>','h = A<sub>l</sub> : 2p','V = A<sub>b</sub> · h'],
+  asks:[A('Altezza','h',h,'cm'), A('Volume','V',V,'cm³')],
+  sol:[L('Spigolo di base','l',`√${Ab_}`,`√${Ab}`,l,'cm'), L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'), L('Altezza','h',`${Al_} : 2p`,`${Al} : ${p2}`,h,'cm'), L('Volume','V',`${Ab_} · h`,`${Ab} · ${h}`,V,'cm³')]}; }},
+{lvl:2, cat:'prismi', make(){ const l=rnd(2,8), h=rnd(4,12), m=pick(MATERIALS), V=l*l*h; return {
+  lab:{solid:'prisma', dims:{l,h}, sides:4},
+  text:()=>`Un prisma quadrangolare regolare di <b>${m.n}</b> (peso specifico ${NU(m.ps,'g/cm³')}) ha lo spigolo di base di ${NU(l,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola il volume e il peso in grammi.`,
+  hint:['V = A<sub>b</sub> · h','P = V · p<sub>s</sub>'],
+  asks:[A('Volume','V',V,'cm³'), A('Peso','P',V*m.ps,'g')],
+  sol:[L('Area di base',Ab_,'l²',`${l}²`,l*l,'cm²'), L('Volume','V',`${Ab_} · h`,`${l*l} · ${h}`,V,'cm³'), pesoLine(V,m.ps,false)]}; }},
+{lvl:2, cat:'piramidi', make(){ const [ab,h,a]=tripleMax(12), l=2*ab, p2=4*l, Ab=l*l, Al=p2*a/2, At=Ab+Al, V=Ab*h/3; return {
+  lab:{solid:'piramide', dims:{l,h}, sides:4},
+  text:()=>`Una piramide quadrangolare regolare ha lo spigolo di base di ${NU(l,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola l'apotema, l'area totale e il volume.`,
+  hint:['a<sub>b</sub> = l : 2','a = √(h² + a<sub>b</sub>²)','A<sub>t</sub> = A<sub>b</sub> + A<sub>l</sub>','V = (A<sub>b</sub> · h) : 3'],
+  asks:[A('Apotema','a',a,'cm'), A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Apotema di base',ab_,'l : 2',`${l} : 2`,ab,'cm'), L('Apotema (Pitagora)','a',`√(h² + ${ab_}²)`,`√(${h}² + ${ab}²)`,a,'cm'), L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Area laterale',Al_,'(2p · a) : 2',`(${p2} · ${a}) : 2`,Al,'cm²'), L('Area totale',At_,`${Ab_} + ${Al_}`,`${Ab} + ${Al}`,At,'cm²'), L('Volume','V',`(${Ab_} · h) : 3`,`(${Ab} · ${h}) : 3`,V,'cm³')]}; }},
+{lvl:2, cat:'piramidi', make(){ const [ab,h,a]=tripleMax(12), l=2*ab, p2=4*l, Ab=l*l, Al=p2*a/2, At=Ab+Al, V=Ab*h/3; return {
+  lab:{solid:'piramide', dims:{l,h}, sides:4},
+  text:()=>`Una piramide quadrangolare regolare ha lo spigolo di base di ${NU(l,'cm')} e il volume di ${NU(V,'cm³')}. Calcola l'altezza e l'area totale.`,
+  hint:['h = (3 · V) : A<sub>b</sub>','a = √(h² + a<sub>b</sub>²)','A<sub>t</sub> = A<sub>b</sub> + A<sub>l</sub>'],
+  asks:[A('Altezza','h',h,'cm'), A('Area totale',At_,At,'cm²')],
+  sol:[L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Altezza','h',`(3 · V) : ${Ab_}`,`(3 · ${V}) : ${Ab}`,h,'cm'), L('Apotema di base',ab_,'l : 2',`${l} : 2`,ab,'cm'), L('Apotema (Pitagora)','a',`√(h² + ${ab_}²)`,`√(${h}² + ${ab}²)`,a,'cm'), L('Area laterale',Al_,'(2p · a) : 2',`(${p2} · ${a}) : 2`,Al,'cm²'), L('Area totale',At_,`${Ab_} + ${Al_}`,`${Ab} + ${Al}`,At,'cm²')]}; }},
+{lvl:2, cat:'cilindro', make(){ const r=rnd(2,6), h=rnd(3,12), Vc=r*r*h; return {
+  lab:{solid:'cilindro', dims:{r,h}},
+  text:c=>`Un cilindro ha il volume di <b>${c.pc(Vc)} cm³</b> e il raggio di base di ${NU(r,'cm')}. Calcola l'altezza e l'area laterale.`,
+  hint:['A<sub>b</sub> = π · r²','h = V : A<sub>b</sub>','A<sub>l</sub> = 2 · π · r · h'],
+  asks:[A('Altezza','h',h,'cm'), A('Area laterale',Al_,2*r*h,'cm²',true)],
+  sol:[L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Altezza','h',`V : ${Ab_}`,c=>`${c.pc(Vc)} : ${c.pc(r*r)}`,h,'cm'), L('Area laterale',Al_,'2 · π · r · h',c=>`2 · ${c.P} · ${r} · ${h}`,2*r*h,'cm²',true)]}; }},
+{lvl:2, cat:'cilindro', make(){ const r=rnd(2,6), h=rnd(3,12), m=pick(MATERIALS), Vc=r*r*h; return {
+  lab:{solid:'cilindro', dims:{r,h}},
+  text:()=>`Un cilindro di <b>${m.n}</b> (peso specifico ${NU(m.ps,'g/cm³')}) ha il raggio di base di ${NU(r,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola il volume e il peso in grammi (per il peso usa π = 3,14).`,
+  hint:['V = π · r² · h','P = V · p<sub>s</sub>'],
+  asks:[A('Volume','V',Vc,'cm³',true), A('Peso','P',Vc*PI_NUM*m.ps,'g')],
+  sol:[L('Volume','V','π · r² · h',c=>`${c.P} · ${r}² · ${h}`,Vc,'cm³',true), pesoLine(Vc*PI_NUM,m.ps,true)]}; }},
+{lvl:2, cat:'cono', make(){ const [r,h,a]=tripleMax(12); return {
+  lab:{solid:'cono', dims:{r,h}},
+  text:()=>`Un cono ha il raggio di base di ${NU(r,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola l'apotema, l'area totale e il volume.`,
+  hint:['a = √(r² + h²)','A<sub>l</sub> = π · r · a','A<sub>t</sub> = A<sub>b</sub> + A<sub>l</sub>','V = (π · r² · h) : 3'],
+  asks:[A('Apotema','a',a,'cm'), A('Area totale',At_,r*r+r*a,'cm²',true), A('Volume','V',r*r*h/3,'cm³',true)],
+  sol:[L('Apotema (Pitagora)','a','√(r² + h²)',`√(${r}² + ${h}²)`,a,'cm'), L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale',Al_,'π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true), L('Area totale',At_,`${Ab_} + ${Al_}`,c=>`${c.pc(r*r)} + ${c.pc(r*a)}`,r*r+r*a,'cm²',true), L('Volume','V','(π · r² · h) : 3',c=>`(${c.P} · ${r}² · ${h}) : 3`,r*r*h/3,'cm³',true)]}; }},
+{lvl:2, cat:'cono', make(){ const [r,h,a]=tripleMax(12), Vc=r*r*h/3; return {
+  lab:{solid:'cono', dims:{r,h}},
+  text:c=>`Un cono ha il volume di <b>${c.pc(Vc)} cm³</b> e il raggio di base di ${NU(r,'cm')}. Calcola l'altezza e l'area laterale.`,
+  hint:['h = (3 · V) : A<sub>b</sub>','a = √(r² + h²)','A<sub>l</sub> = π · r · a'],
+  asks:[A('Altezza','h',h,'cm'), A('Area laterale',Al_,r*a,'cm²',true)],
+  sol:[L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Altezza','h',`(3 · V) : ${Ab_}`,c=>`(3 · ${c.pc(Vc)}) : ${c.pc(r*r)}`,h,'cm'), L('Apotema (Pitagora)','a','√(r² + h²)',`√(${r}² + ${h}²)`,a,'cm'), L('Area laterale',Al_,'π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true)]}; }},
+{lvl:2, cat:'sfera', make(){ const r=pick([3,6,9,12]), S4=4*r*r; return {
+  lab:{solid:'sfera', dims:{r}},
+  text:c=>`La superficie di una sfera misura <b>${c.pc(S4)} cm²</b>. Calcola il raggio e il volume.`,
+  hint:['r² = S : (4 · π)','r = √r²','V = (4 · π · r³) : 3'],
+  asks:[A('Raggio','r',r,'cm'), A('Volume','V',4*r**3/3,'cm³',true)],
+  sol:[L('Raggio al quadrato','r²','S : (4 · π)',c=>`${c.pc(S4)} : (4 · ${c.P})`,r*r,'cm²'), L('Raggio','r','√r²',`√${r*r}`,r,'cm'), L('Volume','V','(4 · π · r³) : 3',c=>`(4 · ${c.P} · ${r}³) : 3`,4*r**3/3,'cm³',true)]}; }},
+
+/* ---------------- AVANZATO ---------------- */
+{lvl:3, cat:'cubo', make(){ const k=rnd(2,4), a=3*k, b=4*k, d=5*k, c=rnd(3,12), u=k, p2=2*(a+b), Ab=a*b, Al=p2*c, At=Al+2*Ab, V=Ab*c; return {
+  lab:{solid:'parallelepipedo', dims:{a,b,c}},
+  text:()=>`In un parallelepipedo rettangolo le dimensioni di base sono una i <b>3/4</b> dell'altra e la diagonale di base misura ${NU(d,'cm')}. L'altezza è ${NU(c,'cm')}. Calcola l'area totale e il volume.`,
+  hint:['I lati di base e la diagonale formano la terna 3 · u, 4 · u, 5 · u','u = d : 5','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>','V = A<sub>b</sub> · h'],
+  asks:[A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Segmento unitario (terna 3, 4, 5)','u','d : 5',`${d} : 5`,u,'cm'), L('Lato minore','a','3 · u',`3 · ${u}`,a,'cm'), L('Lato maggiore','b','4 · u',`4 · ${u}`,b,'cm'), L('Perimetro di base','2p','2 · (a + b)',`2 · (${a} + ${b})`,p2,'cm'), L('Area di base',Ab_,'a · b',`${a} · ${b}`,Ab,'cm²'), L('Area laterale',Al_,'2p · h',`${p2} · ${c}`,Al,'cm²'), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,`${Al} + 2 · ${Ab}`,At,'cm²'), L('Volume','V',`${Ab_} · h`,`${Ab} · ${c}`,V,'cm³')]}; }},
+{lvl:3, cat:'cubo', make(){ const [a,b,c]=pick([[2,4,8],[3,8,9],[4,6,9],[2,9,12],[3,4,18],[5,8,25],[4,10,25],[2,16,16],[4,8,16],[3,9,27]]), V=a*b*c, l=Math.round(Math.cbrt(V)); return {
+  lab:{solid:'cubo', dims:{l}},
+  text:()=>`Un parallelepipedo rettangolo ha le dimensioni di ${NU(a,'cm')}, ${NU(b,'cm')} e ${NU(c,'cm')}. Un cubo è <b>equivalente</b> al parallelepipedo (ha lo stesso volume). Calcola lo spigolo e l'area totale del cubo.`,
+  hint:['V = a · b · c','l = ∛V','A<sub>t</sub> = 6 · l²'],
+  asks:[A('Spigolo del cubo','l',l,'cm'), A('Area totale del cubo',At_,6*l*l,'cm²')],
+  sol:[L('Volume del parallelepipedo','V','a · b · c',`${a} · ${b} · ${c}`,V,'cm³'), L('Spigolo del cubo','l','∛V',`∛${V}`,l,'cm'), L('Area totale del cubo',At_,'6 · l²',`6 · ${l}²`,6*l*l,'cm²')]}; }},
+{lvl:3, cat:'prismi', make(){ const l=rnd(3,10), h=rnd(4,15), Ab=l*l, At=2*Ab+4*l*h, Al=At-2*Ab, p2=4*l, V=Ab*h; return {
+  lab:{solid:'prisma', dims:{l,h}, sides:4},
+  text:()=>`Un prisma quadrangolare regolare ha l'area totale di ${NU(At,'cm²')} e lo spigolo di base di ${NU(l,'cm')}. Calcola l'altezza e il volume.`,
+  hint:['A<sub>l</sub> = A<sub>t</sub> − 2 · A<sub>b</sub>','h = A<sub>l</sub> : 2p','V = A<sub>b</sub> · h'],
+  asks:[A('Altezza','h',h,'cm'), A('Volume','V',V,'cm³')],
+  sol:[L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Area laterale',Al_,`${At_} − 2 · ${Ab_}`,`${At} − 2 · ${Ab}`,Al,'cm²'), L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'), L('Altezza','h',`${Al_} : 2p`,`${Al} : ${p2}`,h,'cm'), L('Volume','V',`${Ab_} · h`,`${Ab} · ${h}`,V,'cm³')]}; }},
+{lvl:3, cat:'piramidi', make(){ const [ab,h,a]=tripleMax(12), l=2*ab, p2=4*l, Ab=l*l, Al=p2*a/2, At=Ab+Al, V=Ab*h/3; return {
+  lab:{solid:'piramide', dims:{l,h}, sides:4},
+  text:()=>`Una piramide quadrangolare regolare ha il perimetro di base di ${NU(p2,'cm')} e l'apotema di ${NU(a,'cm')}. Calcola l'area totale e il volume.`,
+  hint:['l = 2p : 4','a<sub>b</sub> = l : 2','h = √(a² − a<sub>b</sub>²)','V = (A<sub>b</sub> · h) : 3'],
+  asks:[A('Area totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Spigolo di base','l','2p : 4',`${p2} : 4`,l,'cm'), L('Apotema di base',ab_,'l : 2',`${l} : 2`,ab,'cm'), L('Altezza (Pitagora)','h',`√(a² − ${ab_}²)`,`√(${a}² − ${ab}²)`,h,'cm'), L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Area laterale',Al_,'(2p · a) : 2',`(${p2} · ${a}) : 2`,Al,'cm²'), L('Area totale',At_,`${Ab_} + ${Al_}`,`${Ab} + ${Al}`,At,'cm²'), L('Volume','V',`(${Ab_} · h) : 3`,`(${Ab} · ${h}) : 3`,V,'cm³')]}; }},
+{lvl:3, cat:'cilindro', make(){ const [p,q]=pick([[3,5],[2,3],[3,4],[1,2],[4,5],[2,5]]), u=rnd(2,3), r=p*u, h=q*u, sum=r+h; return {
+  lab:{solid:'cilindro', dims:{r,h}},
+  text:()=>`Il raggio di base di un cilindro è i <b>${p}/${q}</b> dell'altezza e la loro somma misura ${NU(sum,'cm')}. Calcola l'area totale e il volume.`,
+  hint:['u = somma : (' + p + ' + ' + q + ')','r = ' + p + ' · u   h = ' + q + ' · u','A<sub>t</sub> = A<sub>l</sub> + 2 · A<sub>b</sub>','V = π · r² · h'],
+  asks:[A('Area totale',At_,2*r*h+2*r*r,'cm²',true), A('Volume','V',r*r*h,'cm³',true)],
+  sol:[L('Segmento unitario','u',`(r + h) : (${p} + ${q})`,`${sum} : ${p+q}`,u,'cm'), L('Raggio','r',`${p} · u`,`${p} · ${u}`,r,'cm'), L('Altezza','h',`${q} · u`,`${q} · ${u}`,h,'cm'), L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale',Al_,'2 · π · r · h',c=>`2 · ${c.P} · ${r} · ${h}`,2*r*h,'cm²',true), L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,c=>`${c.pc(2*r*h)} + 2 · ${c.pc(r*r)}`,2*r*h+2*r*r,'cm²',true), L('Volume','V','π · r² · h',c=>`${c.P} · ${r}² · ${h}`,r*r*h,'cm³',true)]}; }},
+{lvl:3, cat:'cono', make(){ const base=pick([[3,4,5],[4,3,5],[5,12,13]]), k= base[2]===13 ? 1 : rnd(2,3), r=base[0]*k, h=base[1]*k, a=base[2]*k, sum=r+h; return {
+  lab:{solid:'cono', dims:{r,h}},
+  text:()=>`In un cono il raggio di base è i <b>${base[0]}/${base[1]}</b> dell'altezza e la loro somma misura ${NU(sum,'cm')}. Calcola l'area totale e il volume.`,
+  hint:['u = somma : (' + base[0] + ' + ' + base[1] + ')','a = √(r² + h²)','A<sub>t</sub> = A<sub>b</sub> + A<sub>l</sub>','V = (π · r² · h) : 3'],
+  asks:[A('Area totale',At_,r*r+r*a,'cm²',true), A('Volume','V',r*r*h/3,'cm³',true)],
+  sol:[L('Segmento unitario','u',`(r + h) : (${base[0]} + ${base[1]})`,`${sum} : ${base[0]+base[1]}`,k,'cm'), L('Raggio','r',`${base[0]} · u`,`${base[0]} · ${k}`,r,'cm'), L('Altezza','h',`${base[1]} · u`,`${base[1]} · ${k}`,h,'cm'), L('Apotema (Pitagora)','a','√(r² + h²)',`√(${r}² + ${h}²)`,a,'cm'), L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale',Al_,'π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true), L('Area totale',At_,`${Ab_} + ${Al_}`,c=>`${c.pc(r*r)} + ${c.pc(r*a)}`,r*r+r*a,'cm²',true), L('Volume','V','(π · r² · h) : 3',c=>`(${c.P} · ${r}² · ${h}) : 3`,r*r*h/3,'cm³',true)]}; }},
+{lvl:3, cat:'sfera', make(){ const m=rnd(1,3), R=3*m, h=4*m, Vc=R*R*h; return {
+  lab:{solid:'sfera', dims:{r:R}},
+  text:()=>`Una sfera è <b>equivalente</b> a un cilindro (ha lo stesso volume) che ha il raggio di base di ${NU(R,'cm')} e l'altezza di ${NU(h,'cm')}. Calcola il raggio e la superficie della sfera.`,
+  hint:['V<sub>cilindro</sub> = π · r² · h','R³ = (3 · V) : (4 · π)','R = ∛R³','S = 4 · π · R²'],
+  asks:[A('Raggio della sfera','R',R,'cm'), A('Superficie della sfera','S',4*R*R,'cm²',true)],
+  sol:[L('Volume del cilindro','V','π · r² · h',c=>`${c.P} · ${R}² · ${h}`,Vc,'cm³',true), L('Raggio al cubo','R³','(3 · V) : (4 · π)',c=>`(3 · ${c.pc(Vc)}) : (4 · ${c.P})`,R**3,'cm³'), L('Raggio della sfera','R','∛R³',`∛${R**3}`,R,'cm'), L('Superficie','S','4 · π · R²',c=>`4 · ${c.P} · ${R}²`,4*R*R,'cm²',true)]}; }},
+{lvl:3, cat:'composti', make(){ const [r,hc,a]=tripleMax(12), H=rnd(4,12), m = Math.random()<0.5 ? pick(MATERIALS) : null, At=r*r+2*r*H+r*a, V=r*r*H+r*r*hc/3; return {
+  lab:null,
+  text:()=>`Un solido è formato da un cilindro sormontato da un cono che ha la stessa base. Il raggio di base misura ${NU(r,'cm')}, l'altezza del cilindro ${NU(H,'cm')} e l'altezza del cono ${NU(hc,'cm')}. Calcola l'area della superficie totale e il volume${m ? ` del solido. Il solido è di <b>${m.n}</b> (peso specifico ${NU(m.ps,'g/cm³')}): calcola anche il peso in grammi (usa π = 3,14)` : ''}.`,
+  hint:['Superficie = base del cilindro + A<sub>l</sub> cilindro + A<sub>l</sub> cono','a = √(r² + h<sub>cono</sub>²)','V = V<sub>cilindro</sub> + V<sub>cono</sub>'].concat(m?['P = V · p<sub>s</sub>']:[]),
+  asks:[A('Superficie totale',At_,At,'cm²',true), A('Volume','V',V,'cm³',true)].concat(m?[A('Peso','P',V*PI_NUM*m.ps,'g')]:[]),
+  sol:[L('Apotema del cono','a','√(r² + h<sub>cono</sub>²)',`√(${r}² + ${hc}²)`,a,'cm'), L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true), L('Area laterale del cono','A<sub>l cono</sub>','π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true), L('Superficie totale',At_,`${Ab_} + A<sub>l cil</sub> + A<sub>l cono</sub>`,c=>`${c.pc(r*r)} + ${c.pc(2*r*H)} + ${c.pc(r*a)}`,At,'cm²',true), L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,r*r*H,'cm³',true), L('Volume del cono','V<sub>cono</sub>','(π · r² · h<sub>cono</sub>) : 3',c=>`(${c.P} · ${r}² · ${hc}) : 3`,r*r*hc/3,'cm³',true), L('Volume totale','V','V<sub>cil</sub> + V<sub>cono</sub>',c=>`${c.pc(r*r*H)} + ${c.pc(r*r*hc/3)}`,V,'cm³',true)].concat(m?[pesoLine(V*PI_NUM,m.ps,true)]:[])}; }},
+{lvl:3, cat:'composti', make(){ const [ab,hp,a]=tripleMax(8), l=2*ab, H=rnd(4,12), p2=4*l, Ab=l*l, Alp=p2*H, Alq=p2*a/2, At=Ab+Alp+Alq, V1=Ab*H, V2=Ab*hp/3, V=V1+V2; return {
+  lab:null,
+  text:()=>`Una "casetta" è formata da un prisma quadrangolare regolare sormontato da una piramide con la stessa base. Lo spigolo di base misura ${NU(l,'cm')}, l'altezza del prisma ${NU(H,'cm')} e l'altezza della piramide ${NU(hp,'cm')}. Calcola l'area della superficie totale e il volume del solido.`,
+  hint:['Superficie = base + A<sub>l</sub> prisma + A<sub>l</sub> piramide','a = √(h<sub>pir</sub>² + a<sub>b</sub>²)','V = V<sub>prisma</sub> + V<sub>piramide</sub>'],
+  asks:[A('Superficie totale',At_,At,'cm²'), A('Volume','V',V,'cm³')],
+  sol:[L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'), L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'), L('Area laterale del prisma','A<sub>l pr</sub>','2p · H',`${p2} · ${H}`,Alp,'cm²'), L('Apotema di base',ab_,'l : 2',`${l} : 2`,ab,'cm'), L('Apotema della piramide','a',`√(h<sub>pir</sub>² + ${ab_}²)`,`√(${hp}² + ${ab}²)`,a,'cm'), L('Area laterale della piramide','A<sub>l pir</sub>','(2p · a) : 2',`(${p2} · ${a}) : 2`,Alq,'cm²'), L('Superficie totale',At_,`${Ab_} + A<sub>l pr</sub> + A<sub>l pir</sub>`,`${Ab} + ${Alp} + ${Alq}`,At,'cm²'), L('Volume del prisma','V<sub>pr</sub>',`${Ab_} · H`,`${Ab} · ${H}`,V1,'cm³'), L('Volume della piramide','V<sub>pir</sub>',`(${Ab_} · h<sub>pir</sub>) : 3`,`(${Ab} · ${hp}) : 3`,V2,'cm³'), L('Volume totale','V','V<sub>pr</sub> + V<sub>pir</sub>',`${V1} + ${fmt(V2)}`,V,'cm³')]}; }},
+{lvl:3, cat:'composti', make(){ const r=pick([3,6]), H=rnd(4,12), At=r*r+2*r*H+2*r*r, V1=r*r*H, V2=2*r**3/3, V=V1+V2; return {
+  lab:null,
+  text:()=>`Un solido è formato da un cilindro sormontato da una semisfera con lo stesso raggio. Il raggio misura ${NU(r,'cm')} e l'altezza del cilindro ${NU(H,'cm')}. Calcola l'area della superficie totale e il volume del solido.`,
+  hint:['Superficie = base + A<sub>l</sub> cilindro + metà superficie sferica','S<sub>semisfera</sub> = 2 · π · r²','V<sub>semisfera</sub> = (4 · π · r³) : 3 : 2'],
+  asks:[A('Superficie totale',At_,At,'cm²',true), A('Volume','V',V,'cm³',true)],
+  sol:[L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale del cilindro',Al_,'2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true), L('Superficie della semisfera','S<sub>ss</sub>','2 · π · r²',c=>`2 · ${c.P} · ${r}²`,2*r*r,'cm²',true), L('Superficie totale',At_,`${Ab_} + ${Al_} + S<sub>ss</sub>`,c=>`${c.pc(r*r)} + ${c.pc(2*r*H)} + ${c.pc(2*r*r)}`,At,'cm²',true), L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,V1,'cm³',true), L('Volume della semisfera','V<sub>ss</sub>','(4 · π · r³) : 3 : 2',c=>`(4 · ${c.P} · ${r}³) : 3 : 2`,V2,'cm³',true), L('Volume totale','V','V<sub>cil</sub> + V<sub>ss</sub>',c=>`${c.pc(V1)} + ${c.pc(V2)}`,V,'cm³',true)]}; }}
+];
+
+const LEVELS = [{n:1, name:'Base', d:'Tutti i dati sono forniti: applica la formula.'},{n:2, name:'Medio', d:'Formule inverse, Pitagora e peso specifico.'},{n:3, name:'Avanzato', d:'Rapporti, solidi composti e solidi equivalenti.'}];
+const CATS = [{k:'tutti',n:'Tutti'},{k:'cubo',n:'Cubo e parallelepipedo'},{k:'prismi',n:'Prismi'},{k:'piramidi',n:'Piramidi'},{k:'cilindro',n:'Cilindro'},{k:'cono',n:'Cono'},{k:'sfera',n:'Sfera'},{k:'composti',n:'Solidi composti'}];
+const SERIES = 10;
+const EX = {level:1, cat:'tutti', results:[], idx:0, cur:null, lastGen:null, summary:false};
+
+function exCtx(){ const sym = S.pi==='sym'; return { sym, P: sym ? 'π' : '3,14', pc: c => sym ? `${approx(c)?'≈':''}${fmt(c)}π` : fmt(c*PI_NUM) }; }
+function expected(a, ctx){ return a.pi ? (ctx.sym ? a.val : a.val*PI_NUM) : a.val; }
+function showExp(a, ctx){ const e = expected(a, ctx); return (approx(e)?'≈ ':'') + fmt(e) + (a.pi && ctx.sym ? 'π' : '') + ' ' + a.unit; }
+function parseNum(s){
+  s = String(s||'').trim().replace(/\s/g,'').replace(/(π|pi)$/i,'');
+  if(s.indexOf(',')>=0) s = s.replace(/\./g,'').replace(',', '.');
+  if(!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+  return parseFloat(s);
+}
+const close = (u, e) => Math.abs(u-e) <= Math.max(0.02, Math.abs(e)*0.01);
+function solLine(Ln, ctx){
+  const value = Ln.pi && !ctx.sym ? Ln.val*PI_NUM : Ln.val, ap = approx(value);
+  const res = (Ln.pi && ctx.sym) ? `${Ln.val===1?'':fmt(Ln.val)}π ${Ln.unit}` : `${fmt(value)} ${Ln.unit}`;
+  const sub = Ln.s ? Ln.s(ctx) : '';
+  return `<div class="line"><div class="lbl">${Ln.label}</div><div class="eq"><span class="sym">${Ln.sym}</span><span class="op">=</span><span>${rad(Ln.f)}</span>${
+    sub && sub!==Ln.f ? `<span class="op stepop">=</span><span class="step">${rad(sub)}</span>` : ''}<span class="op">${ap?'≈':'='}</span><span class="res">${res}</span></div></div>`;
+}
+function pool(){ return GENS.filter(g=>g.lvl===EX.level && (EX.cat==='tutti' || g.cat===EX.cat)); }
+function newExercise(){
+  const p = pool(); if(!p.length){ EX.cur = null; return; }
+  let g = pick(p); if(p.length>1){ let n=0; while(g===EX.lastGen && n++<10) g = pick(p); }
+  EX.lastGen = g;
+  const data = g.make();
+  EX.cur = {data, inputs:data.asks.map(()=>''), status:data.asks.map(()=>null), tries:0, done:false, outcome:null, hint:false, sol:false, msg:null};
+}
+function newSeries(){ EX.results = []; EX.idx = 0; EX.summary = false; newExercise(); renderEx(); }
+function exRefresh(){ if(!$('#viewEx').hidden){ saveInputs(); renderEx(); } }
+function saveInputs(){ if(!EX.cur) return; EX.cur.data.asks.forEach((a,i)=>{ const el = $('#ans_'+i); if(el) EX.cur.inputs[i] = el.value; }); }
+
+function renderExSide(){
+  $('#exLevels').innerHTML = LEVELS.map(l=>`<button class="level${l.n===EX.level?' on':''}" data-n="${l.n}" aria-pressed="${l.n===EX.level}"><b>${l.name}</b><span>${l.d}</span></button>`).join('');
+  $('#exLevels').querySelectorAll('.level').forEach(b=>b.onclick = ()=>{ EX.level = +b.dataset.n; newSeries(); });
+  $('#exCats').innerHTML = CATS.map(c=>`<button class="pick${c.k===EX.cat?' on':''}" data-k="${c.k}" aria-pressed="${c.k===EX.cat}">${c.n}</button>`).join('');
+  $('#exCats').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>{ EX.cat = b.dataset.k; newSeries(); });
+  const cnt = o => EX.results.filter(x=>x===o).length;
+  $('#exScore').innerHTML = `<div class="s1"><b>${cnt('first')}</b>al primo colpo</div><div class="s2"><b>${cnt('retry')}</b>dopo un errore</div><div class="s3"><b>${cnt('shown')}</b>con la soluzione</div>`;
+}
+function renderEx(){
+  renderExSide();
+  const box = $('#exMain'), ctx = exCtx();
+  if(EX.summary){
+    const f = EX.results.filter(x=>x==='first').length;
+    box.innerHTML = `<div class="summary"><span class="badge">${LEVELS[EX.level-1].name}</span><h2>Serie completata</h2>
+      <p class="big">${f} / ${SERIES}</p><p class="ex-text">esercizi risolti al primo tentativo.</p>
+      <div class="dots">${EX.results.map(o=>`<i class="${o}"></i>`).join('')}</div>
+      <div class="ex-actions"><button class="play" id="exAgain">Nuova serie</button>${EX.level<3?`<button class="ghost" id="exUp">Prova il livello ${LEVELS[EX.level].name}</button>`:''}</div></div>`;
+    $('#exAgain').onclick = newSeries;
+    if($('#exUp')) $('#exUp').onclick = ()=>{ EX.level++; newSeries(); };
+    return;
+  }
+  const cur = EX.cur;
+  if(!cur){
+    box.innerHTML = `<h2>Nessun esercizio</h2><p class="ex-text">I solidi composti si trovano solo nel livello <b>Avanzato</b>. Scegli un altro argomento o cambia livello.</p>`;
+    return;
+  }
+  const d = cur.data, anyPi = d.asks.some(a=>a.pi);
+  const dots = Array.from({length:SERIES},(_,i)=>`<i class="${EX.results[i]||''}${i===EX.idx?' cur':''}"></i>`).join('');
+  const tip = anyPi ? (ctx.sym ? 'Dove c\'è π, scrivi solo il numero che sta davanti a π (per 48π scrivi 48).' : 'Usa π = 3,14.') + ' ' : '';
+  box.innerHTML = `
+    <div class="ex-head"><span class="badge">${LEVELS[EX.level-1].name}</span><h2>Esercizio ${EX.idx+1} di ${SERIES}</h2><div class="dots" aria-label="Avanzamento della serie">${dots}</div></div>
+    <p class="ex-text">${d.text(ctx)}</p>
+    <p class="ex-tip">${tip}Puoi usare la virgola; se il risultato non è intero, arrotonda a due decimali.</p>
+    <form class="asks" id="exForm" autocomplete="off">
+      ${d.asks.map((a,i)=>{
+        const st = cur.status[i], unit = (a.pi && ctx.sym ? 'π ' : '') + a.unit;
+        return `<div class="ask${st===true?' ok':st===false?' bad':''}"><label class="ask-lbl" for="ans_${i}">${a.label} <span class="sym">${a.sym}</span> =</label>
+          <span class="ask-in"><input id="ans_${i}" inputmode="decimal" value="${cur.inputs[i].replace(/"/g,'')}" ${cur.done?'readonly':''} aria-describedby="exFb"><span class="unit">${unit}</span></span>
+          ${cur.sol && st!==true ? `<span class="exp">Risultato: ${showExp(a, ctx)}</span>` : ''}
+          <span class="mark" aria-hidden="true">${st===true?'✓':st===false?'✗':''}</span></div>`;
+      }).join('')}
+      <div class="ex-actions">
+        ${cur.done
+          ? `<button type="button" class="play" id="exNext">${EX.idx+1<SERIES?'Prossimo esercizio':'Vedi il risultato'}</button>`
+          : `<button type="submit" class="play">Verifica</button>`}
+        ${!cur.hint && !S.simple ? `<button type="button" class="ghost" id="exHint">Suggerimento</button>` : ''}
+        ${!cur.sol ? `<button type="button" class="ghost" id="exSol">Mostra la soluzione</button>` : ''}
+        ${d.lab ? `<button type="button" class="ghost" id="exLab">Vedi il solido</button>` : ''}
+        <span class="spacer"></span>
+        ${!cur.done ? `<button type="button" class="ghost" id="exSkip">Cambia esercizio</button>` : ''}
+      </div>
+    </form>
+    ${cur.msg ? `<p class="feedback ${cur.msg.ok?'ok':'bad'}" id="exFb">${cur.msg.t}</p>` : '<p id="exFb" hidden></p>'}
+    ${cur.hint || S.simple ? `<div class="hint-box"><h4>Formule utili</h4><div class="chips">${d.hint.map(h=>`<span>${rad(h)}</span>`).join('')}</div></div>` : ''}
+    ${cur.sol ? `<div class="sol-box"><h3>Soluzione</h3><div class="lines">${d.sol.map(Ln=>solLine(Ln, ctx)).join('')}</div></div>` : ''}`;
+
+  $('#exForm').onsubmit = e=>{ e.preventDefault(); verify(); };
+  if($('#exNext')) $('#exNext').onclick = next;
+  if($('#exHint')) $('#exHint').onclick = ()=>{ saveInputs(); cur.hint = true; renderEx(); };
+  if($('#exSol')) $('#exSol').onclick = ()=>{ saveInputs(); cur.sol = true; if(!cur.done){ cur.done = true; cur.outcome = 'shown'; cur.msg = {ok:false, t:'Ecco la soluzione passo passo. Confrontala con i tuoi calcoli.'}; } renderEx(); };
+  if($('#exLab')) $('#exLab').onclick = ()=>openInLab(d.lab);
+  if($('#exSkip')) $('#exSkip').onclick = ()=>{ newExercise(); renderEx(); };
+  if(EX.focus){
+    const first = d.asks.findIndex((a,i)=>cur.status[i]!==true);
+    const el = cur.done ? $('#exNext') : $('#ans_'+Math.max(0,first));
+    if(el) el.focus({preventScroll:true});
+  }
+  EX.focus = false;
+}
+function verify(){
+  const cur = EX.cur, ctx = exCtx(); saveInputs(); EX.focus = true;
+  let allOk = true, piHint = false, empty = false;
+  cur.data.asks.forEach((a,i)=>{
+    const u = parseNum(cur.inputs[i]), e = expected(a, ctx);
+    if(isNaN(u)){ cur.status[i] = false; allOk = false; if(!cur.inputs[i].trim()) empty = true; return; }
+    const ok = close(u, e); cur.status[i] = ok; if(!ok) allOk = false;
+    if(!ok && a.pi && ctx.sym && close(u, a.val*PI_NUM)) piHint = true;
+  });
+  if(allOk){
+    cur.done = true; cur.outcome = cur.tries===0 ? 'first' : 'retry';
+    cur.msg = {ok:true, t: cur.tries===0 ? 'Esatto, al primo tentativo!' : 'Esatto! Ce l\'hai fatta.'};
+  } else {
+    cur.tries++;
+    cur.msg = {ok:false, t: piHint ? 'Hai moltiplicato per 3,14: qui scrivi solo il numero davanti a π.'
+      : empty ? 'Completa tutte le caselle prima di verificare.'
+      : cur.tries>=2 ? 'Ancora qualcosa non va. Prova il suggerimento o guarda la soluzione.' : 'Controlla le caselle in rosso e riprova.'};
+  }
+  renderEx();
+}
+function next(){
+  EX.results[EX.idx] = EX.cur.outcome;
+  EX.idx++;
+  if(EX.idx >= SERIES){ EX.summary = true; EX.cur = null; }
+  else newExercise();
+  EX.focus = true;
+  renderEx();
+  $('#exMain').scrollIntoView({block:'nearest'});
+}
+function openInLab(lab){
+  Object.assign(S.dims[lab.solid], lab.dims);
+  if(lab.sides) S.sides[lab.solid] = lab.sides;
+  S.t = 0; $('#netT').value = 0;
+  showView('solidi');
+  selectSolid(lab.solid);
+}
+$('#exNewSeries').onclick = newSeries;
+
+/* schede */
+function showView(v){
+  $('#viewLab').hidden = v!=='solidi';
+  $('#viewEx').hidden = v!=='esercizi';
+  $('#viewFo').hidden = v!=='formule';
+  $('#viewCo').hidden = v!=='composti';
+  if(v==='composti') coShow();
+  if(v==='formule') foShow();
+  document.querySelectorAll('.tab[data-view]').forEach(t=>{ const on = t.dataset.view===v; t.classList.toggle('active', on); if(on) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
+  if(v==='solidi') requestAnimationFrame(resize);
+  if(v==='esercizi'){ if(!EX.cur && !EX.summary) newSeries(); else renderEx(); }
+}
+document.querySelectorAll('.tab[data-view]').forEach(t=>t.onclick = ()=>showView(t.dataset.view));
+
+/* =========================================================
+   MODULO 3 · FORMULE ED EULERO
+   ========================================================= */
+function attachOrbit(cv, c){
+  const pts = new Map(); let drag = null, pinch = null;
+  const dist = ()=>{ const [a,b] = [...pts.values()]; return Math.hypot(a.x-b.x, a.y-b.y); };
+  cv.addEventListener('pointerdown', e=>{
+    cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(pts.size===1){ drag = {x:e.clientX, y:e.clientY}; pinch = null; }
+    else if(pts.size===2){ drag = null; pinch = {d:dist(), zoom:c.zoom}; }
+  });
+  cv.addEventListener('pointermove', e=>{
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(pinch && pts.size===2){ c.zoom = Math.max(0.35, Math.min(3, pinch.zoom*pinch.d/Math.max(20, dist()))); return; }
+    if(!drag) return;
+    const dx = e.clientX-drag.x, dy = e.clientY-drag.y; drag = {x:e.clientX, y:e.clientY};
+    const k = e.pointerType==='mouse' ? 0.009 : 0.011;
+    c.goal.theta -= dx*k; c.goal.phi = Math.max(0.04, Math.min(2.2, c.goal.phi - dy*k));
+    c.theta = c.goal.theta; c.phi = c.goal.phi;
+  });
+  const end = e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch = null; if(pts.size===1){ const p=[...pts.values()][0]; drag={x:p.x,y:p.y}; } else drag = null; };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  cv.addEventListener('wheel', e=>{ e.preventDefault(); c.zoom = Math.max(0.35, Math.min(3, c.zoom*Math.exp(e.deltaY*0.0012))); }, {passive:false});
+}
+function makeViewer(vpEl, cv){
+  const rd = new THREE.WebGLRenderer({canvas:cv, antialias:true});
+  rd.setPixelRatio(Math.min(window.devicePixelRatio||1, 2)); rd.localClippingEnabled = true;
+  const sc = new THREE.Scene(), camv = new THREE.PerspectiveCamera(38, 1, 0.1, 500); sc.add(camv);
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x8a97ad, 0.62));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.62); dl.position.set(4,6,5); camv.add(dl);
+  const c = {theta:0.62, phi:1.05, dist:20, zoom:1, target:V3(0,2,0), goal:{theta:0.62, phi:1.05}, R:5, C:V3(0,2,0)};
+  let grd = null, gy = 0; const ticks = [];
+  function theme(){
+    rd.setClearColor(new THREE.Color(css('--scene')||'#F8FAFD'));
+    if(grd){ sc.remove(grd); grd.geometry.dispose(); }
+    grd = new THREE.GridHelper(60, 60, new THREE.Color(css('--grid-strong')||'#C3CFE0'), new THREE.Color(css('--grid')||'#DFE6F0'));
+    grd.position.y = gy - 0.01; sc.add(grd);
+  }
+  function resizeV(){ const w = vpEl.clientWidth, h = vpEl.clientHeight; if(!w||!h) return; rd.setSize(w,h,false); camv.aspect = w/h; camv.updateProjectionMatrix(); }
+  new ResizeObserver(resizeV).observe(vpEl);
+  attachOrbit(cv, c);
+  function fit(obj, snap){
+    obj.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(obj); if(box.isEmpty()) return;
+    const s = box.getBoundingSphere(new THREE.Sphere());
+    c.R = Math.max(s.radius, 1.5); c.C = s.center.clone(); gy = Math.min(0, box.min.y); if(grd) grd.position.y = gy - 0.01;
+    if(snap){ c.target.copy(c.C); c.dist = c.R/Math.sin(camv.fov*Math.PI/360)*1.1; }
+  }
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(!vpEl.clientWidth) return;
+    ticks.forEach(f=>f(now));
+    c.theta += (c.goal.theta - c.theta)*0.14; c.phi += (c.goal.phi - c.phi)*0.14;
+    const want = c.R/Math.sin(camv.fov*Math.PI/360)/Math.min(1, camv.aspect)*1.08*c.zoom;
+    c.dist += (want - c.dist)*0.12; c.target.lerp(c.C, 0.12);
+    const sp = Math.sin(c.phi);
+    camv.position.set(c.target.x + c.dist*sp*Math.sin(c.theta), c.target.y + c.dist*Math.cos(c.phi), c.target.z + c.dist*sp*Math.cos(c.theta));
+    camv.lookAt(c.target);
+    rd.render(sc, camv);
+  }
+  theme(); resizeV(); requestAnimationFrame(frame);
+  return { scene:sc, camera:camv, cam:c, fit, theme, resize:resizeV, onTick:f=>ticks.push(f),
+    view(theta, phi){ c.goal.theta = theta; c.goal.phi = phi; }, reset(){ c.goal.theta = 0.62; c.goal.phi = 1.05; c.zoom = 1; } };
+}
+function setSeg(mesh, a, b){
+  const d = new THREE.Vector3().subVectors(b, a), len = Math.max(1e-4, d.length());
+  mesh.position.copy(a).addScaledVector(d, 0.5); mesh.scale.set(1, len, 1);
+  mesh.quaternion.setFromUnitVectors(V3(0,1,0), d.normalize());
+}
+function numSprite(num, color){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 96; const ctx = cv.getContext('2d');
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(48,48,44,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = `700 ${num>9?48:56}px 'Baloo 2', Nunito, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(num), 48, 52);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv), depthTest:false, transparent:true}));
+  sp.renderOrder = 12; return sp;
+}
+
+/* ---------- vasi per i travasi ---------- */
+const WATER = '#3FA9F5';
+function vesselGeo(type, d){
+  let g;
+  if(type==='cyl'){ g = new THREE.CylinderGeometry(d.r, d.r, d.h, 64); g.translate(0, d.h/2, 0); }
+  else if(type==='prism'){ g = new THREE.BoxGeometry(d.l, d.h, d.l); g.translate(0, d.h/2, 0); }
+  else if(type==='cone'){ g = new THREE.ConeGeometry(d.r, d.h, 64); g.rotateX(Math.PI); g.translate(0, d.h/2, 0); }
+  else if(type==='pyr'){ g = new THREE.ConeGeometry(d.l/Math.SQRT2, d.h, 4); g.rotateY(Math.PI/4); g.rotateX(Math.PI); g.translate(0, d.h/2, 0); }
+  else { g = new THREE.SphereGeometry(d.r, 64, 40); g.translate(0, d.r, 0); }
+  return g;
+}
+function makeVessel(type, d, x, color){
+  const H = type==='sphere' ? 2*d.r : d.h, grp = new THREE.Group();
+  const glass = new THREE.Mesh(vesselGeo(type,d), new THREE.MeshLambertMaterial({color, transparent:true, opacity:.22, side:THREE.DoubleSide, depthWrite:false}));
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(glass.geometry, 25), edgeMat);
+  const plane = new THREE.Plane(V3(0,-1,0), 0);
+  const wg = vesselGeo(type,d); wg.scale(0.97, 1, 0.97);
+  const water = new THREE.Mesh(wg, new THREE.MeshLambertMaterial({color:WATER, transparent:true, opacity:.78, side:THREE.DoubleSide, clippingPlanes:[plane]}));
+  const square = type==='prism' || type==='pyr';
+  const cg = square ? new THREE.PlaneGeometry(1,1) : new THREE.CircleGeometry(1, 64); cg.rotateX(-Math.PI/2);
+  const cap = new THREE.Mesh(cg, new THREE.MeshLambertMaterial({color:WATER, transparent:true, opacity:.9, side:THREE.DoubleSide}));
+  grp.add(glass, edges, water, cap); grp.position.x = x;
+  function size(y){
+    if(type==='cyl') return d.r; if(type==='prism') return d.l;
+    if(type==='cone') return d.r*y/d.h; if(type==='pyr') return d.l*y/d.h;
+    return Math.sqrt(Math.max(0, d.r*d.r - (y-d.r)*(y-d.r)));
+  }
+  function setLevel(y){
+    plane.constant = y;
+    const s = Math.max(0.001, size(y)*0.97);
+    cap.visible = y > 0.02; cap.position.y = y; cap.scale.set(s, 1, s);
+  }
+  setLevel(0);
+  return {group:grp, H, setLevel, x, top:()=>size(H)};
+}
+
+/* ---------- esperimenti ---------- */
+const EXPS = [
+  {k:'cubetti', name:'Il volume con i cubetti', d:'Riempi un parallelepipedo con cubetti da 1 cm³.'},
+  {k:'piramide', name:'Piramide e prisma', d:'Quante piramidi d\'acqua riempiono il prisma?'},
+  {k:'cono', name:'Cono e cilindro', d:'Quanti coni d\'acqua riempiono il cilindro?'},
+  {k:'sfera', name:'La sfera di Archimede', d:'Quanta acqua contiene la sfera rispetto al cilindro?'},
+  {k:'cavalieri', name:'Principio di Cavalieri', d:'Due pile di monete uguali: una dritta, una storta.'}
+];
+const FO = {viewer:null, cur:'cubetti', group:null, tick:null};
+function foShow(){
+  if(!FO.viewer){
+    FO.viewer = makeViewer($('#foVp'), $('#foCanvas')); VIEWERS.push(FO.viewer);
+    FO.viewer.onTick(now=>{ if(FO.tick) FO.tick(now); });
+    $('#foReset').onclick = ()=>FO.viewer.reset();
+    loadExp(FO.cur);
+  } else FO.viewer.resize();
+}
+function renderFoList(){
+  $('#foList').innerHTML = EXPS.map(e=>`<button class="exp${e.k===FO.cur?' on':''}" data-k="${e.k}" aria-pressed="${e.k===FO.cur}"><b>${e.name}</b><span>${e.d}</span></button>`).join('');
+  $('#foList').querySelectorAll('.exp').forEach(b=>b.onclick = ()=>loadExp(b.dataset.k));
+}
+function foClear(){
+  if(FO.group){ FO.viewer.scene.remove(FO.group); disposeGroup(FO.group); }
+  FO.group = new THREE.Group(); FO.viewer.scene.add(FO.group); FO.tick = null;
+}
+function loadExp(k){
+  FO.cur = k; renderFoList(); foClear(); FO.viewer.reset();
+  const e = EXPS.find(x=>x.k===k); $('#foTitle').textContent = e.name;
+  if(k==='cubetti') expCubetti();
+  else if(k==='cavalieri') expCavalieri();
+  else expTravaso(k);
+  FO.viewer.fit(FO.group, true);
+}
+
+function expCubetti(){
+  const st = {a:4, b:3, c:3, k:0, anim:null};
+  let inst = null;
+  function build(){
+    foClear(); FO.tick = tick;
+    const {a,b,c} = st, n = a*b*c;
+    const box = new THREE.BoxGeometry(a, c, b); box.translate(0, c/2, 0);
+    FO.group.add(new THREE.Mesh(box, new THREE.MeshLambertMaterial({color:COL.base, transparent:true, opacity:.12, depthWrite:false, side:THREE.DoubleSide})));
+    FO.group.add(new THREE.LineSegments(new THREE.EdgesGeometry(box), edgeMat));
+    inst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9,0.9,0.9), new THREE.MeshLambertMaterial({color:0xffffff}), n);
+    const m = new THREE.Matrix4(), col = new THREE.Color(); let i = 0;
+    for(let y=0;y<c;y++) for(let z=0;z<b;z++) for(let x=0;x<a;x++){
+      m.makeTranslation(x - a/2 + .5, y + .5, z - b/2 + .5); inst.setMatrixAt(i, m);
+      inst.setColorAt(i, col.set(y%2 ? COL.lat[1] : COL.lat[0])); i++;
+    }
+    inst.instanceMatrix.needsUpdate = true; if(inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    FO.group.add(inst);
+    st.k = Math.min(st.k, n); inst.count = st.k;
+    FO.viewer.fit(FO.group, false);
+  }
+  function tick(now){
+    if(!st.anim) return;
+    const n = st.a*st.b*st.c, p = Math.min(1, (now - st.anim.t0)/st.anim.dur);
+    st.k = Math.round(st.anim.from + (n - st.anim.from)*p); inst.count = st.k;
+    if(p>=1) st.anim = null;
+    ui();
+  }
+  function ui(){
+    const {a,b,c,k} = st, n = a*b*c, full = k>=n;
+    $('#foK').max = n; $('#foK').value = k;
+    $('#foKs').textContent = `${k} di ${n} cubetti`;
+    $('#foPlay').querySelector('span').textContent = full ? 'Svuota' : 'Riempi';
+    $('#foLay').innerHTML = `Cubetti in uno strato: a · b = ${a} · ${b} = <b>${a*b}</b>`;
+    $('#foStr').innerHTML = `Strati: c = <b>${c}</b>`;
+    $('#foBox').classList.toggle('locked', !full);
+    $('#foBig').innerHTML = full ? `V = a · b · c = ${a} · ${b} · ${c} = ${n} cm³` : 'Riempi tutto per scoprire la formula';
+  }
+  $('#foSub').textContent = 'Ogni cubetto misura 1 cm³';
+  $('#foBar').innerHTML = `<button class="play" id="foPlay"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg><span>Riempi</span></button>
+    <div class="net-slider"><label for="foK">Cubetti inseriti</label><input type="range" id="foK" min="0" max="36" value="0"><div class="ends"><span>Vuoto</span><span class="bar-status" id="foKs"></span></div></div>`;
+  $('#foInfo').innerHTML = `<h3>Il volume con i cubetti</h3>
+    <p class="small">Il volume dice quanti cubetti da 1 cm³ entrano nel solido. Cambia le misure e riempi il parallelepipedo.</p>
+    <div style="display:flex;flex-direction:column;gap:10px">${['a','b','c'].map(x=>`<div class="dim"><label for="fo_${x}">${{a:'Lunghezza',b:'Larghezza',c:'Altezza'}[x]} <var>${x}</var></label><output id="foo_${x}">${st[x]} cm</output><input type="range" id="fo_${x}" min="1" max="6" step="1" value="${st[x]}"></div>`).join('')}</div>
+    <div class="formula-box locked" id="foBox"><span id="foLay"></span><span id="foStr"></span><span class="big" id="foBig"></span></div>`;
+  ['a','b','c'].forEach(x=>$('#fo_'+x).addEventListener('input', e=>{ st[x] = +e.target.value; $('#foo_'+x).textContent = st[x]+' cm'; st.k = 0; st.anim = null; build(); ui(); }));
+  $('#foK').addEventListener('input', e=>{ st.anim = null; st.k = +e.target.value; inst.count = st.k; ui(); });
+  $('#foPlay').onclick = ()=>{
+    const n = st.a*st.b*st.c;
+    if(st.k>=n){ st.anim = null; st.k = 0; inst.count = 0; ui(); return; }
+    st.anim = {t0:performance.now(), from:st.k, dur:Math.min(4500, (n-st.k)*90)};
+  };
+  build(); ui();
+}
+
+function expTravaso(kind){
+  const CFG = {
+    piramide:{cont:{type:'prism', d:{l:4, h:6}}, cup:{type:'pyr', d:{l:4, h:6}}, frac:1/3, max:3, a:'la piramide', c:'il prisma', sub:'Stessa base e stessa altezza',
+      steps:['Il prisma e la piramide hanno la stessa base e la stessa altezza.','Premi «Versa»: l\'acqua della piramide finisce nel prisma.','Conta quante piramidi servono per riempire il prisma.'],
+      found:'Servono 3 piramidi: il volume della piramide è un terzo di quello del prisma.', big:'V = (A<sub>b</sub> · h) : 3'},
+    cono:{cont:{type:'cyl', d:{r:2.5, h:6}}, cup:{type:'cone', d:{r:2.5, h:6}}, frac:1/3, max:3, a:'il cono', c:'il cilindro', sub:'Stessa base e stessa altezza',
+      steps:['Il cilindro e il cono hanno la stessa base e la stessa altezza.','Premi «Versa»: l\'acqua del cono finisce nel cilindro.','Conta quanti coni servono per riempire il cilindro.'],
+      found:'Servono 3 coni: il volume del cono è un terzo di quello del cilindro.', big:'V = (π · r² · h) : 3'},
+    sfera:{cont:{type:'cyl', d:{r:3, h:6}}, cup:{type:'sphere', d:{r:3}}, frac:2/3, max:1, a:'la sfera', c:'il cilindro', sub:'Il cilindro contiene esattamente la sfera',
+      steps:['Il cilindro ha lo stesso raggio della sfera e l\'altezza uguale al diametro (2r).','Premi «Versa»: l\'acqua della sfera finisce nel cilindro.','Guarda fin dove arriva l\'acqua.'],
+      found:'La sfera riempie i 2/3 del cilindro. Lo scoprì Archimede, che ne fu così fiero da volerlo inciso sulla sua tomba.', big:'V = 2/3 · π · r² · 2r = (4 · π · r³) : 3'}
+  }[kind];
+  const gap = 4.6;
+  const cont = makeVessel(CFG.cont.type, CFG.cont.d, -gap, COL.lat[0]);
+  const cup = makeVessel(CFG.cup.type, CFG.cup.d, gap, COL.base);
+  FO.group.add(cont.group, cup.group);
+  const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1, 12), new THREE.MeshLambertMaterial({color:WATER, transparent:true, opacity:.85}));
+  stream.visible = false; FO.group.add(stream);
+  const st = {pours:0, level:0, cupL:cup.H, anim:null};
+  cont.setLevel(0); cup.setLevel(cup.H);
+  FO.tick = now=>{
+    if(!st.anim) return;
+    const A = st.anim, p = Math.min(1, (now - A.t0)/A.dur), e = ease(p);
+    if(A.type==='pour'){
+      st.level = A.from + (A.to - A.from)*e; st.cupL = cup.H*(1-e);
+      cont.setLevel(st.level); cup.setLevel(st.cupL);
+      stream.visible = p < 0.97;
+      setSeg(stream, V3(cup.x - cup.top()*0.9, cup.H, 0), V3(cont.x, Math.max(st.level, 0.05), 0));
+      if(p>=1){ st.anim = null; stream.visible = false; st.pours++; if(st.pours < CFG.max) st.anim = {type:'fill', t0:now, dur:700}; ui(); }
+    } else {
+      st.cupL = cup.H*e; cup.setLevel(st.cupL);
+      if(p>=1){ st.anim = null; ui(); }
+    }
+  };
+  function ui(){
+    const done = st.pours >= CFG.max;
+    $('#foPour').disabled = done || !!st.anim;
+    $('#foStatus').textContent = kind==='sfera'
+      ? (done ? 'Il cilindro è pieno per 2/3' : 'Travasi: 0 di 1')
+      : `Travasi: ${st.pours} di 3` + (st.pours ? ` · il ${CFG.cont.type==='cyl'?'cilindro':'prisma'} è pieno per ${st.pours}/3` : '');
+    $('#foMeter').style.width = Math.round(st.pours*CFG.frac*100) + '%';
+    const now = done ? 3 : st.pours===0 ? 1 : 2;
+    $('#foSteps').innerHTML = CFG.steps.map((s,i)=>`<li class="${i+1<now?'done':i+1===now?'now':''}">${s}</li>`).join('');
+    $('#foBox').classList.toggle('locked', !done);
+    $('#foFound').textContent = done ? CFG.found : 'Completa i travasi per scoprire la formula.';
+    $('#foBig').innerHTML = done ? CFG.big : 'V = ?';
+  }
+  $('#foSub').textContent = CFG.sub;
+  $('#foBar').innerHTML = `<button class="play" id="foPour"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c-2.5 3.5-4.5 6-4.5 8.5a4.5 4.5 0 0 0 9 0C12.5 7.5 10.5 5 8 1.5z" fill="currentColor"/></svg><span>Versa</span></button>
+    <button class="ghost" id="foAgain">Ricomincia</button>
+    <div class="net-slider"><span class="bar-status" id="foStatus"></span><div class="meter" aria-hidden="true"><i id="foMeter" style="width:0%"></i></div></div>`;
+  $('#foInfo').innerHTML = `<h3>${EXPS.find(x=>x.k===kind).name}</h3><ol class="steps" id="foSteps"></ol>
+    <div class="formula-box locked" id="foBox"><span id="foFound"></span><span class="big" id="foBig"></span></div>`;
+  $('#foPour').onclick = ()=>{
+    if(st.anim || st.pours>=CFG.max) return;
+    st.anim = {type:'pour', t0:performance.now(), dur:1900, from:st.level, to:Math.min(cont.H, st.level + CFG.frac*cont.H)};
+    ui();
+  };
+  $('#foAgain').onclick = ()=>{ st.pours = 0; st.level = 0; st.anim = null; stream.visible = false; cont.setLevel(0); cup.setLevel(cup.H); ui(); };
+  ui();
+}
+
+function expCavalieri(){
+  const st = {shape:'monete', shear:0, mix:0, rnd:[]};
+  const N = 10, t = 0.45;
+  for(let i=0;i<N;i++) st.rnd.push({x:Math.random()*2-1, z:Math.random()*2-1});
+  let left = [], right = [];
+  function build(){
+    foClear();
+    left = []; right = [];
+    const geo = () => st.shape==='monete' ? new THREE.CylinderGeometry(2, 2, t*0.94, 48) : new THREE.BoxGeometry(3.6, t*0.94, 3.6);
+    for(let side=0; side<2; side++) for(let i=0;i<N;i++){
+      const m = new THREE.Mesh(geo(), new THREE.MeshLambertMaterial({color: i%2 ? COL.lat[0] : COL.base}));
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 25), edgeMat); m.add(e);
+      m.position.set(side ? 3.6 : -3.6, t*i + t/2, 0);
+      FO.group.add(m); (side ? right : left).push(m);
+    }
+    place();
+  }
+  function place(){
+    right.forEach((m,i)=>{
+      m.position.x = 3.6 + st.shear*i*t*1.3 + st.rnd[i].x*st.mix;
+      m.position.z = st.rnd[i].z*st.mix;
+    });
+    FO.viewer.fit(FO.group, false);
+  }
+  $('#foSub').textContent = 'Stessi strati, stessa altezza';
+  $('#foBar').innerHTML = `<div class="net-slider"><label for="foShear">Inclina la pila</label><input type="range" id="foShear" min="-100" max="100" value="0"><div class="ends"><span>A sinistra</span><span>A destra</span></div></div>
+    <button class="ghost" id="foMix">Sposta gli strati</button><button class="ghost" id="foStraight">Raddrizza</button>
+    <div class="seg" role="group" aria-label="Forma degli strati"><button id="foCoins" class="on">Monete</button><button id="foSheets">Fogli</button></div>`;
+  $('#foInfo').innerHTML = `<h3>Principio di Cavalieri</h3>
+    <p class="small">Le due pile hanno lo stesso numero di strati, tutti uguali. Inclina o sposta la pila di destra: il volume cambia?</p>
+    <ol class="steps"><li>Ogni strato ha la stessa area e lo stesso spessore.</li><li>Alla stessa altezza, le due pile hanno sezioni della stessa area.</li><li>Quindi le due pile hanno lo stesso volume, anche se una è storta.</li></ol>
+    <div class="formula-box"><span>Due solidi con la stessa altezza e sezioni della stessa area, prese alla stessa altezza, hanno lo stesso volume.</span><span class="big">V = A<sub>b</sub> · h</span><span>vale anche per prismi e cilindri obliqui.</span></div>`;
+  $('#foShear').addEventListener('input', e=>{ st.shear = e.target.value/100; place(); });
+  $('#foMix').onclick = ()=>{ st.rnd.forEach(r=>{ r.x = Math.random()*2-1; r.z = Math.random()*2-1; }); st.mix = 0.9; place(); };
+  $('#foStraight').onclick = ()=>{ st.shear = 0; st.mix = 0; $('#foShear').value = 0; place(); };
+  const setShape = s=>{ st.shape = s; $('#foCoins').classList.toggle('on', s==='monete'); $('#foSheets').classList.toggle('on', s==='fogli'); build(); };
+  $('#foCoins').onclick = ()=>setShape('monete'); $('#foSheets').onclick = ()=>setShape('fogli');
+  build();
+}
+
+/* =========================================================
+   MODULO 4 · SOLIDI DI ROTAZIONE E COMPOSTI
+   ========================================================= */
+const sq = x => Math.sqrt(x);
+const ROT = [
+  {k:'rett', name:'Rettangolo', d:'attorno a un lato → cilindro', solid:'Cilindro',
+    dims:[{k:'r',label:'Lato che ruota (raggio)',min:1,max:8,def:3},{k:'h',label:'Lato sull\'asse (altezza)',min:1,max:12,def:5}],
+    profile:d=>[[0,0],[d.r,0],[d.r,d.h],[0,d.h]],
+    calc:d=>{ const {r,h}=d; return [
+      L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true),
+      L('Area laterale',Al_,'2 · π · r · h',c=>`2 · ${c.P} · ${r} · ${h}`,2*r*h,'cm²',true),
+      L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,c=>`${c.pc(2*r*h)} + 2 · ${c.pc(r*r)}`,2*r*h+2*r*r,'cm²',true),
+      L('Volume','V','π · r² · h',c=>`${c.P} · ${r}² · ${h}`,r*r*h,'cm³',true)]; },
+    note:'Il lato sull\'asse diventa l\'altezza, il lato che ruota diventa il raggio di base.'},
+  {k:'tri', name:'Triangolo rettangolo', d:'attorno a un cateto → cono', solid:'Cono',
+    dims:[{k:'r',label:'Cateto che ruota (raggio)',min:1,max:8,def:3},{k:'h',label:'Cateto sull\'asse (altezza)',min:1,max:12,def:4}],
+    profile:d=>[[0,0],[d.r,0],[0,d.h]],
+    calc:d=>{ const {r,h}=d, a=r2(sq(r*r+h*h)); return [
+      L('Apotema = ipotenusa','a','√(r² + h²)',`√(${r}² + ${h}²)`,sq(r*r+h*h),'cm'),
+      L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true),
+      L('Area laterale',Al_,'π · r · a',c=>`${c.P} · ${r} · ${fmt(a)}`,r*a,'cm²',true),
+      L('Area totale',At_,`${Ab_} + ${Al_}`,c=>`${c.pc(r*r)} + ${c.pc(r*a)}`,r*r+r*a,'cm²',true),
+      L('Volume','V','(π · r² · h) : 3',c=>`(${c.P} · ${r}² · ${h}) : 3`,r*r*h/3,'cm³',true)]; },
+    note:'L\'ipotenusa del triangolo diventa l\'apotema del cono.'},
+  {k:'semi', name:'Semicerchio', d:'attorno al diametro → sfera', solid:'Sfera', smooth:true,
+    dims:[{k:'r',label:'Raggio',min:1,max:8,def:3}],
+    profile:d=>{ const p=[]; for(let i=0;i<=48;i++){ const t=Math.PI*i/48; p.push([d.r*Math.sin(t), d.r - d.r*Math.cos(t)]); } return p; },
+    calc:d=>{ const r=d.r; return [
+      L('Superficie','S','4 · π · r²',c=>`4 · ${c.P} · ${r}²`,4*r*r,'cm²',true),
+      L('Volume','V','(4 · π · r³) : 3',c=>`(4 · ${c.P} · ${r}³) : 3`,4*r**3/3,'cm³',true)]; },
+    note:'Il diametro sta sull\'asse: ogni punto del semicerchio descrive un cerchio.'},
+  {k:'ipo', name:'Triangolo rettangolo', d:'attorno all\'ipotenusa → doppio cono', solid:'Doppio cono',
+    dims:[{k:'c1',label:'Primo cateto',min:1,max:12,def:6},{k:'c2',label:'Secondo cateto',min:1,max:12,def:8}],
+    profile:d=>{ const ip=sq(d.c1*d.c1+d.c2*d.c2), r=d.c1*d.c2/ip, p1=d.c1*d.c1/ip; return [[0,0],[r,p1],[0,ip]]; },
+    calc:d=>{ const {c1,c2}=d, ipr=sq(c1*c1+c2*c2), ip=r2(ipr), r=r2(c1*c2/ip); return [
+      L('Ipotenusa (asse)','i','√(c₁² + c₂²)',`√(${c1}² + ${c2}²)`,ipr,'cm'),
+      L('Raggio = altezza relativa all\'ipotenusa','r','(c₁ · c₂) : i',`(${c1} · ${c2}) : ${fmt(ip)}`,c1*c2/ip,'cm'),
+      L('Area laterale del primo cono','A<sub>l1</sub>','π · r · c₁',c=>`${c.P} · ${fmt(r)} · ${c1}`,r*c1,'cm²',true),
+      L('Area laterale del secondo cono','A<sub>l2</sub>','π · r · c₂',c=>`${c.P} · ${fmt(r)} · ${c2}`,r*c2,'cm²',true),
+      L('Area totale',At_,'A<sub>l1</sub> + A<sub>l2</sub>',c=>`${c.pc(r*c1)} + ${c.pc(r*c2)}`,r*(c1+c2),'cm²',true),
+      L('Volume','V','(π · r² · i) : 3',c=>`(${c.P} · ${fmt(r)}² · ${fmt(ip)}) : 3`,r*r*ip/3,'cm³',true)]; },
+    note:'Due coni con la stessa base: i cateti diventano gli apotemi, la somma delle altezze è l\'ipotenusa.'},
+  {k:'trapM', name:'Trapezio rettangolo', d:'attorno alla base maggiore → cilindro + cono', solid:'Cilindro + cono',
+    dims:[{k:'B',label:'Base maggiore (sull\'asse)',min:2,max:12,def:9},{k:'b',label:'Base minore',min:1,max:11,def:5},{k:'h',label:'Altezza del trapezio (raggio)',min:1,max:8,def:3}],
+    profile:d=>[[0,0],[d.h,0],[d.h,d.b],[0,d.B]],
+    calc:d=>{ const {B,b,h}=d, hc=B-b, l=r2(sq(h*h+hc*hc)); return [
+      L('Altezza del cono','h<sub>c</sub>','B − b',`${B} − ${b}`,hc,'cm'),
+      L('Apotema del cono = lato obliquo','a','√(h² + h<sub>c</sub>²)',`√(${h}² + ${hc}²)`,sq(h*h+hc*hc),'cm'),
+      L('Area di base',Ab_,'π · h²',c=>`${c.P} · ${h}²`,h*h,'cm²',true),
+      L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · h · b',c=>`2 · ${c.P} · ${h} · ${b}`,2*h*b,'cm²',true),
+      L('Area laterale del cono','A<sub>l cono</sub>','π · h · a',c=>`${c.P} · ${h} · ${fmt(l)}`,h*l,'cm²',true),
+      L('Area totale',At_,`${Ab_} + A<sub>l cil</sub> + A<sub>l cono</sub>`,c=>`${c.pc(h*h)} + ${c.pc(2*h*b)} + ${c.pc(h*l)}`,h*h+2*h*b+h*l,'cm²',true),
+      L('Volume del cilindro','V<sub>cil</sub>','π · h² · b',c=>`${c.P} · ${h}² · ${b}`,h*h*b,'cm³',true),
+      L('Volume del cono','V<sub>cono</sub>','(π · h² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${h}² · ${hc}) : 3`,h*h*hc/3,'cm³',true),
+      L('Volume totale','V','V<sub>cil</sub> + V<sub>cono</sub>',c=>`${c.pc(h*h*b)} + ${c.pc(h*h*hc/3)}`,h*h*b+h*h*hc/3,'cm³',true)]; },
+    note:'L\'altezza del trapezio diventa il raggio. La base minore è l\'altezza del cilindro, la differenza delle basi è l\'altezza del cono.'},
+  {k:'trapm', name:'Trapezio rettangolo', d:'attorno alla base minore → cilindro con cavità a cono', solid:'Cilindro con cavità conica',
+    dims:[{k:'B',label:'Base maggiore',min:2,max:12,def:9},{k:'b',label:'Base minore (sull\'asse)',min:1,max:11,def:5},{k:'h',label:'Altezza del trapezio (raggio)',min:1,max:8,def:3}],
+    profile:d=>[[0,0],[d.h,0],[d.h,d.B],[0,d.b]],
+    calc:d=>{ const {B,b,h}=d, hc=B-b, l=r2(sq(h*h+hc*hc)); return [
+      L('Altezza della cavità','h<sub>c</sub>','B − b',`${B} − ${b}`,hc,'cm'),
+      L('Apotema della cavità = lato obliquo','a','√(h² + h<sub>c</sub>²)',`√(${h}² + ${hc}²)`,sq(h*h+hc*hc),'cm'),
+      L('Area di base',Ab_,'π · h²',c=>`${c.P} · ${h}²`,h*h,'cm²',true),
+      L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · h · B',c=>`2 · ${c.P} · ${h} · ${B}`,2*h*B,'cm²',true),
+      L('Area della cavità conica','A<sub>l cono</sub>','π · h · a',c=>`${c.P} · ${h} · ${fmt(l)}`,h*l,'cm²',true),
+      L('Area totale',At_,`${Ab_} + A<sub>l cil</sub> + A<sub>l cono</sub>`,c=>`${c.pc(h*h)} + ${c.pc(2*h*B)} + ${c.pc(h*l)}`,h*h+2*h*B+h*l,'cm²',true),
+      L('Volume del cilindro','V<sub>cil</sub>','π · h² · B',c=>`${c.P} · ${h}² · ${B}`,h*h*B,'cm³',true),
+      L('Volume della cavità','V<sub>cono</sub>','(π · h² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${h}² · ${hc}) : 3`,h*h*hc/3,'cm³',true),
+      L('Volume del solido','V','V<sub>cil</sub> − V<sub>cono</sub>',c=>`${c.pc(h*h*B)} − ${c.pc(h*h*hc/3)}`,h*h*B-h*h*hc/3,'cm³',true)]; },
+    note:'Il cilindro ha per altezza la base maggiore; il cono si "toglie" dal cilindro, ma la sua superficie laterale fa parte della superficie del solido.'}
+];
+const M = (label, sym, f, s, n, cc, unit) => ({label, sym, f, s: typeof s==='function' ? s : ()=>s, mix:{n, c:cc}, unit});
+const hlL = (Ln, ...keys) => { Ln.hl = keys; return Ln; };
+const NOTE = (text, ...keys) => ({note:true, text, hl:keys});
+const P = (key, piece, geo, col, y, lift, role) => ({key, piece, geo, col, y, lift, role:role||'surf'});
+const GE = {
+  cyl:(r,h)=>new THREE.CylinderGeometry(r, r, h, 64, 1, true),
+  disc:(r,up)=>{ const g = new THREE.CircleGeometry(r, 64); g.rotateX(up ? -Math.PI/2 : Math.PI/2); return g; },
+  sq:(l,up)=>{ const g = new THREE.PlaneGeometry(l, l); g.rotateX(up ? -Math.PI/2 : Math.PI/2); return g; },
+  cone:(r,h,down)=>{ const g = new THREE.ConeGeometry(r, h, 64, 1, true); if(down) g.rotateX(Math.PI); return g; },
+  prism:(l,h)=>{ const g = new THREE.CylinderGeometry(l/Math.SQRT2, l/Math.SQRT2, h, 4, 1, true); g.rotateY(Math.PI/4); return g; },
+  pyr:(l,h,down)=>{ const g = new THREE.ConeGeometry(l/Math.SQRT2, h, 4, 1, true); g.rotateY(Math.PI/4); if(down) g.rotateX(Math.PI); return g; },
+  hemi:r=>new THREE.SphereGeometry(r, 48, 24, 0, Math.PI*2, 0, Math.PI/2),
+  holed:(l,r,up)=>{
+    const s = new THREE.Shape(); s.moveTo(-l/2,-l/2); s.lineTo(l/2,-l/2); s.lineTo(l/2,l/2); s.lineTo(-l/2,l/2); s.lineTo(-l/2,-l/2);
+    const hole = new THREE.Path(); hole.absarc(0, 0, r, 0, Math.PI*2, true); s.holes.push(hole);
+    const g = new THREE.ShapeGeometry(s, 48); g.rotateX(up ? -Math.PI/2 : Math.PI/2); return g;
+  }
+};
+/* superfici a contatto fra due pezzi: una per pezzo, visibili quando si separano */
+const contactDisc = (r, y, lowerPiece, lowerLift, upperPiece, upperLift) => [P('contact', lowerPiece, GE.disc(r,true), 'CH', y, lowerLift, 'contact'), P('contact', upperPiece, GE.disc(r,false), 'CH', y, upperLift, 'contact')];
+const contactSq = (l, y, lowerPiece, lowerLift, upperPiece, upperLift) => [P('contact', lowerPiece, GE.sq(l,true), 'CH', y, lowerLift, 'contact'), P('contact', upperPiece, GE.sq(l,false), 'CH', y, upperLift, 'contact')];
+
+const COMP = [
+  {k:'cil2coni', name:'Cilindro + due coni', d:'due coni uguali sulle basi del cilindro',
+    dims:[{k:'r',label:'Raggio',min:1,max:6,def:3},{k:'H',label:'Altezza del cilindro',min:1,max:12,def:6},{k:'hc',label:'Altezza di ogni cono',min:1,max:10,def:4}],
+    legend:[['C1','Superficie laterale del cilindro'],['C3','Superfici laterali dei coni'],['CH','Superfici a contatto']],
+    parts:d=>{ const {r,H,hc}=d; return [
+      P('coneLat1','cone1',GE.cone(r,hc,true),'C3',hc/2,-1),
+      ...contactDisc(r, hc, 'cone1', -1, 'cyl', 0),
+      P('cylLat','cyl',GE.cyl(r,H),'C1',hc+H/2,0),
+      ...contactDisc(r, hc+H, 'cyl', 0, 'cone2', 1),
+      P('coneLat2','cone2',GE.cone(r,hc),'C3',hc+H+hc/2,1)]; },
+    calc:d=>{ const {r,H,hc}=d, a=r2(sq(r*r+hc*hc)); return [
+      hlL(L('Apotema dei coni','a','√(r² + h<sub>c</sub>²)',`√(${r}² + ${hc}²)`,sq(r*r+hc*hc),'cm'),'coneLat2'),
+      hlL(L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true),'cylLat'),
+      hlL(L('Area laterale di un cono','A<sub>l cono</sub>','π · r · a',c=>`${c.P} · ${r} · ${fmt(a)}`,r*a,'cm²',true),'coneLat2'),
+      NOTE('Le due basi del cilindro sono coperte dalle basi dei coni: restano dentro il solido e non si contano.','contact'),
+      hlL(L('Superficie totale',At_,'A<sub>l cil</sub> + 2 · A<sub>l cono</sub>',c=>`${c.pc(2*r*H)} + 2 · ${c.pc(r*a)}`,2*r*H+2*r*a,'cm²',true),'cylLat','coneLat1','coneLat2'),
+      hlL(L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,r*r*H,'cm³',true),'cyl'),
+      hlL(L('Volume di un cono','V<sub>cono</sub>','(π · r² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${r}² · ${hc}) : 3`,r*r*hc/3,'cm³',true),'cone2'),
+      hlL(L('Volume totale','V','V<sub>cil</sub> + 2 · V<sub>cono</sub>',c=>`${c.pc(r*r*H)} + 2 · ${c.pc(r*r*hc/3)}`,r*r*H+2*r*r*hc/3,'cm³',true),'cyl','cone1','cone2')]; },
+    segs:d=>{ const {r,H,hc}=d; return {
+      'Apotema dei coni':{piece:'cone2', segs:[[V3(0,hc+H,r), V3(0,2*hc+H,0)]], main:'a', val:sq(r*r+hc*hc)}}; },
+    note:'I due coni sono uguali: basta calcolarne uno e moltiplicare per 2.'},
+  {k:'cubo2pir', name:'Cubo + due piramidi', d:'due piramidi uguali su facce opposte del cubo',
+    dims:[{k:'l',label:'Spigolo del cubo',min:2,max:10,def:6},{k:'hp',label:'Altezza di ogni piramide',min:1,max:10,def:4}],
+    legend:[['C1','Facce laterali del cubo'],['C3','Facce laterali delle piramidi'],['CH','Superfici a contatto']],
+    parts:d=>{ const {l,hp}=d; return [
+      P('pyrLat1','pyr1',GE.pyr(l,hp,true),'C3',hp/2,-1),
+      ...contactSq(l, hp, 'pyr1', -1, 'cube', 0),
+      P('cubeLat','cube',GE.prism(l,l),'C1',hp+l/2,0),
+      ...contactSq(l, hp+l, 'cube', 0, 'pyr2', 1),
+      P('pyrLat2','pyr2',GE.pyr(l,hp),'C3',hp+l+hp/2,1)]; },
+    calc:d=>{ const {l,hp}=d, ab=l/2, a=r2(sq(hp*hp+ab*ab)), p2=4*l, Alp=p2*a/2; return [
+      hlL(L('Area laterale del cubo','A<sub>l cubo</sub>','4 · l²',`4 · ${l}²`,4*l*l,'cm²'),'cubeLat'),
+      hlL(L('Apotema di base delle piramidi',ab_,'l : 2',`${l} : 2`,ab,'cm'),'pyrLat2'),
+      hlL(L('Apotema delle piramidi','a',`√(h<sub>p</sub>² + ${ab_}²)`,`√(${hp}² + ${fmt(ab)}²)`,sq(hp*hp+ab*ab),'cm'),'pyrLat2'),
+      hlL(L('Area laterale di una piramide','A<sub>l pir</sub>','(2p · a) : 2',`(${p2} · ${fmt(a)}) : 2`,Alp,'cm²'),'pyrLat2'),
+      NOTE('Due facce del cubo sono coperte dalle basi delle piramidi: non si contano.','contact'),
+      hlL(L('Superficie totale',At_,'A<sub>l cubo</sub> + 2 · A<sub>l pir</sub>',`${4*l*l} + 2 · ${fmt(Alp)}`,4*l*l+2*Alp,'cm²'),'cubeLat','pyrLat1','pyrLat2'),
+      hlL(L('Volume del cubo','V<sub>cubo</sub>','l³',`${l}³`,l**3,'cm³'),'cube'),
+      hlL(L('Volume di una piramide','V<sub>pir</sub>','(l² · h<sub>p</sub>) : 3',`(${l}² · ${hp}) : 3`,l*l*hp/3,'cm³'),'pyr2'),
+      hlL(L('Volume totale','V','V<sub>cubo</sub> + 2 · V<sub>pir</sub>',`${l**3} + 2 · ${fmt(l*l*hp/3)}`,l**3+2*l*l*hp/3,'cm³'),'cube','pyr1','pyr2')]; },
+    segs:d=>{ const {l,hp}=d, y0=hp+l; return {
+      'Apotema di base delle piramidi':{piece:'pyr2', segs:[[V3(0,y0,0), V3(0,y0,l/2)]], main:'a', sub:'b', val:l/2},
+      'Apotema delle piramidi':{piece:'pyr2', segs:[[V3(0,y0,l/2), V3(0,y0+hp,0)]], main:'a', val:sq(hp*hp+l*l/4)}}; },
+    note:'Le piramidi hanno per base una faccia del cubo: la loro area di base è l².'},
+  {k:'prisma2pir', name:'Prisma + due piramidi', d:'due piramidi uguali sulle basi del prisma quadrangolare',
+    dims:[{k:'l',label:'Spigolo di base',min:2,max:10,def:6},{k:'H',label:'Altezza del prisma',min:1,max:14,def:8},{k:'hp',label:'Altezza di ogni piramide',min:1,max:10,def:4}],
+    legend:[['C1','Facce laterali del prisma'],['C3','Facce laterali delle piramidi'],['CH','Superfici a contatto']],
+    parts:d=>{ const {l,H,hp}=d; return [
+      P('pyrLat1','pyr1',GE.pyr(l,hp,true),'C3',hp/2,-1),
+      ...contactSq(l, hp, 'pyr1', -1, 'pr', 0),
+      P('prLat','pr',GE.prism(l,H),'C1',hp+H/2,0),
+      ...contactSq(l, hp+H, 'pr', 0, 'pyr2', 1),
+      P('pyrLat2','pyr2',GE.pyr(l,hp),'C3',hp+H+hp/2,1)]; },
+    calc:d=>{ const {l,H,hp}=d, p2=4*l, Ab=l*l, ab=l/2, a=r2(sq(hp*hp+ab*ab)), Alpr=p2*H, Alp=p2*a/2; return [
+      hlL(L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'),'prLat'),
+      hlL(L('Area laterale del prisma','A<sub>l pr</sub>','2p · H',`${p2} · ${H}`,Alpr,'cm²'),'prLat'),
+      hlL(L('Apotema delle piramidi','a',`√(h<sub>p</sub>² + ${ab_}²)`,`√(${hp}² + ${fmt(ab)}²)`,sq(hp*hp+ab*ab),'cm'),'pyrLat2'),
+      hlL(L('Area laterale di una piramide','A<sub>l pir</sub>','(2p · a) : 2',`(${p2} · ${fmt(a)}) : 2`,Alp,'cm²'),'pyrLat2'),
+      NOTE('Le due basi del prisma sono coperte dalle basi delle piramidi: non si contano.','contact'),
+      hlL(L('Superficie totale',At_,'A<sub>l pr</sub> + 2 · A<sub>l pir</sub>',`${Alpr} + 2 · ${fmt(Alp)}`,Alpr+2*Alp,'cm²'),'prLat','pyrLat1','pyrLat2'),
+      hlL(L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'),'contact'),
+      hlL(L('Volume del prisma','V<sub>pr</sub>',`${Ab_} · H`,`${Ab} · ${H}`,Ab*H,'cm³'),'pr'),
+      hlL(L('Volume di una piramide','V<sub>pir</sub>',`(${Ab_} · h<sub>p</sub>) : 3`,`(${Ab} · ${hp}) : 3`,Ab*hp/3,'cm³'),'pyr2'),
+      hlL(L('Volume totale','V','V<sub>pr</sub> + 2 · V<sub>pir</sub>',`${Ab*H} + 2 · ${fmt(Ab*hp/3)}`,Ab*H+2*Ab*hp/3,'cm³'),'pr','pyr1','pyr2')]; },
+    segs:d=>{ const {l,H,hp}=d, y0=hp+H, c=[V3(-l/2,y0,l/2),V3(l/2,y0,l/2),V3(l/2,y0,-l/2),V3(-l/2,y0,-l/2)]; return {
+      'Perimetro di base':{piece:'pr', segs:[[c[0],c[1]],[c[1],c[2]],[c[2],c[3]],[c[3],c[0]]], main:'2p', val:4*l},
+      'Apotema delle piramidi':{piece:'pyr2', segs:[[V3(0,y0,l/2), V3(0,y0+hp,0)]], main:'a', val:sq(hp*hp+l*l/4)}}; },
+    note:'L\'area di base non entra nella superficie totale, ma serve per i volumi.'},
+  {k:'cilcono', name:'Cilindro + cono', d:'come una matita o un silo',
+    dims:[{k:'r',label:'Raggio',min:1,max:6,def:3},{k:'H',label:'Altezza del cilindro',min:1,max:12,def:6},{k:'hc',label:'Altezza del cono',min:1,max:10,def:4}],
+    legend:[['C2','Base'],['C1','Superficie laterale del cilindro'],['C3','Superficie laterale del cono'],['CH','Superfici a contatto']],
+    parts:d=>{ const {r,H,hc}=d; return [
+      P('base','cyl',GE.disc(r,false),'C2',0,0),
+      P('cylLat','cyl',GE.cyl(r,H),'C1',H/2,0),
+      ...contactDisc(r, H, 'cyl', 0, 'cone', 1),
+      P('coneLat','cone',GE.cone(r,hc),'C3',H+hc/2,1)]; },
+    calc:d=>{ const {r,H,hc}=d, a=r2(sq(r*r+hc*hc)); return [
+      hlL(L('Apotema del cono','a','√(r² + h<sub>c</sub>²)',`√(${r}² + ${hc}²)`,sq(r*r+hc*hc),'cm'),'coneLat'),
+      hlL(L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true),'base'),
+      hlL(L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true),'cylLat'),
+      hlL(L('Area laterale del cono','A<sub>l cono</sub>','π · r · a',c=>`${c.P} · ${r} · ${fmt(a)}`,r*a,'cm²',true),'coneLat'),
+      NOTE('La base superiore del cilindro e la base del cono sono a contatto: non si contano.','contact'),
+      hlL(L('Superficie totale',At_,`${Ab_} + A<sub>l cil</sub> + A<sub>l cono</sub>`,c=>`${c.pc(r*r)} + ${c.pc(2*r*H)} + ${c.pc(r*a)}`,r*r+2*r*H+r*a,'cm²',true),'base','cylLat','coneLat'),
+      hlL(L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,r*r*H,'cm³',true),'cyl'),
+      hlL(L('Volume del cono','V<sub>cono</sub>','(π · r² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${r}² · ${hc}) : 3`,r*r*hc/3,'cm³',true),'cone'),
+      hlL(L('Volume totale','V','V<sub>cil</sub> + V<sub>cono</sub>',c=>`${c.pc(r*r*H)} + ${c.pc(r*r*hc/3)}`,r*r*H+r*r*hc/3,'cm³',true),'cyl','cone')]; },
+    segs:d=>{ const {r,H,hc}=d; return {
+      'Apotema del cono':{piece:'cone', segs:[[V3(0,H,r), V3(0,H+hc,0)]], main:'a', val:sq(r*r+hc*hc)}}; },
+    note:'Qui la base inferiore del cilindro resta esterna e si conta.'},
+  {k:'casetta', name:'Prisma + piramide', d:'la "casetta"',
+    dims:[{k:'l',label:'Spigolo di base',min:2,max:10,def:6},{k:'H',label:'Altezza del prisma',min:1,max:12,def:5},{k:'hp',label:'Altezza della piramide',min:1,max:10,def:4}],
+    legend:[['C2','Base'],['C1','Facce laterali del prisma'],['C3','Facce laterali della piramide'],['CH','Superfici a contatto']],
+    parts:d=>{ const {l,H,hp}=d; return [
+      P('base','pr',GE.sq(l,false),'C2',0,0),
+      P('prLat','pr',GE.prism(l,H),'C1',H/2,0),
+      ...contactSq(l, H, 'pr', 0, 'pyr', 1),
+      P('pyrLat','pyr',GE.pyr(l,hp),'C3',H+hp/2,1)]; },
+    calc:d=>{ const {l,H,hp}=d, p2=4*l, Ab=l*l, ab=l/2, a=r2(sq(hp*hp+ab*ab)), Alp=p2*H, Alq=p2*a/2; return [
+      hlL(L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'),'base'),
+      hlL(L('Area laterale del prisma','A<sub>l pr</sub>','2p · H',`${p2} · ${H}`,Alp,'cm²'),'prLat'),
+      hlL(L('Apotema della piramide','a',`√(h<sub>p</sub>² + ${ab_}²)`,`√(${hp}² + ${fmt(ab)}²)`,sq(hp*hp+ab*ab),'cm'),'pyrLat'),
+      hlL(L('Area laterale della piramide','A<sub>l pir</sub>','(2p · a) : 2',`(${p2} · ${fmt(a)}) : 2`,Alq,'cm²'),'pyrLat'),
+      NOTE('La base della piramide coincide con la base superiore del prisma: nessuna delle due si conta.','contact'),
+      hlL(L('Superficie totale',At_,`${Ab_} + A<sub>l pr</sub> + A<sub>l pir</sub>`,`${Ab} + ${Alp} + ${fmt(Alq)}`,Ab+Alp+Alq,'cm²'),'base','prLat','pyrLat'),
+      hlL(L('Volume del prisma','V<sub>pr</sub>',`${Ab_} · H`,`${Ab} · ${H}`,Ab*H,'cm³'),'pr'),
+      hlL(L('Volume della piramide','V<sub>pir</sub>',`(${Ab_} · h<sub>p</sub>) : 3`,`(${Ab} · ${hp}) : 3`,Ab*hp/3,'cm³'),'pyr'),
+      hlL(L('Volume totale','V','V<sub>pr</sub> + V<sub>pir</sub>',`${Ab*H} + ${fmt(Ab*hp/3)}`,Ab*H+Ab*hp/3,'cm³'),'pr','pyr')]; },
+    segs:d=>{ const {l,H,hp}=d; return {
+      'Apotema della piramide':{piece:'pyr', segs:[[V3(0,H,l/2), V3(0,H+hp,0)]], main:'a', val:sq(hp*hp+l*l/4)}}; },
+    note:'Stessa base per prisma e piramide: l\'area di base serve sia per la superficie sia per i volumi.'},
+  {k:'cilsemi', name:'Cilindro + semisfera', d:'come un serbatoio',
+    dims:[{k:'r',label:'Raggio',min:1,max:6,def:3},{k:'H',label:'Altezza del cilindro',min:1,max:12,def:6}],
+    legend:[['C2','Base'],['C1','Superficie laterale del cilindro'],['C4','Semisfera'],['CH','Superfici a contatto']],
+    parts:d=>{ const {r,H}=d; return [
+      P('base','cyl',GE.disc(r,false),'C2',0,0),
+      P('cylLat','cyl',GE.cyl(r,H),'C1',H/2,0),
+      ...contactDisc(r, H, 'cyl', 0, 'hemi', 1),
+      P('hemi','hemi',GE.hemi(r),'C4',H,1)]; },
+    calc:d=>{ const {r,H}=d; return [
+      hlL(L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true),'base'),
+      hlL(L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true),'cylLat'),
+      hlL(L('Superficie della semisfera','S<sub>ss</sub>','2 · π · r²',c=>`2 · ${c.P} · ${r}²`,2*r*r,'cm²',true),'hemi'),
+      NOTE('Il cerchio su cui poggia la semisfera è coperto: non si conta.','contact'),
+      hlL(L('Superficie totale',At_,`${Ab_} + A<sub>l cil</sub> + S<sub>ss</sub>`,c=>`${c.pc(r*r)} + ${c.pc(2*r*H)} + ${c.pc(2*r*r)}`,3*r*r+2*r*H,'cm²',true),'base','cylLat','hemi'),
+      hlL(L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,r*r*H,'cm³',true),'cyl'),
+      hlL(L('Volume della semisfera','V<sub>ss</sub>','(4 · π · r³) : 3 : 2',c=>`(4 · ${c.P} · ${r}³) : 3 : 2`,2*r**3/3,'cm³',true),'hemi'),
+      hlL(L('Volume totale','V','V<sub>cil</sub> + V<sub>ss</sub>',c=>`${c.pc(r*r*H)} + ${c.pc(2*r**3/3)}`,r*r*H+2*r**3/3,'cm³',true),'cyl','hemi')]; },
+    note:'La semisfera ha metà della superficie e metà del volume della sfera.'},
+  {k:'gelato', name:'Cono + semisfera', d:'come un cono gelato',
+    dims:[{k:'r',label:'Raggio',min:1,max:6,def:3},{k:'hc',label:'Altezza del cono',min:2,max:12,def:8}],
+    legend:[['C3','Superficie laterale del cono'],['C4','Semisfera'],['CH','Superfici a contatto']],
+    parts:d=>{ const {r,hc}=d; return [
+      P('coneLat','cone',GE.cone(r,hc,true),'C3',hc/2,0),
+      ...contactDisc(r, hc, 'cone', 0, 'hemi', 1),
+      P('hemi','hemi',GE.hemi(r),'C4',hc,1)]; },
+    calc:d=>{ const {r,hc}=d, a=r2(sq(r*r+hc*hc)); return [
+      hlL(L('Apotema del cono','a','√(r² + h<sub>c</sub>²)',`√(${r}² + ${hc}²)`,sq(r*r+hc*hc),'cm'),'coneLat'),
+      hlL(L('Area laterale del cono','A<sub>l cono</sub>','π · r · a',c=>`${c.P} · ${r} · ${fmt(a)}`,r*a,'cm²',true),'coneLat'),
+      hlL(L('Superficie della semisfera','S<sub>ss</sub>','2 · π · r²',c=>`2 · ${c.P} · ${r}²`,2*r*r,'cm²',true),'hemi'),
+      NOTE('La base del cono è coperta dalla semisfera: non si conta.','contact'),
+      hlL(L('Superficie totale',At_,'A<sub>l cono</sub> + S<sub>ss</sub>',c=>`${c.pc(r*a)} + ${c.pc(2*r*r)}`,r*a+2*r*r,'cm²',true),'coneLat','hemi'),
+      hlL(L('Volume del cono','V<sub>cono</sub>','(π · r² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${r}² · ${hc}) : 3`,r*r*hc/3,'cm³',true),'cone'),
+      hlL(L('Volume della semisfera','V<sub>ss</sub>','(4 · π · r³) : 3 : 2',c=>`(4 · ${c.P} · ${r}³) : 3 : 2`,2*r**3/3,'cm³',true),'hemi'),
+      hlL(L('Volume totale','V','V<sub>cono</sub> + V<sub>ss</sub>',c=>`${c.pc(r*r*hc/3)} + ${c.pc(2*r**3/3)}`,r*r*hc/3+2*r**3/3,'cm³',true),'cone','hemi')]; },
+    segs:d=>{ const {r,hc}=d; return {
+      'Apotema del cono':{piece:'cone', segs:[[V3(0,hc,r), V3(0,0,0)]], main:'a', val:sq(r*r+hc*hc)}}; },
+    note:'La superficie è solo quella laterale del cono più quella della semisfera.'},
+  {k:'foro', name:'Cubo con foro cilindrico', d:'un solido cavo',
+    dims:[{k:'l',label:'Spigolo del cubo',min:3,max:10,def:6},{k:'r',label:'Raggio del foro',min:1,max:4,def:2}],
+    legend:[['C1','Pareti del cubo'],['C2','Facce forate'],['C4','Superficie interna del foro'],['CH','Parte tolta']],
+    parts:d=>{ const {l,r}=d; return [
+      P('walls','cube',GE.prism(l,l),'C1',l/2,0),
+      P('faces','cube',GE.holed(l,r,false),'C2',0,0),
+      P('faces','cube',GE.holed(l,r,true),'C2',l,0),
+      P('hole','cube',GE.cyl(r,l),'C4',l/2,0),
+      P('core','core',new THREE.CylinderGeometry(r*0.98, r*0.98, l, 48),'CH',l/2,1.25,'core')]; },
+    calc:d=>{ const {l,r}=d; return [
+      hlL(L('Volume del cubo','V<sub>cubo</sub>','l³',`${l}³`,l**3,'cm³'),'walls','faces','core'),
+      hlL(L('Volume del foro','V<sub>foro</sub>','π · r² · l',c=>`${c.P} · ${r}² · ${l}`,r*r*l,'cm³',true),'core'),
+      hlL(M('Volume del solido','V','V<sub>cubo</sub> − V<sub>foro</sub>',c=>`${l**3} − ${c.pc(r*r*l)}`,l**3,-r*r*l,'cm³'),'walls','faces','hole'),
+      hlL(L('Area del cubo','A<sub>cubo</sub>','6 · l²',`6 · ${l}²`,6*l*l,'cm²'),'walls','faces','core'),
+      hlL(L('Area dei due cerchi tolti','A<sub>cerchi</sub>','2 · π · r²',c=>`2 · ${c.P} · ${r}²`,2*r*r,'cm²',true),'core'),
+      hlL(L('Area interna del foro','A<sub>foro</sub>','2 · π · r · l',c=>`2 · ${c.P} · ${r} · ${l}`,2*r*l,'cm²',true),'hole'),
+      hlL(M('Superficie totale',At_,'A<sub>cubo</sub> − A<sub>cerchi</sub> + A<sub>foro</sub>',c=>`${6*l*l} − ${c.pc(2*r*r)} + ${c.pc(2*r*l)}`,6*l*l,2*r*l-2*r*r,'cm²'),'walls','faces','hole')]; },
+    note:'Il foro toglie volume, ma aggiunge la superficie interna del "tubo" e toglie i due cerchi sulle facce.'}
+];
+
+const CO = {viewer:null, mode:'comp', rot:'rett', comp:'cil2coni', dims:{}, angle:Math.PI*1.5, explode:0, glass:false, showFig:true,
+  hidden:false, revealed:new Set(), anim:null, parts:[], group:null, lines:[], sel:null, step:null};
+ROT.concat(COMP).forEach(it=>{ CO.dims[it.k] = {}; it.dims.forEach(x=>CO.dims[it.k][x.k] = x.def); });
+const coItem = ()=> CO.mode==='rot' ? ROT.find(x=>x.k===CO.rot) : COMP.find(x=>x.k===CO.comp);
+const coColors = ()=>({C1:COL.lat[0], C2:COL.lat[1], C3:COL.base, C4:COL.curve, CH:css('--hl')||'#D6336C'});
+
+function coShow(){
+  if(!CO.viewer){
+    CO.viewer = makeViewer($('#coVp'), $('#coCanvas')); VIEWERS.push(CO.viewer);
+    CO.viewer.onTick(coTick);
+    $('#coReset').onclick = ()=>CO.viewer.reset();
+    $('#coFront').onclick = ()=>CO.viewer.view(0, 1.42);
+    $('#coMode').querySelectorAll('button').forEach(b=>b.onclick = ()=>{ CO.mode = b.dataset.m; coResetCalc(); coAll(); });
+    $('#coToggleRes').onclick = ()=>{ CO.hidden = !CO.hidden; CO.revealed.clear(); coCalc(); };
+    $('#coGuide').onclick = ()=>{ CO.step = CO.step===null ? 0 : null; CO.sel = CO.step===null ? null : 0; coCalc(); coApplySel(); };
+    $('#coPrev').onclick = ()=>{ if(CO.step>0){ CO.step--; CO.sel = CO.step; coCalc(); coApplySel(); } };
+    $('#coNext').onclick = ()=>{ if(CO.step < CO.lines.length-1){ CO.step++; CO.sel = CO.step; coCalc(); coApplySel(); } };
+    coAll();
+  } else CO.viewer.resize();
+}
+function coRefresh(){ if(CO.viewer) coCalc(); }
+function coResetCalc(){ CO.revealed.clear(); CO.sel = null; if(CO.step!==null) CO.step = 0; }
+function coAll(){
+  $('#coMode').querySelectorAll('button').forEach(b=>{ const on = b.dataset.m===CO.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  const list = CO.mode==='rot' ? ROT : COMP, cur = CO.mode==='rot' ? CO.rot : CO.comp;
+  $('#coList').innerHTML = list.map(it=>`<button class="exp${it.k===cur?' on':''}" data-k="${it.k}" aria-pressed="${it.k===cur}"><b>${it.name}</b><span>${it.d}</span></button>`).join('');
+  $('#coList').querySelectorAll('.exp').forEach(b=>b.onclick = ()=>{ if(CO.mode==='rot') CO.rot = b.dataset.k; else CO.comp = b.dataset.k; coResetCalc(); coAll(); });
+  coBar(); coDims(); coBuild(true); coCalc(); coApplySel();
+}
+function coDims(){
+  const it = coItem(), d = CO.dims[it.k];
+  $('#coDims').innerHTML = it.dims.map(x=>`<div class="dim"><label for="co_${x.k}">${x.label}</label><output id="coo_${x.k}">${d[x.k]} cm</output><input type="range" id="co_${x.k}" min="${x.min}" max="${x.max}" step="1" value="${d[x.k]}"></div>`).join('');
+  it.dims.forEach(x=>$('#co_'+x.k).addEventListener('input', e=>{
+    d[x.k] = +e.target.value;
+    if(it.k.startsWith('trap')){
+      if(x.k==='b' && d.b >= d.B){ d.B = Math.min(12, d.b+1); if(d.b >= d.B) d.b = d.B-1; }
+      if(x.k==='B' && d.B <= d.b){ d.b = Math.max(1, d.B-1); }
+      ['B','b'].forEach(k=>{ $('#co_'+k).value = d[k]; $('#coo_'+k).textContent = d[k]+' cm'; });
+    }
+    if(it.k==='foro'){
+      const maxR = Math.max(1, Math.floor((d.l-1)/2));
+      if(d.r > maxR){ d.r = maxR; $('#co_r').value = d.r; $('#coo_r').textContent = d.r+' cm'; }
+    }
+    $('#coo_'+x.k).textContent = d[x.k]+' cm';
+    CO.revealed.clear(); coBuild(false); coCalc(); coApplySel();
+  }));
+}
+function coBar(){
+  if(CO.mode==='rot'){
+    $('#coBar').innerHTML = `<button class="play" id="coPlay"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4v2.5L11.5 3 8 0z" fill="currentColor"/></svg><span>Ruota</span></button>
+      <div class="net-slider"><label for="coAng">Rotazione intorno all'asse</label><input type="range" id="coAng" min="0" max="360" value="${Math.round(CO.angle*180/Math.PI)}"><div class="ends"><span>0°</span><span class="bar-status" id="coAngS"></span><span>360°</span></div></div>
+      <label class="switch"><input type="checkbox" id="coFig" ${CO.showFig?'checked':''}><span>Figura piana</span></label>`;
+    $('#coAng').addEventListener('input', e=>{ CO.anim = null; CO.angle = e.target.value*Math.PI/180; coLathe(); });
+    $('#coFig').onchange = e=>{ CO.showFig = e.target.checked; coLathe(); };
+    $('#coPlay').onclick = ()=>{ const from = CO.angle >= Math.PI*2-0.01 ? 0 : CO.angle; CO.anim = {t0:performance.now(), from, dur:3200*(1-from/(Math.PI*2))+300}; };
+  } else {
+    $('#coBar').innerHTML = `<div class="net-slider"><label for="coExp">Separa le parti</label><input type="range" id="coExp" min="0" max="100" value="${Math.round(CO.explode*100)}"><div class="ends"><span>Unite</span><span>Separate</span></div></div>
+      <label class="switch"><input type="checkbox" id="coGlass" ${CO.glass?'checked':''}><span>Trasparente</span></label>`;
+    $('#coExp').addEventListener('input', e=>{ CO.explode = e.target.value/100; coPlace(); });
+    $('#coGlass').onchange = e=>{ CO.glass = e.target.checked; coPaint(); };
+  }
+}
+function coClear(){
+  if(CO.group){ CO.viewer.scene.remove(CO.group); disposeGroup(CO.group); }
+  CO.group = new THREE.Group(); CO.viewer.scene.add(CO.group); CO.parts = [];
+}
+function coMat(color, extra){ return new THREE.MeshLambertMaterial(Object.assign({color, side:THREE.DoubleSide, transparent:true, opacity:1, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1}, extra||{})); }
+
+/* rotazione */
+let coLatheMesh = null, coFig = null;
+function coBuild(snap){
+  coClear();
+  const it = coItem(), d = CO.dims[it.k];
+  if(CO.mode==='rot'){
+    const prof = it.profile(d);
+    let maxR = 0, maxY = 0; prof.forEach(p=>{ maxR = Math.max(maxR, p[0]); maxY = Math.max(maxY, p[1]); });
+    const bound = new THREE.Mesh(new THREE.BoxGeometry(2*maxR, maxY, 2*maxR), new THREE.MeshBasicMaterial({visible:false}));
+    bound.position.y = maxY/2; CO.group.add(bound);
+    const axis = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(0,-1.2,0), V3(0,maxY+1.2,0)]), new THREE.LineDashedMaterial({color:css('--hl')||'#D6336C', dashSize:0.35, gapSize:0.22}));
+    axis.computeLineDistances(); CO.group.add(axis);
+    const shape = new THREE.Shape(prof.map(p=>new THREE.Vector2(p[0], p[1])));
+    coFig = new THREE.Group();
+    const fm = new THREE.Mesh(new THREE.ShapeGeometry(shape, 48), coMat(COL.base));
+    const fl = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(prof.map(p=>V3(p[0], p[1], 0))), new THREE.LineBasicMaterial({color:edgeMat.color}));
+    fm.renderOrder = 2; coFig.add(fm, fl); CO.group.add(coFig);
+    coLatheMesh = null;
+    coLathe();
+    $('#coTitle').textContent = it.solid;
+    $('#coSub').textContent = `${it.name} ${it.d.split('→')[0].trim()}`;
+    $('#coLegend').innerHTML = `<span><i style="background:${COL.base}"></i>Figura piana</span><span><i style="background:${COL.curve}"></i>Superficie generata</span><span><i style="background:${css('--hl')}"></i>Asse</span>`;
+    $('#coHint').hidden = true;
+    if(snap) CO.viewer.view(0.35, 1.25);
+  } else {
+    const cm = coColors();
+    it.parts(d).forEach(p=>{
+      const color = cm[p.col], em = new THREE.LineBasicMaterial({color:edgeMat.color, transparent:true});
+      const m = new THREE.Mesh(p.geo, coMat(color));
+      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(p.geo, 25), em));
+      m.position.y = p.y;
+      m.userData = {key:p.key, piece:p.piece, y:p.y, lift:p.lift, role:p.role, color:new THREE.Color(color), em};
+      CO.group.add(m); CO.parts.push(m);
+    });
+    $('#coTitle').textContent = it.name;
+    $('#coSub').textContent = it.d[0].toUpperCase() + it.d.slice(1);
+    $('#coLegend').innerHTML = it.legend.map(([c,t])=>`<span><i style="background:${cm[c]}"></i>${t}</span>`).join('');
+    $('#coHint').hidden = false;
+    coPlace();
+    if(snap) CO.viewer.reset();
+  }
+  CO.viewer.fit(CO.group, snap);
+}
+function coLathe(){
+  if(CO.mode!=='rot') return;
+  const it = coItem(), prof = it.profile(CO.dims[it.k]);
+  const pts = [];
+  prof.forEach((p,i)=>{ const v = new THREE.Vector2(Math.max(0, p[0]), p[1]); pts.push(v); if(!it.smooth && i>0 && i<prof.length-1) pts.push(v.clone()); });
+  if(coLatheMesh){ CO.group.remove(coLatheMesh); disposeGroup(coLatheMesh); }
+  const ang = Math.max(0.001, CO.angle);
+  coLatheMesh = new THREE.Mesh(new THREE.LatheGeometry(pts, 96, 0, ang), coMat(COL.curve, {opacity:.88, depthWrite:false}));
+  CO.group.add(coLatheMesh);
+  coFig.rotation.y = CO.angle - Math.PI/2;
+  coFig.visible = CO.showFig;
+  const deg = Math.round(CO.angle*180/Math.PI);
+  if($('#coAng')){ $('#coAng').value = deg; $('#coAngS').textContent = deg + '°'; $('#coPlay span').textContent = deg>=360 ? 'Ruota di nuovo' : 'Ruota'; }
+}
+function coTick(now){
+  if(!CO.anim) return;
+  const p = Math.min(1, (now - CO.anim.t0)/CO.anim.dur);
+  CO.angle = CO.anim.from + (Math.PI*2 - CO.anim.from)*p;
+  if(p>=1){ CO.angle = Math.PI*2; CO.anim = null; }
+  coLathe();
+}
+
+/* composti: posizioni ed evidenziazione */
+const CO_GAP = 2.6;
+function coPlace(){
+  const gap = CO_GAP;
+  CO.parts.forEach(m=>{ m.position.y = m.userData.y + m.userData.lift*CO.explode*gap; });
+  coPaint();
+  if(CO.viewer && CO.group) CO.viewer.fit(CO.group, false);
+}
+function coPaint(){
+  if(CO.mode!=='comp') return;
+  const L0 = CO.sel!==null ? CO.lines[CO.sel] : null, seg = L0 && L0.seg ? L0.seg : null;
+  const keys = !seg && L0 && L0.hl ? L0.hl : null;
+  const apart = CO.explode > 0.04;
+  CO.parts.forEach(m=>{
+    const u = m.userData, match = !!keys && (keys.includes(u.key) || keys.includes(u.piece));
+    let vis = true, op = CO.glass ? .35 : 1;
+    if(u.role==='contact'){ vis = apart || (!!keys && keys.includes('contact')); op = .7; }
+    if(u.role==='core'){ vis = apart || match; op = .55; }
+    if(keys){ op = match ? (u.role==='surf' ? 1 : .8) : .1; }
+    if(seg){ op = u.piece===seg.piece && u.role==='surf' ? .38 : .14; }
+    m.visible = vis;
+    m.material.opacity = op; m.material.depthWrite = op > .99; m.material.needsUpdate = true;
+    m.material.emissive.copy(u.color).multiplyScalar(keys && match ? .35 : 0);
+    u.em.opacity = (keys && !match) || seg ? .3 : 1;
+  });
+  coDrawSeg(seg);
+}
+/* segmenti (apotemi, perimetri): disegnati sul solido con la loro misura */
+function coDrawSeg(seg){
+  if(!CO.group) return;
+  if(!CO.segGroup || CO.segGroup.parent !== CO.group){ CO.segGroup = new THREE.Group(); CO.group.add(CO.segGroup); }
+  while(CO.segGroup.children.length){ const c = CO.segGroup.children.pop(); disposeGroup(c); }
+  if(!seg) return;
+  const owner = CO.parts.find(p=>p.userData.piece===seg.piece);
+  const dy = owner ? owner.userData.lift*CO.explode*CO_GAP : 0;
+  const color = css('--hl')||'#D6336C', R = CO.viewer.cam.R || 5;
+  const rad = Math.max(0.05, R*0.012);
+  const mat = new THREE.MeshBasicMaterial({color, depthTest:false, transparent:true});
+  seg.segs.forEach(([a0,b0])=>{
+    const a = a0.clone(), b = b0.clone(); a.y += dy; b.y += dy;
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1, 14), mat); setSeg(tube, a, b); tube.renderOrder = 11; CO.segGroup.add(tube);
+    [a,b].forEach(p=>{ const s = new THREE.Mesh(new THREE.SphereGeometry(rad*2, 16, 12), mat); s.position.copy(p); s.renderOrder = 11; CO.segGroup.add(s); });
+  });
+  const [a0,b0] = seg.segs[0], mid = a0.clone().add(b0).multiplyScalar(0.5); mid.y += dy;
+  const out = V3(mid.x, 0, mid.z); if(out.length() < 0.01) out.set(0,0,1); out.normalize();
+  const sp = labelSprite({main:seg.main, sub:seg.sub, val:seg.val}, color);
+  const k = Math.max(0.6, R*0.1);
+  sp.position.copy(mid).addScaledVector(out, k*1.1).add(V3(0, k*0.4, 0)); sp.scale.set(k*sp.userData.aspect, k, 1);
+  CO.segGroup.add(sp);
+}
+function coApplySel(){
+  const L0 = CO.sel!==null ? CO.lines[CO.sel] : null;
+  if(CO.mode==='comp' && L0 && L0.hl && L0.hl.includes('contact') && CO.explode < 0.45){
+    CO.explode = 0.5; if($('#coExp')) $('#coExp').value = 50; coPlace();
+  } else coPaint();
+  $('#coCalc').querySelectorAll('.line').forEach(el=>el.classList.toggle('sel', +el.dataset.i===CO.sel));
+}
+
+/* calcoli */
+function coLine(Ln, i, ctx, dotColor){
+  const click = CO.mode==='comp' && (Ln.hl || Ln.seg) ? ' clickable' : '';
+  const dot = dotColor ? `<i class="dotc" style="background:${dotColor}"></i>` : '';
+  if(Ln.note) return `<div class="line note-line${click}" data-i="${i}" role="button" tabindex="0"><div class="nt">${dot}<span>${Ln.text}</span></div></div>`;
+  let res, ap;
+  if(Ln.mix){
+    const n = Ln.mix.n, c = Ln.mix.c;
+    if(ctx.sym){ res = `${fmt(n)} ${c<0?'−':'+'} ${fmt(Math.abs(c))}π ${Ln.unit}`; ap = approx(n) || approx(c); }
+    else { const v = n + c*PI_NUM; res = `${fmt(v)} ${Ln.unit}`; ap = approx(v); }
+  } else {
+    const value = Ln.pi && !ctx.sym ? Ln.val*PI_NUM : Ln.val; ap = approx(value);
+    res = (Ln.pi && ctx.sym) ? `${Ln.val===1?'':fmt(Ln.val)}π ${Ln.unit}` : `${fmt(value)} ${Ln.unit}`;
+  }
+  const sub = Ln.s ? Ln.s(ctx) : '';
+  const show = !CO.hidden || CO.revealed.has(i);
+  return `<div class="line${click}" data-i="${i}"${click?' role="button" tabindex="0"':''}><div class="lbl">${dot}${Ln.label}</div><div class="eq"><span class="sym">${Ln.sym}</span><span class="op">=</span><span>${rad(Ln.f)}</span>${
+    sub && sub!==Ln.f ? `<span class="op stepop">=</span><span class="step">${rad(sub)}</span>` : ''}<span class="op">${ap?'≈':'='}</span>${
+    show ? `<span class="res">${res}</span>` : `<button class="reveal" data-r="${i}" aria-label="Mostra il risultato: ${Ln.label}">?</button>`}</div></div>`;
+}
+function coCalc(){
+  const it = coItem(), ctx = exCtx();
+  CO.lines = it.calc(CO.dims[it.k]);
+  if(CO.mode==='comp' && it.segs){ const sg = it.segs(CO.dims[it.k]); CO.lines.forEach(Ln=>{ if(!Ln.note && sg[Ln.label]) Ln.seg = sg[Ln.label]; }); }
+  const guided = CO.step !== null;
+  if(guided){ CO.step = Math.min(CO.step, CO.lines.length-1); CO.sel = CO.step; }
+  const colorOf = Ln => {
+    if(CO.mode!=='comp') return null;
+    if(Ln.seg) return css('--hl') || '#D6336C';
+    if(!Ln.hl) return null;
+    const m = CO.parts.find(p=>Ln.hl.includes(p.userData.key)) || CO.parts.find(p=>Ln.hl.includes(p.userData.piece) && p.userData.role==='surf');
+    return m ? '#' + m.userData.color.getHexString() : null;
+  };
+  $('#coCalc').innerHTML = CO.lines.map((Ln,i)=> guided && i > CO.step ? '' : coLine(Ln, i, ctx, colorOf(Ln))).join('');
+  $('#coCalc').querySelectorAll('.reveal').forEach(b=>b.onclick = e=>{ e.stopPropagation(); CO.revealed.add(+b.dataset.r); coCalc(); });
+  $('#coCalc').querySelectorAll('.line.clickable').forEach(el=>{
+    const pickLine = ()=>{ if(guided) return; const i = +el.dataset.i; CO.sel = CO.sel===i ? null : i; coApplySel(); };
+    el.onclick = pickLine;
+    el.onkeydown = e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); pickLine(); } };
+  });
+  $('#coNav').hidden = !guided;
+  if(guided){ $('#coStep').textContent = `Passo ${CO.step+1} di ${CO.lines.length}`; $('#coPrev').disabled = CO.step===0; $('#coNext').disabled = CO.step>=CO.lines.length-1; }
+  $('#coGuide').textContent = guided ? 'Mostra tutti i passaggi' : 'Esempio passo passo';
+  $('#coNote').textContent = it.note;
+  $('#coToggleRes').textContent = CO.hidden ? 'Mostra tutti i risultati' : 'Nascondi risultati';
+  $('#coCalc').querySelectorAll('.line').forEach(el=>el.classList.toggle('sel', +el.dataset.i===CO.sel));
+}
+
+/* viste per dispositivo */
+function detectDevice(){
+  const w = window.innerWidth, coarse = matchMedia('(pointer: coarse)').matches;
+  if(w < 600) return 'phone';
+  if(coarse && w >= 1280) return 'lim';
+  if(coarse) return 'tablet';
+  return 'pc';
+}
+let lastDev = null;
+function applyDevice(){
+  const dev = S.device==='auto' ? detectDevice() : S.device;
+  document.body.dataset.dev = dev;
+  document.body.classList.toggle('touch', dev!=='pc');
+  $('#optDevice').value = S.device;
+  const touchNow = matchMedia('(pointer: coarse)').matches;
+  $('#hint3d').textContent = touchNow ? 'Trascina con un dito per ruotare · due dita per ingrandire' : 'Trascina per ruotare · rotellina per ingrandire';
+  if(dev !== lastDev){ lastDev = dev; requestAnimationFrame(()=>{ resize(); refreshHelpers(); }); }
+}
+$('#optDevice').onchange = e=>{ S.device = e.target.value; savePrefs(); applyDevice(); };
+window.addEventListener('resize', ()=>{ if(S.device==='auto') applyDevice(); });
+$('#prefsToggle').onclick = ()=>{ const open = document.body.classList.toggle('prefs-open'); $('#prefsToggle').setAttribute('aria-expanded', open); };
+$('#vFull').onclick = ()=>{
+  try{
+    if(document.fullscreenElement) document.exitFullscreen();
+    else if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+  }catch(e){}
+};
+document.addEventListener('fullscreenchange', ()=>{ $('#vFull').textContent = document.fullscreenElement ? 'Esci da schermo intero' : 'Schermo intero'; requestAnimationFrame(resize); });
+applyDevice();
+
+/* tema */
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+/* avvio */
+applyPrefs();
+resize();
+applyTheme();
+selectSolid('cubo');
+computeBounds(); cam.dist = fitR/Math.sin(camera.fov*Math.PI/360)*1.1; cam.target.copy(fitC);
+requestAnimationFrame(loop);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>refreshHelpers());
+if(['#esercizi','#formule','#composti'].includes(location.hash)) showView(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>

@@ -81,6 +81,10 @@ var{font-style:italic;font-family:inherit}
 .solid-title{position:absolute;top:14px;left:16px;pointer-events:none}
 .solid-title h2{font-size:2rem;font-weight:700}
 .solid-title p{margin:0;color:var(--muted);font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
+.fvs-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px;pointer-events:auto}
+.fvs{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:2px 10px;font-weight:800;font-size:.82rem;color:var(--muted)}
+.fvs:hover,.fvs[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.fvs-f{font-weight:800;font-size:.95rem;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:2px 10px;font-variant-numeric:tabular-nums}
 .view-btns{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:6px}
 .vbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 12px;font-weight:700;font-size:.85rem;text-align:left}
 .vbtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -235,6 +239,39 @@ body.simple .hint{display:none}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 
+/* ---------- disegno tecnico ---------- */
+.paper{position:relative;height:clamp(380px,calc(100vh - 210px),760px);background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.paper svg{display:block;width:100%;height:100%}
+.paper .solid-title h2{font-size:1.5rem}
+body[data-dev="lim"] .paper{height:calc(100vh - 190px);min-height:460px}
+body[data-dev="phone"] .paper{height:min(62vh,520px);min-height:320px}
+@media (max-width:980px){ .paper{height:clamp(340px,62vh,600px)} }
+.dw-vis,.dw-hid,.dw-axis,.dw-ref,.dw-con,.dw-frame,.dw-dim,.dw-dimx,.dw-grid{fill:none;stroke-linecap:round}
+.dw-vis{stroke:var(--ink);stroke-width:3.2}
+.dw-hid{stroke:var(--ink);stroke-width:1.8;stroke-dasharray:9 6;stroke-linecap:butt}
+.dw-axis{stroke:var(--hl);stroke-width:1.3;stroke-dasharray:22 5 3 5;stroke-linecap:butt}
+.dw-ref{stroke:var(--accent);stroke-width:1;opacity:.6}
+.dw-con{stroke:var(--muted);stroke-width:1.2;opacity:.75}
+.dw-frame{stroke:var(--ink);stroke-width:1.5}
+.dw-dim,.dw-dimx{stroke:var(--ink);stroke-width:1}
+.dw-arrow{fill:var(--ink)}
+.dw-dot{fill:var(--ink)} .dw-dot.con{fill:var(--accent)} .dw-dot.now{fill:var(--accent)}
+.dw-con.dw-tool{stroke:var(--accent);stroke-width:1.6;opacity:.9}
+.dw-grid{stroke:var(--grid);stroke-width:.8}
+.dw-lab{fill:var(--muted);font:800 26px var(--font-body);letter-spacing:.03em}
+.dw-dimt{fill:var(--ink);font:700 20px var(--font-body)}
+.dw-vis.now,.dw-hid.now,.dw-con.now,.dw-ref.now,.dw-axis.now,.dw-frame.now,.dw-dim.now,.dw-dimx.now{stroke:var(--accent);opacity:1;animation:dwIn .7s ease both}
+.dw-ref.now{stroke-width:1.4}
+text.now{fill:var(--accent);animation:dwIn .7s ease both}
+@keyframes dwIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){ .now{animation:none!important} }
+.dr-step{margin:0;font-size:1.05rem;line-height:1.6}
+body[data-dev="lim"] .dr-step{font-size:1.25rem}
+.dr-legend{display:flex;flex-direction:column;gap:6px}
+.dr-legend div{display:flex;align-items:center;gap:10px;font-size:.9rem}
+.dr-legend svg{width:60px;height:12px;flex:none}
+.dr-legend .dw-vis{stroke-width:3}.dr-legend .dw-hid{stroke-width:1.8;stroke-dasharray:7 5}.dr-legend .dw-axis{stroke-dasharray:14 4 2 4}
+
 /* ---------- radice quadrata disegnata ---------- */
 .rad{display:inline-block;position:relative;padding-left:.66em;white-space:nowrap;vertical-align:baseline}
 .rad > svg{position:absolute;left:0;top:0;height:100%;width:.7em;overflow:visible;color:inherit}
@@ -365,6 +402,7 @@ body[data-dev="phone"] .eq{font-size:1rem}
       <button class="tab" data-view="esercizi">Esercizi</button>
       <button class="tab" data-view="formule">Formule</button>
       <button class="tab" data-view="composti">Rotazione e composti</button>
+      <button class="tab" data-view="disegno">Disegno tecnico</button>
     </nav>
     <div class="prefs" id="prefs">
       <label class="switch devsel"><span>Vista</span>
@@ -393,6 +431,7 @@ body[data-dev="phone"] .eq{font-size:1rem}
         <div class="solid-title">
           <h2 id="solidName">Cubo</h2>
           <p id="solidCounts"></p>
+          <div class="fvs-wrap"><button class="fvs" id="fvsBtn" aria-pressed="false" hidden>F + V − S</button><span class="fvs-f" id="fvsF" hidden></span></div>
         </div>
         <div class="view-btns">
           <button class="vbtn" id="vFront">Di fronte</button>
@@ -484,6 +523,46 @@ body[data-dev="phone"] .eq{font-size:1rem}
     <aside class="panel">
       <section class="card"><h3>Esperimenti</h3><div class="exp-list" id="foList"></div></section>
       <section class="card" id="foInfo" aria-live="polite"></section>
+    </aside>
+  </section>
+
+  <section class="work" id="viewDr" hidden>
+    <section class="stage" aria-label="Disegno tecnico">
+      <div class="paper" id="drPaper">
+        <svg id="drSvg" role="img" aria-label="Disegno tecnico del solido" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="solid-title"><h2 id="drTitle"></h2><p id="drSub"></p></div>
+      </div>
+      <div class="net-bar">
+        <div class="seg" role="group" aria-label="Tipo di disegno" id="drView">
+          <button data-v="po" class="on" aria-pressed="true">Proiezioni ortogonali</button><button data-v="axo" aria-pressed="false">Assonometria</button>
+        </div>
+        <div class="seg" role="group" aria-label="Tipo di assonometria" id="drAxo" hidden>
+          <button data-a="cav" class="on" aria-pressed="true">Cavaliera</button><button data-a="iso" aria-pressed="false">Isometrica</button><button data-a="mono" aria-pressed="false">Monometrica</button>
+        </div>
+        <div class="seg" role="group" aria-label="Angoli della monometrica" id="drMonoA" hidden>
+          <button data-a="30" class="on" aria-pressed="true">30° / 60°</button><button data-a="45" aria-pressed="false">45° / 45°</button>
+        </div>
+        <label class="switch"><input type="checkbox" id="drHid" checked><span>Spigoli nascosti</span></label>
+        <label class="switch" id="drRefsW"><input type="checkbox" id="drRefs"><span>Linee di richiamo</span></label>
+        <label class="switch" id="drQuoteW"><input type="checkbox" id="drQuote" checked><span>Quote</span></label>
+        <label class="switch"><input type="checkbox" id="drGrid" checked><span>Quadretti</span></label>
+      </div>
+    </section>
+    <aside class="panel">
+      <section class="card" id="drTut"></section>
+      <section class="card" id="drMethod"></section>
+      <section class="card"><h3>Scegli il solido</h3><div id="drPicker"></div></section>
+      <section class="card"><h3>Misure</h3><div id="drDims" style="display:flex;flex-direction:column;gap:10px"></div></section>
+      <section class="card">
+        <h3>Tipi di linea</h3>
+        <div class="dr-legend">
+          <div><svg viewBox="0 0 60 12" aria-hidden="true"><path d="M2 6H58" class="dw-vis"/></svg><span><b>Continua grossa</b>: spigoli e contorni in vista</span></div>
+          <div><svg viewBox="0 0 60 12" aria-hidden="true"><path d="M2 6H58" class="dw-hid"/></svg><span><b>Tratteggiata</b>: spigoli nascosti</span></div>
+          <div><svg viewBox="0 0 60 12" aria-hidden="true"><path d="M2 6H58" class="dw-axis"/></svg><span><b>Mista (tratto e punto)</b>: assi di simmetria</span></div>
+          <div><svg viewBox="0 0 60 12" aria-hidden="true"><path d="M2 6H58" class="dw-ref"/></svg><span><b>Continua sottile</b>: linee di richiamo e di costruzione</span></div>
+        </div>
+        <p class="small">Proiezioni ortogonali con il metodo europeo: prospetto sul piano verticale, pianta sotto, profilo (vista da sinistra) a destra.</p>
+      </section>
     </aside>
   </section>
 
@@ -1285,6 +1364,12 @@ function renderHeader(){
   else if(S.solid==='cono') counts = '1 base circolare · 1 superficie laterale curva · 1 vertice';
   else counts = '1 superficie curva · nessuno spigolo';
   $('#solidCounts').textContent = counts;
+  const c = current.counts;
+  $('#fvsBtn').hidden = !c;
+  $('#fvsBtn').setAttribute('aria-pressed', !!(c && S.fvs));
+  $('#fvsBtn').title = 'Mostra la relazione di Eulero';
+  $('#fvsF').hidden = !(c && S.fvs);
+  if(c) $('#fvsF').textContent = `F + V − S = ${c.F} + ${c.V} − ${c.S} = ${c.F + c.V - c.S}`;
   let leg;
   if(def.platonic) leg = `<span><i style="background:${COL.plat[0]}"></i><i style="background:${COL.plat[1]}"></i><i style="background:${COL.plat[2]}"></i>Facce</span>`;
   else if(current.netKind==='poly') leg = `<span><i style="background:${COL.base}"></i>${S.solid==='piramide'?'Base':'Basi'}</span><span><i style="background:${COL.lat[0]}"></i><i style="background:${COL.lat[1]}"></i>Facce laterali</span>`;
@@ -1295,6 +1380,7 @@ function renderHeader(){
   $('#netNote').hidden = hasNet;
   $('#netT').disabled = !hasNet; $('#netPlay').disabled = !hasNet;
 }
+$('#fvsBtn').onclick = ()=>{ S.fvs = !S.fvs; renderHeader(); };
 function selectSolid(k){
   S.solid = k; S.el = null; S.revealed.clear(); anim = null;
   if(!SOLIDS[k].build || k==='sfera'){ S.t = 0; $('#netT').value = 0; }
@@ -1541,8 +1627,102 @@ const GENS = [
   sol:[L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale del cilindro',Al_,'2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true), L('Superficie della semisfera','S<sub>ss</sub>','2 · π · r²',c=>`2 · ${c.P} · ${r}²`,2*r*r,'cm²',true), L('Superficie totale',At_,`${Ab_} + ${Al_} + S<sub>ss</sub>`,c=>`${c.pc(r*r)} + ${c.pc(2*r*H)} + ${c.pc(2*r*r)}`,At,'cm²',true), L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,V1,'cm³',true), L('Volume della semisfera','V<sub>ss</sub>','(4 · π · r³) : 3 : 2',c=>`(4 · ${c.P} · ${r}³) : 3 : 2`,V2,'cm³',true), L('Volume totale','V','V<sub>cil</sub> + V<sub>ss</sub>',c=>`${c.pc(V1)} + ${c.pc(V2)}`,V,'cm³',true)]}; }}
 ];
 
+/* ---------- solidi di rotazione e nuovi composti ---------- */
+const ROT_TRIPLES = [[3,4,5],[4,3,5],[6,8,10],[8,6,10],[9,12,15],[12,9,15]];
+GENS.push(
+{lvl:2, cat:'rotazione', make(){ const [a,b] = distinct(2,2,10).sort((x,y)=>x-y), major = Math.random()<0.5, r = major ? a : b, h = major ? b : a; return {
+  co:{mode:'rot', k:'rett', dims:{r,h}},
+  text:()=>`Un rettangolo ha i lati di ${NU(a,'cm')} e ${NU(b,'cm')}. Fallo ruotare di 360° attorno al lato <b>${major?'maggiore':'minore'}</b>. Calcola l'area totale e il volume del solido che si ottiene.`,
+  hint:['Si ottiene un cilindro','il lato sull\'asse è l\'altezza, l\'altro è il raggio','A<sub>t</sub> = 2 · π · r · h + 2 · π · r²','V = π · r² · h'],
+  asks:[A('Area totale',At_,2*r*h+2*r*r,'cm²',true), A('Volume','V',r*r*h,'cm³',true)],
+  sol:[L('Raggio (lato che ruota)','r','lato perpendicolare all\'asse',`${r}`,r,'cm'), L('Altezza (lato sull\'asse)','h','lato sull\'asse',`${h}`,h,'cm'),
+    L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${r}²`,r*r,'cm²',true), L('Area laterale',Al_,'2 · π · r · h',c=>`2 · ${c.P} · ${r} · ${h}`,2*r*h,'cm²',true),
+    L('Area totale',At_,`${Al_} + 2 · ${Ab_}`,c=>`${c.pc(2*r*h)} + 2 · ${c.pc(r*r)}`,2*r*h+2*r*r,'cm²',true), L('Volume','V','π · r² · h',c=>`${c.P} · ${r}² · ${h}`,r*r*h,'cm³',true)]}; }},
+{lvl:2, cat:'rotazione', make(){ const t = pick(ROT_TRIPLES), k = t[2]===15 ? 1 : rnd(1,2), c1 = t[0]*k, c2 = t[1]*k, ip = t[2]*k; return {
+  co:{mode:'rot', k:'tri', dims:{r:c2, h:c1}},
+  text:()=>`Un triangolo rettangolo ha i cateti di ${NU(c1,'cm')} e ${NU(c2,'cm')}. Fallo ruotare di 360° attorno al cateto di ${NU(c1,'cm')}. Calcola l'area totale e il volume del cono che si ottiene.`,
+  hint:['Il cateto sull\'asse è l\'altezza, l\'altro cateto è il raggio','l\'ipotenusa è l\'apotema: a = √(r² + h²)','A<sub>t</sub> = π · r² + π · r · a','V = (π · r² · h) : 3'],
+  asks:[A('Area totale',At_,c2*c2+c2*ip,'cm²',true), A('Volume','V',c2*c2*c1/3,'cm³',true)],
+  sol:[L('Apotema (ipotenusa)','a','√(r² + h²)',`√(${c2}² + ${c1}²)`,ip,'cm'), L('Area di base',Ab_,'π · r²',c=>`${c.P} · ${c2}²`,c2*c2,'cm²',true),
+    L('Area laterale',Al_,'π · r · a',c=>`${c.P} · ${c2} · ${ip}`,c2*ip,'cm²',true), L('Area totale',At_,`${Ab_} + ${Al_}`,c=>`${c.pc(c2*c2)} + ${c.pc(c2*ip)}`,c2*c2+c2*ip,'cm²',true),
+    L('Volume','V','(π · r² · h) : 3',c=>`(${c.P} · ${c2}² · ${c1}) : 3`,c2*c2*c1/3,'cm³',true)]}; }},
+{lvl:3, cat:'rotazione', make(){ const k = rnd(1,3), c1 = 3*k, c2 = 4*k, ip = 5*k, r = c1*c2/ip; return {
+  co:{mode:'rot', k:'ipo', dims:{c1, c2}},
+  text:()=>`Un triangolo rettangolo ha i cateti di ${NU(c1,'cm')} e ${NU(c2,'cm')}. Fallo ruotare di 360° attorno all'<b>ipotenusa</b>. Calcola l'area della superficie e il volume del doppio cono che si ottiene.`,
+  hint:['i = √(c₁² + c₂²)','r = (c₁ · c₂) : i  (altezza relativa all\'ipotenusa)','A = π · r · c₁ + π · r · c₂','V = (π · r² · i) : 3'],
+  asks:[A('Superficie',At_,r*(c1+c2),'cm²',true), A('Volume','V',r*r*ip/3,'cm³',true)],
+  sol:[L('Ipotenusa (asse)','i','√(c₁² + c₂²)',`√(${c1}² + ${c2}²)`,ip,'cm'), L('Raggio = altezza relativa all\'ipotenusa','r','(c₁ · c₂) : i',`(${c1} · ${c2}) : ${ip}`,r,'cm'),
+    L('Area laterale del primo cono','A<sub>l1</sub>','π · r · c₁',c=>`${c.P} · ${fmt(r)} · ${c1}`,r*c1,'cm²',true), L('Area laterale del secondo cono','A<sub>l2</sub>','π · r · c₂',c=>`${c.P} · ${fmt(r)} · ${c2}`,r*c2,'cm²',true),
+    L('Superficie',At_,'A<sub>l1</sub> + A<sub>l2</sub>',c=>`${c.pc(r*c1)} + ${c.pc(r*c2)}`,r*(c1+c2),'cm²',true), L('Volume','V','(π · r² · i) : 3',c=>`(${c.P} · ${fmt(r)}² · ${ip}) : 3`,r*r*ip/3,'cm³',true)]}; }},
+{lvl:3, cat:'rotazione', make(){ const [h,hc,l] = pick(ROT_TRIPLES), b = rnd(2,8), B = b + hc; return {
+  co:{mode:'rot', k:'trapM', dims:{B, b, h}},
+  text:()=>`Un trapezio rettangolo ha la base maggiore di ${NU(B,'cm')}, la base minore di ${NU(b,'cm')}, l'altezza di ${NU(h,'cm')} e il lato obliquo di ${NU(l,'cm')}. Fallo ruotare di 360° attorno alla <b>base maggiore</b>. Calcola l'area della superficie e il volume del solido.`,
+  hint:['Si ottiene un cilindro (altezza b) con sopra un cono (altezza B − b)','il raggio è l\'altezza del trapezio','A = π · h² + 2 · π · h · b + π · h · l','V = π · h² · b + (π · h² · (B − b)) : 3'],
+  asks:[A('Superficie totale',At_,h*h+2*h*b+h*l,'cm²',true), A('Volume','V',h*h*b+h*h*hc/3,'cm³',true)],
+  sol:[L('Altezza del cono','h<sub>c</sub>','B − b',`${B} − ${b}`,hc,'cm'), L('Area di base',Ab_,'π · h²',c=>`${c.P} · ${h}²`,h*h,'cm²',true),
+    L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · h · b',c=>`2 · ${c.P} · ${h} · ${b}`,2*h*b,'cm²',true), L('Area laterale del cono','A<sub>l cono</sub>','π · h · l',c=>`${c.P} · ${h} · ${l}`,h*l,'cm²',true),
+    L('Superficie totale',At_,`${Ab_} + A<sub>l cil</sub> + A<sub>l cono</sub>`,c=>`${c.pc(h*h)} + ${c.pc(2*h*b)} + ${c.pc(h*l)}`,h*h+2*h*b+h*l,'cm²',true),
+    L('Volume del cilindro','V<sub>cil</sub>','π · h² · b',c=>`${c.P} · ${h}² · ${b}`,h*h*b,'cm³',true), L('Volume del cono','V<sub>cono</sub>','(π · h² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${h}² · ${hc}) : 3`,h*h*hc/3,'cm³',true),
+    L('Volume totale','V','V<sub>cil</sub> + V<sub>cono</sub>',c=>`${c.pc(h*h*b)} + ${c.pc(h*h*hc/3)}`,h*h*b+h*h*hc/3,'cm³',true)]}; }},
+{lvl:3, cat:'rotazione', make(){ const [h,hc,l] = pick(ROT_TRIPLES), b = rnd(2,8), B = b + hc; return {
+  co:{mode:'rot', k:'trapm', dims:{B, b, h}},
+  text:()=>`Un trapezio rettangolo ha la base maggiore di ${NU(B,'cm')}, la base minore di ${NU(b,'cm')}, l'altezza di ${NU(h,'cm')} e il lato obliquo di ${NU(l,'cm')}. Fallo ruotare di 360° attorno alla <b>base minore</b>. Calcola l'area della superficie e il volume del solido.`,
+  hint:['Si ottiene un cilindro (altezza B) con una cavità a forma di cono (altezza B − b)','A = π · h² + 2 · π · h · B + π · h · l','V = π · h² · B − (π · h² · (B − b)) : 3'],
+  asks:[A('Superficie totale',At_,h*h+2*h*B+h*l,'cm²',true), A('Volume','V',h*h*B-h*h*hc/3,'cm³',true)],
+  sol:[L('Altezza della cavità','h<sub>c</sub>','B − b',`${B} − ${b}`,hc,'cm'), L('Area di base',Ab_,'π · h²',c=>`${c.P} · ${h}²`,h*h,'cm²',true),
+    L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · h · B',c=>`2 · ${c.P} · ${h} · ${B}`,2*h*B,'cm²',true), L('Area della cavità conica','A<sub>l cono</sub>','π · h · l',c=>`${c.P} · ${h} · ${l}`,h*l,'cm²',true),
+    L('Superficie totale',At_,`${Ab_} + A<sub>l cil</sub> + A<sub>l cono</sub>`,c=>`${c.pc(h*h)} + ${c.pc(2*h*B)} + ${c.pc(h*l)}`,h*h+2*h*B+h*l,'cm²',true),
+    L('Volume del cilindro','V<sub>cil</sub>','π · h² · B',c=>`${c.P} · ${h}² · ${B}`,h*h*B,'cm³',true), L('Volume della cavità','V<sub>cono</sub>','(π · h² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${h}² · ${hc}) : 3`,h*h*hc/3,'cm³',true),
+    L('Volume del solido','V','V<sub>cil</sub> − V<sub>cono</sub>',c=>`${c.pc(h*h*B)} − ${c.pc(h*h*hc/3)}`,h*h*B-h*h*hc/3,'cm³',true)]}; }},
+{lvl:3, cat:'composti', make(){ const [r,hc,a] = tripleMax(12), H = rnd(4,12); return {
+  co:{mode:'comp', k:'cil2coni', dims:{r, H, hc}},
+  text:()=>`Un solido è formato da un cilindro con due coni uguali appoggiati sulle basi. Il raggio misura ${NU(r,'cm')}, l'altezza del cilindro ${NU(H,'cm')} e l'altezza di ogni cono ${NU(hc,'cm')}. Calcola l'area della superficie totale e il volume del solido.`,
+  hint:['a = √(r² + h<sub>c</sub>²)','Superficie = A<sub>l</sub> cilindro + 2 · A<sub>l</sub> cono (le basi sono coperte)','V = V<sub>cilindro</sub> + 2 · V<sub>cono</sub>'],
+  asks:[A('Superficie totale',At_,2*r*H+2*r*a,'cm²',true), A('Volume','V',r*r*H+2*r*r*hc/3,'cm³',true)],
+  sol:[L('Apotema dei coni','a','√(r² + h<sub>c</sub>²)',`√(${r}² + ${hc}²)`,a,'cm'), L('Area laterale del cilindro','A<sub>l cil</sub>','2 · π · r · H',c=>`2 · ${c.P} · ${r} · ${H}`,2*r*H,'cm²',true),
+    L('Area laterale di un cono','A<sub>l cono</sub>','π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true), L('Superficie totale',At_,'A<sub>l cil</sub> + 2 · A<sub>l cono</sub>',c=>`${c.pc(2*r*H)} + 2 · ${c.pc(r*a)}`,2*r*H+2*r*a,'cm²',true),
+    L('Volume del cilindro','V<sub>cil</sub>','π · r² · H',c=>`${c.P} · ${r}² · ${H}`,r*r*H,'cm³',true), L('Volume di un cono','V<sub>cono</sub>','(π · r² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${r}² · ${hc}) : 3`,r*r*hc/3,'cm³',true),
+    L('Volume totale','V','V<sub>cil</sub> + 2 · V<sub>cono</sub>',c=>`${c.pc(r*r*H)} + 2 · ${c.pc(r*r*hc/3)}`,r*r*H+2*r*r*hc/3,'cm³',true)]}; }},
+{lvl:3, cat:'composti', make(){ const [ab,hp,a] = tripleMax(8), l = 2*ab, p2 = 4*l, Alp = p2*a/2, Vp = l*l*hp/3; return {
+  co:{mode:'comp', k:'cubo2pir', dims:{l, hp}},
+  text:()=>`Un solido è formato da un cubo con due piramidi regolari uguali appoggiate su due facce opposte. Lo spigolo del cubo misura ${NU(l,'cm')} e l'altezza di ogni piramide ${NU(hp,'cm')}. Calcola l'area della superficie totale e il volume del solido.`,
+  hint:['a<sub>b</sub> = l : 2','a = √(h<sub>p</sub>² + a<sub>b</sub>²)','Superficie = 4 · l² + 2 · A<sub>l</sub> piramide','V = l³ + 2 · (l² · h<sub>p</sub>) : 3'],
+  asks:[A('Superficie totale',At_,4*l*l+2*Alp,'cm²'), A('Volume','V',l**3+2*Vp,'cm³')],
+  sol:[L('Area laterale del cubo','A<sub>l cubo</sub>','4 · l²',`4 · ${l}²`,4*l*l,'cm²'), L('Apotema di base',ab_,'l : 2',`${l} : 2`,ab,'cm'),
+    L('Apotema delle piramidi','a',`√(h<sub>p</sub>² + ${ab_}²)`,`√(${hp}² + ${ab}²)`,a,'cm'), L('Area laterale di una piramide','A<sub>l pir</sub>','(2p · a) : 2',`(${p2} · ${a}) : 2`,Alp,'cm²'),
+    L('Superficie totale',At_,'A<sub>l cubo</sub> + 2 · A<sub>l pir</sub>',`${4*l*l} + 2 · ${Alp}`,4*l*l+2*Alp,'cm²'), L('Volume del cubo','V<sub>cubo</sub>','l³',`${l}³`,l**3,'cm³'),
+    L('Volume di una piramide','V<sub>pir</sub>','(l² · h<sub>p</sub>) : 3',`(${l}² · ${hp}) : 3`,Vp,'cm³'), L('Volume totale','V','V<sub>cubo</sub> + 2 · V<sub>pir</sub>',`${l**3} + 2 · ${fmt(Vp)}`,l**3+2*Vp,'cm³')]}; }},
+{lvl:3, cat:'composti', make(){ const [ab,hp,a] = tripleMax(8), l = 2*ab, H = rnd(4,14), p2 = 4*l, Ab = l*l, Alpr = p2*H, Alp = p2*a/2, Vp = Ab*hp/3; return {
+  co:{mode:'comp', k:'prisma2pir', dims:{l, H, hp}},
+  text:()=>`Un solido è formato da un prisma quadrangolare regolare con due piramidi uguali appoggiate sulle basi. Lo spigolo di base misura ${NU(l,'cm')}, l'altezza del prisma ${NU(H,'cm')} e l'altezza di ogni piramide ${NU(hp,'cm')}. Calcola l'area della superficie totale e il volume del solido.`,
+  hint:['a = √(h<sub>p</sub>² + a<sub>b</sub>²)','Superficie = A<sub>l</sub> prisma + 2 · A<sub>l</sub> piramide','V = A<sub>b</sub> · H + 2 · (A<sub>b</sub> · h<sub>p</sub>) : 3'],
+  asks:[A('Superficie totale',At_,Alpr+2*Alp,'cm²'), A('Volume','V',Ab*H+2*Vp,'cm³')],
+  sol:[L('Perimetro di base','2p','4 · l',`4 · ${l}`,p2,'cm'), L('Area laterale del prisma','A<sub>l pr</sub>','2p · H',`${p2} · ${H}`,Alpr,'cm²'),
+    L('Apotema delle piramidi','a',`√(h<sub>p</sub>² + ${ab_}²)`,`√(${hp}² + ${ab}²)`,a,'cm'), L('Area laterale di una piramide','A<sub>l pir</sub>','(2p · a) : 2',`(${p2} · ${a}) : 2`,Alp,'cm²'),
+    L('Superficie totale',At_,'A<sub>l pr</sub> + 2 · A<sub>l pir</sub>',`${Alpr} + 2 · ${Alp}`,Alpr+2*Alp,'cm²'), L('Area di base',Ab_,'l²',`${l}²`,Ab,'cm²'),
+    L('Volume del prisma','V<sub>pr</sub>',`${Ab_} · H`,`${Ab} · ${H}`,Ab*H,'cm³'), L('Volume di una piramide','V<sub>pir</sub>',`(${Ab_} · h<sub>p</sub>) : 3`,`(${Ab} · ${hp}) : 3`,Vp,'cm³'),
+    L('Volume totale','V','V<sub>pr</sub> + 2 · V<sub>pir</sub>',`${Ab*H} + 2 · ${fmt(Vp)}`,Ab*H+2*Vp,'cm³')]}; }},
+{lvl:3, cat:'composti', make(){ const [r,hc,a] = pick([[3,4,5],[6,8,10],[9,12,15],[3,4,5],[6,8,10]]); return {
+  co:{mode:'comp', k:'gelato', dims:{r, hc}},
+  text:()=>`Un "cono gelato" è formato da un cono con sopra una semisfera che ha lo stesso raggio. Il raggio misura ${NU(r,'cm')} e l'altezza del cono ${NU(hc,'cm')}. Calcola l'area della superficie totale e il volume del solido.`,
+  hint:['a = √(r² + h<sub>c</sub>²)','Superficie = A<sub>l</sub> cono + 2 · π · r²','V = (π · r² · h<sub>c</sub>) : 3 + (4 · π · r³) : 3 : 2'],
+  asks:[A('Superficie totale',At_,r*a+2*r*r,'cm²',true), A('Volume','V',r*r*hc/3+2*r**3/3,'cm³',true)],
+  sol:[L('Apotema del cono','a','√(r² + h<sub>c</sub>²)',`√(${r}² + ${hc}²)`,a,'cm'), L('Area laterale del cono','A<sub>l cono</sub>','π · r · a',c=>`${c.P} · ${r} · ${a}`,r*a,'cm²',true),
+    L('Superficie della semisfera','S<sub>ss</sub>','2 · π · r²',c=>`2 · ${c.P} · ${r}²`,2*r*r,'cm²',true), L('Superficie totale',At_,'A<sub>l cono</sub> + S<sub>ss</sub>',c=>`${c.pc(r*a)} + ${c.pc(2*r*r)}`,r*a+2*r*r,'cm²',true),
+    L('Volume del cono','V<sub>cono</sub>','(π · r² · h<sub>c</sub>) : 3',c=>`(${c.P} · ${r}² · ${hc}) : 3`,r*r*hc/3,'cm³',true), L('Volume della semisfera','V<sub>ss</sub>','(4 · π · r³) : 3 : 2',c=>`(4 · ${c.P} · ${r}³) : 3 : 2`,2*r**3/3,'cm³',true),
+    L('Volume totale','V','V<sub>cono</sub> + V<sub>ss</sub>',c=>`${c.pc(r*r*hc/3)} + ${c.pc(2*r**3/3)}`,r*r*hc/3+2*r**3/3,'cm³',true)]}; }},
+{lvl:3, cat:'composti', make(){ const l = rnd(4,10), r = rnd(1, Math.max(1, Math.floor((l-1)/2))), Vc = l**3, Vf = PI_NUM*r*r*l, Af = 2*PI_NUM*r*l, Ac = 2*PI_NUM*r*r; return {
+  co:{mode:'comp', k:'foro', dims:{l, r}},
+  text:()=>`Un cubo con lo spigolo di ${NU(l,'cm')} è attraversato da un foro cilindrico con il raggio di ${NU(r,'cm')}, perpendicolare a due facce opposte. Calcola il volume e l'area della superficie totale del solido (usa π = 3,14).`,
+  hint:['V = l³ − π · r² · l','Superficie = 6 · l² − 2 · π · r² + 2 · π · r · l'],
+  asks:[A('Volume','V',Vc-Vf,'cm³'), A('Superficie totale',At_,6*l*l-Ac+Af,'cm²')],
+  sol:[L('Volume del cubo','V<sub>cubo</sub>','l³',`${l}³`,Vc,'cm³'), L('Volume del foro (con π = 3,14)','V<sub>foro</sub>','π · r² · l',`3,14 · ${r}² · ${l}`,Vf,'cm³'),
+    L('Volume del solido','V','V<sub>cubo</sub> − V<sub>foro</sub>',`${Vc} − ${fmt(Vf)}`,Vc-Vf,'cm³'), L('Area del cubo','A<sub>cubo</sub>','6 · l²',`6 · ${l}²`,6*l*l,'cm²'),
+    L('Area dei due cerchi tolti','A<sub>cerchi</sub>','2 · π · r²',`2 · 3,14 · ${r}²`,Ac,'cm²'), L('Area interna del foro','A<sub>foro</sub>','2 · π · r · l',`2 · 3,14 · ${r} · ${l}`,Af,'cm²'),
+    L('Superficie totale',At_,'A<sub>cubo</sub> − A<sub>cerchi</sub> + A<sub>foro</sub>',`${6*l*l} − ${fmt(Ac)} + ${fmt(Af)}`,6*l*l-Ac+Af,'cm²')]}; }}
+);
 const LEVELS = [{n:1, name:'Base', d:'Tutti i dati sono forniti: applica la formula.'},{n:2, name:'Medio', d:'Formule inverse, Pitagora e peso specifico.'},{n:3, name:'Avanzato', d:'Rapporti, solidi composti e solidi equivalenti.'}];
-const CATS = [{k:'tutti',n:'Tutti'},{k:'cubo',n:'Cubo e parallelepipedo'},{k:'prismi',n:'Prismi'},{k:'piramidi',n:'Piramidi'},{k:'cilindro',n:'Cilindro'},{k:'cono',n:'Cono'},{k:'sfera',n:'Sfera'},{k:'composti',n:'Solidi composti'}];
+const CATS = [{k:'tutti',n:'Tutti'},{k:'cubo',n:'Cubo e parallelepipedo'},{k:'prismi',n:'Prismi'},{k:'piramidi',n:'Piramidi'},{k:'cilindro',n:'Cilindro'},{k:'cono',n:'Cono'},{k:'sfera',n:'Sfera'},{k:'rotazione',n:'Solidi di rotazione'},{k:'composti',n:'Solidi composti'}];
 const SERIES = 10;
 const EX = {level:1, cat:'tutti', results:[], idx:0, cur:null, lastGen:null, summary:false};
 
@@ -1623,6 +1803,7 @@ function renderEx(){
         ${!cur.hint && !S.simple ? `<button type="button" class="ghost" id="exHint">Suggerimento</button>` : ''}
         ${!cur.sol ? `<button type="button" class="ghost" id="exSol">Mostra la soluzione</button>` : ''}
         ${d.lab ? `<button type="button" class="ghost" id="exLab">Vedi il solido</button>` : ''}
+        ${d.co ? `<button type="button" class="ghost" id="exCo">Vedi il solido in 3D</button>` : ''}
         <span class="spacer"></span>
         ${!cur.done ? `<button type="button" class="ghost" id="exSkip">Cambia esercizio</button>` : ''}
       </div>
@@ -1636,6 +1817,7 @@ function renderEx(){
   if($('#exHint')) $('#exHint').onclick = ()=>{ saveInputs(); cur.hint = true; renderEx(); };
   if($('#exSol')) $('#exSol').onclick = ()=>{ saveInputs(); cur.sol = true; if(!cur.done){ cur.done = true; cur.outcome = 'shown'; cur.msg = {ok:false, t:'Ecco la soluzione passo passo. Confrontala con i tuoi calcoli.'}; } renderEx(); };
   if($('#exLab')) $('#exLab').onclick = ()=>openInLab(d.lab);
+  if($('#exCo')) $('#exCo').onclick = ()=>openInCo(d.co);
   if($('#exSkip')) $('#exSkip').onclick = ()=>{ newExercise(); renderEx(); };
   if(EX.focus){
     const first = d.asks.findIndex((a,i)=>cur.status[i]!==true);
@@ -1673,6 +1855,15 @@ function next(){
   renderEx();
   $('#exMain').scrollIntoView({block:'nearest'});
 }
+function openInCo(co){
+  CO.mode = co.mode;
+  if(co.mode==='rot') CO.rot = co.k; else CO.comp = co.k;
+  Object.assign(CO.dims[co.k], co.dims);
+  CO.explode = 0; CO.angle = Math.PI*2; CO.sel = null; CO.revealed.clear();
+  const had = !!CO.viewer;
+  showView('composti');
+  if(had) coAll();
+}
 function openInLab(lab){
   Object.assign(S.dims[lab.solid], lab.dims);
   if(lab.sides) S.sides[lab.solid] = lab.sides;
@@ -1688,7 +1879,9 @@ function showView(v){
   $('#viewEx').hidden = v!=='esercizi';
   $('#viewFo').hidden = v!=='formule';
   $('#viewCo').hidden = v!=='composti';
+  $('#viewDr').hidden = v!=='disegno';
   if(v==='composti') coShow();
+  if(v==='disegno') drShow();
   if(v==='formule') foShow();
   document.querySelectorAll('.tab[data-view]').forEach(t=>{ const on = t.dataset.view===v; t.classList.toggle('active', on); if(on) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
   if(v==='solidi') requestAnimationFrame(resize);
@@ -2293,7 +2486,7 @@ function coAll(){
 }
 function coDims(){
   const it = coItem(), d = CO.dims[it.k];
-  $('#coDims').innerHTML = it.dims.map(x=>`<div class="dim"><label for="co_${x.k}">${x.label}</label><output id="coo_${x.k}">${d[x.k]} cm</output><input type="range" id="co_${x.k}" min="${x.min}" max="${x.max}" step="1" value="${d[x.k]}"></div>`).join('');
+  $('#coDims').innerHTML = it.dims.map(x=>`<div class="dim"><label for="co_${x.k}">${x.label}</label><output id="coo_${x.k}">${d[x.k]} cm</output><input type="range" id="co_${x.k}" min="${x.min}" max="${Math.max(x.max, d[x.k])}" step="1" value="${d[x.k]}"></div>`).join('');
   it.dims.forEach(x=>$('#co_'+x.k).addEventListener('input', e=>{
     d[x.k] = +e.target.value;
     if(it.k.startsWith('trap')){
@@ -2501,6 +2694,510 @@ function coCalc(){
   $('#coCalc').querySelectorAll('.line').forEach(el=>el.classList.toggle('sel', +el.dataset.i===CO.sel));
 }
 
+/* =========================================================
+   MODULO 5 · DISEGNO TECNICO
+   (proiezioni ortogonali col metodo europeo, assonometria isometrica e cavaliera,
+    spigoli nascosti tratteggiati, tutorial passo passo)
+   ========================================================= */
+const DR = {src:'lab', k:'cubo', view:'po', axo:'cav', mono:30, transfer:'line45', ell:'rombo', hid:true, refs:false, quote:true, grid:true, step:null, cache:null, timer:null};
+const DR_LIST = [
+  {g:'Solidi', items:['cubo','parallelepipedo','prisma','piramide','cilindro','cono','sfera','tetraedro','ottaedro','dodecaedro','icosaedro'].map(k=>({src:'lab', k}))},
+  {g:'Solidi composti', items:COMP.map(c=>({src:'comp', k:c.k}))}
+];
+const DR_VIEWS = {po:'Proiezioni ortogonali', iso:'Assonometria isometrica', mono:'Assonometria monometrica', cav:'Assonometria cavaliera'};
+function drName(){
+  if(DR.src==='comp') return COMP.find(c=>c.k===DR.k).name;
+  const def = SOLIDS[DR.k];
+  if(def.sides){ const n = S.sides[DR.k]; return (DR.k==='prisma'?'Prisma ':'Piramide ') + {3:'triangolare',4:'quadrangolare',5:'pentagonale',6:'esagonale',8:'ottagonale'}[n]; }
+  return def.name;
+}
+
+/* ---- modello a triangoli del solido chiuso ---- */
+function drModel(){
+  const tris = [];
+  const addGeo = (geo, y)=>{
+    const g = geo.index ? geo.toNonIndexed() : geo, p = g.attributes.position;
+    for(let i=0;i+2<p.count;i+=3) tris.push([V3(p.getX(i),p.getY(i)+y,p.getZ(i)), V3(p.getX(i+1),p.getY(i+1)+y,p.getZ(i+1)), V3(p.getX(i+2),p.getY(i+2)+y,p.getZ(i+2))]);
+    if(g !== geo) g.dispose(); geo.dispose();
+  };
+  let sphere = null;
+  if(DR.src==='lab'){
+    const k = DR.k, d = S.dims[k], n = S.sides[k];
+    if(k==='cilindro') addGeo(new THREE.CylinderGeometry(d.r, d.r, d.h, 48), d.h/2);
+    else if(k==='cono') addGeo(new THREE.ConeGeometry(d.r, d.h, 48), d.h/2);
+    else if(k==='sfera'){ addGeo(new THREE.SphereGeometry(d.r, 40, 20), d.r); sphere = {c:V3(0,d.r,0), r:d.r}; }
+    else {
+      const before = faceMats.length, o = SOLIDS[k].build(d, n); faceMats.splice(before);
+      o.faces.forEach(f=>{ const P = f.idx.map(i=>o.verts[i]); for(let i=1;i<P.length-1;i++) tris.push([P[0].clone(), P[i].clone(), P[i+1].clone()]); });
+      disposeGroup(o.group);
+    }
+  } else {
+    const it = COMP.find(c=>c.k===DR.k);
+    it.parts(CO.dims[it.k]).forEach(p=>{ if(p.role==='surf') addGeo(p.geo, p.y); else p.geo.dispose(); });
+  }
+  return drAnalyze(tris, sphere);
+}
+const drKey = v => `${Math.round(v.x*1e4)},${Math.round(v.y*1e4)},${Math.round(v.z*1e4)}`;
+function drAnalyze(tris, sphere){
+  const T = [], box = new THREE.Box3();
+  tris.forEach(([a,b,c])=>{
+    const e1 = new THREE.Vector3().subVectors(b,a), e2 = new THREE.Vector3().subVectors(c,a), n = new THREE.Vector3().crossVectors(e1,e2);
+    if(n.length() < 1e-9) return;
+    T.push({a, b, c, e1, e2, n:n.normalize()}); box.expandByPoint(a); box.expandByPoint(b); box.expandByPoint(c);
+  });
+  const emap = new Map();
+  T.forEach((t,ti)=>{ [[t.a,t.b],[t.b,t.c],[t.c,t.a]].forEach(([p,q])=>{
+    const kp = drKey(p), kq = drKey(q); if(kp===kq) return;
+    const k = kp < kq ? kp+'|'+kq : kq+'|'+kp;
+    let e = emap.get(k); if(!e){ e = {a:p, b:q, tris:[]}; emap.set(k, e); } e.tris.push(ti);
+  }); });
+  const feat = [], smooth = [];
+  emap.forEach(e=>{
+    if(e.tris.length !== 2){ feat.push(e); return; }
+    if(T[e.tris[0]].n.dot(T[e.tris[1]].n) < 0.94) feat.push(e); else smooth.push(e);
+  });
+  const R = box.getBoundingSphere(new THREE.Sphere()).radius;
+  return {T, feat, smooth, box, R, sphere};
+}
+function drRayTri(o, d, t){
+  const p = new THREE.Vector3().crossVectors(d, t.e2), det = t.e1.dot(p);
+  if(Math.abs(det) < 1e-12) return -1;
+  const inv = 1/det, s = new THREE.Vector3().subVectors(o, t.a), u = s.dot(p)*inv;
+  if(u < -1e-7 || u > 1+1e-7) return -1;
+  const q = new THREE.Vector3().crossVectors(s, t.e1), v = d.dot(q)*inv;
+  if(v < -1e-7 || u+v > 1+1e-7) return -1;
+  return t.e2.dot(q)*inv;
+}
+/* segmenti in vista / nascosti per una vista (proiezione parallela lungo d) */
+function drLines(M, V){
+  const d = V.d, eps = M.R*2e-3;
+  const P = M.T.map(t=>{ const A = V.p(t.a), B = V.p(t.b), C = V.p(t.c); return {t, x0:Math.min(A[0],B[0],C[0])-1e-6, x1:Math.max(A[0],B[0],C[0])+1e-6, y0:Math.min(A[1],B[1],C[1])-1e-6, y1:Math.max(A[1],B[1],C[1])+1e-6}; });
+  const visible = m=>{
+    const q = V.p(m), o = m.clone().addScaledVector(d, eps);
+    for(const e of P){ if(q[0]<e.x0 || q[0]>e.x1 || q[1]<e.y0 || q[1]>e.y1) continue; if(drRayTri(o, d, e.t) > eps) return false; }
+    return true;
+  };
+  const edges = M.feat.map(e=>({a:e.a, b:e.b, kind:'f'}));
+  M.smooth.forEach(e=>{ const n1 = M.T[e.tris[0]].n.dot(d), n2 = M.T[e.tris[1]].n.dot(d); if((n1>1e-6 && n2<-1e-6) || (n1<-1e-6 && n2>1e-6)) edges.push({a:e.a, b:e.b, kind:'s'}); });
+  const out = [];
+  edges.forEach(e=>{
+    const n = Math.min(24, Math.max(1, Math.ceil(e.a.distanceTo(e.b)/(M.R*0.05))));
+    let cur = null;
+    const flush = ()=>{ const A = e.a.clone().lerp(e.b, cur.t0), B = e.a.clone().lerp(e.b, cur.t1); out.push({a3:A, b3:B, p:V.p(A), q:V.p(B), vis:cur.vis, e}); };
+    for(let i=0;i<n;i++){
+      const t0 = i/n, t1 = (i+1)/n, v = visible(e.a.clone().lerp(e.b, (t0+t1)/2));
+      if(cur && cur.vis===v) cur.t1 = t1; else { if(cur) flush(); cur = {t0, t1, vis:v}; }
+    }
+    flush();
+  });
+  return out;
+}
+/* punti notevoli (per le linee di richiamo) e circonferenze (per assi e rombi) */
+function drFeatures(M){
+  const nodes = new Map();
+  M.feat.forEach(e=>{ [[e.a,e.b],[e.b,e.a]].forEach(([p,q])=>{ const k = drKey(p); if(!nodes.has(k)) nodes.set(k, {p, nb:[]}); nodes.get(k).nb.push(q); }); });
+  const pts = new Map(), addP = p=>pts.set(drKey(p), p), smoothN = new Set();
+  nodes.forEach((n,k)=>{
+    if(n.nb.length !== 2){ addP(n.p); return; }
+    const d1 = n.nb[0].clone().sub(n.p).normalize(), d2 = n.nb[1].clone().sub(n.p).normalize();
+    if(d1.dot(d2) > -0.9) addP(n.p); else smoothN.add(k);
+  });
+  const seen = new Set(), circles = [];
+  smoothN.forEach(k=>{
+    if(seen.has(k)) return;
+    const comp = [], st = [k]; seen.add(k);
+    while(st.length){ const c = st.pop(); comp.push(nodes.get(c).p); nodes.get(c).nb.forEach(q=>{ const kq = drKey(q); if(smoothN.has(kq) && !seen.has(kq)){ seen.add(kq); st.push(kq); } }); }
+    const ext = (f,s)=>comp.reduce((b,p)=> s*f(p) > s*f(b) ? p : b);
+    [ext(p=>p.x,1), ext(p=>p.x,-1), ext(p=>p.z,1), ext(p=>p.z,-1)].forEach(addP);
+    if(comp.length >= 12){
+      const ys = comp.map(p=>p.y);
+      if(Math.max(...ys) - Math.min(...ys) < 1e-3){
+        const c = comp.reduce((s,p)=>s.add(p), V3(0,0,0)).divideScalar(comp.length);
+        circles.push({c, r:comp.reduce((s,p)=>s + Math.hypot(p.x-c.x, p.z-c.z), 0)/comp.length});
+      }
+    }
+  });
+  const vn = new Map();
+  M.T.forEach(t=>[t.a,t.b,t.c].forEach(p=>{ const k = drKey(p); if(!vn.has(k)) vn.set(k, {p, ns:[]}); vn.get(k).ns.push(t.n); }));
+  vn.forEach((v,k)=>{ if(nodes.has(k)) return; let mn = 1; v.ns.forEach(n=>{ mn = Math.min(mn, n.dot(v.ns[0])); }); if(mn < 0.3) addP(v.p); });
+  if(M.sphere){
+    const {c, r} = M.sphere; circles.push({c:c.clone(), r, sphere:true});
+    [V3(r,0,0),V3(-r,0,0),V3(0,r,0),V3(0,-r,0),V3(0,0,r),V3(0,0,-r)].forEach(o=>addP(c.clone().add(o)));
+  }
+  return {pts:[...pts.values()], circles};
+}
+
+/* ---- costruzione del disegno ---- */
+function drBuild(){
+  const M = drModel(), F = drFeatures(M);
+  return DR.view==='po' ? drBuildPO(M, F) : drBuildAxo(M, F);
+}
+const pathOf = (p, q)=>`M${p[0].toFixed(2)} ${p[1].toFixed(2)}L${q[0].toFixed(2)} ${q[1].toFixed(2)}`;
+function drAxesFor(F){
+  const out = new Map();
+  F.circles.forEach(c=>{ const k = `${Math.round(c.c.x*100)},${Math.round(c.c.z*100)}`; const o = out.get(k); if(!o || o.r < c.r) out.set(k, c); });
+  return [...out.values()];
+}
+function drBuildPO(M, F){
+  const b = M.box, W = b.max.x-b.min.x, H = b.max.y-b.min.y, D = b.max.z-b.min.z, m = Math.max(W,H,D)*0.32 + 0.6;
+  const pv = v=>[-m - (b.max.x - v.x), -m - (v.y - b.min.y)];
+  const po = v=>[-m - (b.max.x - v.x),  m + (v.z - b.min.z)];
+  const pl = v=>[ m + (v.z - b.min.z), -m - (v.y - b.min.y)];
+  const views = {pv:{d:V3(0,0,1), p:pv}, po:{d:V3(0,1,0), p:po}, pl:{d:V3(-1,0,0), p:pl}};
+  const L = {}; Object.keys(views).forEach(k=>{ L[k] = drLines(M, views[k]); });
+  const E = [], T = [], steps = [];
+  const add = (d, cls, step)=>E.push({d, cls, step});
+  const txt = (x, y, s, cls, step, anchor)=>T.push({x, y, s, cls, step, anchor});
+  const ext = Math.max(W,H,D)*0.12 + 0.25;
+  const X0 = -(m + W + m), X1 = m + D + m, Y0 = -(m + H + m), Y1 = m + D + m;
+  // 0. piani
+  const TR = DR.transfer;
+  steps.push({t:'Traccia la <b>linea di terra (LT)</b> e la linea verticale che separa il piano verticale (PV) dal piano laterale (PL). ' + (
+    TR==='line45' ? 'Nel quadrante in basso a destra traccia, con la squadra da 45°, la <b>linea a 45°</b>: servirà a trasferire le misure dalla pianta al profilo.'
+    : TR==='sq45' ? 'La linea a 45° non serve: le misure dalla pianta al profilo le trasferirai punto per punto con la <b>squadra da 45°</b>.'
+    : 'Segna il punto <b>O</b> nell\'incrocio fra la linea di terra e la verticale: sarà il centro del <b>compasso</b> per trasferire le misure dalla pianta al profilo.')});
+  add(pathOf([X0,0],[X1,0]), 'dw-frame', 0); add(pathOf([0,Y0],[0,Y1]), 'dw-frame', 0);
+  if(TR==='line45') add(pathOf([0,0],[Math.min(X1,Y1), Math.min(X1,Y1)]), 'dw-con', 0);
+  if(TR==='comp'){ E.push({dot:[0,0], cls:'dw-frame', step:0}); txt(0.12, 0.45, 'O', 'dw-lab', 0, 'start'); }
+  const lo = Math.max(W,H,D)*0.045 + 0.12;
+  txt(X0+0.15, -lo*0.6, 'LT', 'dw-lab', 0, 'start');
+  txt(-lo*0.5, -lo*0.6, 'PV · prospetto', 'dw-lab', 0, 'end');
+  txt(lo*0.5, -lo*0.6, 'PL · profilo', 'dw-lab', 0, 'start');
+  txt(-lo*0.5, lo*1.5, 'PO · pianta', 'dw-lab', 0, 'end');
+  // assi
+  const axes = drAxesFor(F);
+  let s = 1;
+  if(axes.length){
+    steps.push({t:'Le parti curve hanno un asse di simmetria: traccialo prima di tutto con la <b>linea mista</b> (tratto e punto). In pianta l\'asse è una croce nel centro della circonferenza.'});
+    axes.forEach(c=>{
+      const top = V3(c.c.x, b.max.y, c.c.z), bot = V3(c.c.x, b.min.y, c.c.z);
+      const a1 = pv(top), a2 = pv(bot); add(pathOf([a1[0], a1[1]-ext],[a2[0], a2[1]+ext]), 'dw-axis', s);
+      const l1 = pl(top), l2 = pl(bot); add(pathOf([l1[0], l1[1]-ext],[l2[0], l2[1]+ext]), 'dw-axis', s);
+      const o = po(c.c), rr = c.r + ext; add(pathOf([o[0]-rr, o[1]],[o[0]+rr, o[1]]), 'dw-axis', s); add(pathOf([o[0], o[1]-rr],[o[0], o[1]+rr]), 'dw-axis', s);
+    });
+    s++;
+  }
+  const lineCls = seg => seg.vis ? 'dw-vis' : 'dw-hid';
+  // pianta
+  steps.push({t:'Disegna la <b>pianta</b>: è il solido visto dall\'alto, proiettato sul piano orizzontale (PO). Gli spigoli in vista si disegnano con la linea continua, quelli nascosti con il tratteggio.'});
+  L.po.forEach(g=>add(pathOf(g.p, g.q), lineCls(g), s)); s++;
+  // richiami verso il PV
+  const pts = [], seenP = new Set();
+  F.pts.forEach(p=>{ const k = `${Math.round(p.x*100)},${Math.round(p.y*100)},${Math.round(p.z*100)}`; if(!seenP.has(k)){ seenP.add(k); pts.push(p); } });
+  steps.push({t:'Dai punti della pianta traccia le <b>linee di richiamo</b> verticali: salgono oltre la linea di terra, nel piano verticale.'});
+  const vx = new Set();
+  pts.forEach(p=>{ const a = po(p), k = Math.round(a[0]*100); if(vx.has(k)) return; vx.add(k); add(pathOf(a, [a[0], Y0+0.3]), 'dw-ref', s); });
+  s++;
+  steps.push({t:'Sulle linee di richiamo riporta le <b>altezze</b> e disegna il <b>prospetto</b>: il solido visto di fronte, sul piano verticale (PV).'});
+  L.pv.forEach(g=>add(pathOf(g.p, g.q), lineCls(g), s)); s++;
+  steps.push({t:
+    TR==='line45' ? 'Dai punti della pianta traccia linee orizzontali verso destra fino alla <b>linea a 45°</b>; da lì sali in verticale nel piano laterale.'
+    : TR==='sq45' ? 'Dai punti della pianta traccia linee orizzontali fino alla linea verticale. Da ogni punto trovato, appoggia la <b>squadra da 45°</b> e traccia un segmento inclinato fino alla linea di terra; da lì sali in verticale nel piano laterale.'
+    : 'Dai punti della pianta traccia linee orizzontali fino alla linea verticale. Punta il <b>compasso</b> in O e, con apertura fino a ogni punto, traccia un quarto di circonferenza fino alla linea di terra; da lì sali in verticale nel piano laterale.'});
+  const hz = new Set();
+  pts.forEach(p=>{
+    const a = po(p), k = Math.round(a[1]*100); if(hz.has(k)) return; hz.add(k);
+    const Y = a[1];
+    if(TR==='line45'){ add(pathOf(a, [Y, Y]), 'dw-ref', s); add(pathOf([Y, Y], [Y, Y0+0.3]), 'dw-ref', s); return; }
+    add(pathOf(a, [0, Y]), 'dw-ref', s);
+    if(TR==='sq45') add(pathOf([0, Y], [Y, 0]), 'dw-ref', s);
+    else E.push({arc:{p1:[0, Y], p2:[Y, 0], c:[0, 0]}, cls:'dw-ref', step:s});
+    add(pathOf([Y, 0], [Y, Y0+0.3]), 'dw-ref', s);
+  });
+  s++;
+  steps.push({t:'Dai punti del prospetto traccia linee orizzontali verso destra: dove incontrano le verticali che salgono dalla linea a 45° trovi i punti del <b>profilo</b>.'});
+  const hy = new Set();
+  pts.forEach(p=>{ const a = pv(p), k = Math.round(a[1]*100); if(hy.has(k)) return; hy.add(k); add(pathOf(a, [X1-0.3, a[1]]), 'dw-ref', s); });
+  s++;
+  steps.push({t:'Unisci i punti e disegna il <b>profilo</b>: il solido visto da sinistra, sul piano laterale (PL). Anche qui gli spigoli nascosti vanno tratteggiati.'});
+  L.pl.forEach(g=>add(pathOf(g.p, g.q), lineCls(g), s)); s++;
+  // quote
+  const qs = s;
+  steps.push({t:'Aggiungi le <b>quote</b>: larghezza e altezza sul prospetto, profondità sul profilo. Le misure sono in centimetri.', quote:true});
+  const dim = (p, q, off, val, horiz)=>{
+    const o = horiz ? [0, off] : [off, 0];
+    const P = [p[0]+o[0], p[1]+o[1]], Q = [q[0]+o[0], q[1]+o[1]];
+    add(pathOf(p, [P[0]+(horiz?0:Math.sign(off)*0.15), P[1]+(horiz?Math.sign(off)*0.15:0)]), 'dw-dimx', qs);
+    add(pathOf(q, [Q[0]+(horiz?0:Math.sign(off)*0.15), Q[1]+(horiz?Math.sign(off)*0.15:0)]), 'dw-dimx', qs);
+    E.push({d:pathOf(P, Q), cls:'dw-dim', step:qs, arrows:true});
+    const mx = (P[0]+Q[0])/2, my = (P[1]+Q[1])/2;
+    T.push({x: horiz ? mx : mx - 0.18, y: horiz ? my - 0.14 : my, s:fmt(val), cls:'dw-dimt', step:qs, anchor:'middle', rot: horiz ? 0 : -90});
+  };
+  const qo = Math.max(W,H,D)*0.1 + 0.35;
+  dim(pv(V3(b.min.x, b.max.y, 0)), pv(V3(b.max.x, b.max.y, 0)), -qo, W, true);
+  dim(pv(V3(b.min.x, b.min.y, 0)), pv(V3(b.min.x, b.max.y, 0)), -qo, H, false);
+  dim(pl(V3(0, b.max.y, b.min.z)), pl(V3(0, b.max.y, b.max.z)), -qo, D, true);
+  s++;
+  steps.push({t:'Cancella le linee di richiamo e ripassa il disegno: <b>linea continua grossa</b> per gli spigoli in vista, <b>tratteggio</b> per quelli nascosti, <b>tratto e punto</b> per gli assi.', final:true});
+  return {E, T, steps, bbox:[X0-0.2, Y0-(Y1-Y0)*0.12-0.6, X1+0.3, Y1+0.3]};
+}
+function drBuildAxo(M, F){
+  const b = M.box, W = b.max.x-b.min.x, H = b.max.y-b.min.y, D = b.max.z-b.min.z;
+  const iso = DR.view==='iso', mono = DR.view==='mono', cav = DR.view==='cav';
+  const R = V3(1,0,-1).normalize(), U = V3(-1,2,-1).normalize(), K = Math.sqrt(3/2), c45 = Math.SQRT1_2*0.5;
+  const tx = DR.mono*Math.PI/180, ty = Math.PI/2 - tx, cx = Math.cos(tx), sx = Math.sin(tx), cy = Math.cos(ty), sy = Math.sin(ty);
+  const V = iso ? {d:V3(1,1,1).normalize(), p:v=>[v.dot(R)*K, -v.dot(U)*K]}
+          : mono ? {d:V3(cy, 1, cx).normalize(), p:v=>[v.x*cx - v.z*cy, -(v.y - v.x*sx - v.z*sy)]}
+                 : {d:V3(c45, c45, 1).normalize(), p:v=>[v.x - c45*v.z, -(v.y - c45*v.z)]};
+  const lines = drLines(M, V), E = [], T = [], steps = [];
+  const add = (d, cls, step)=>E.push({d, cls, step});
+  const ext = Math.max(W,H,D)*0.35 + 0.5;
+  // 0. assi
+  const O = cav ? V3(b.min.x, b.min.y, b.max.z) : V3(b.max.x, b.min.y, b.max.z);
+  const ax = cav ? [[V3(1,0,0),'x'],[V3(0,0,-1),'y'],[V3(0,1,0),'z']] : [[V3(-1,0,0),'x'],[V3(0,0,-1),'y'],[V3(0,1,0),'z']];
+  const len = {x:W, y:D, z:H};
+  steps.push({t: iso
+    ? 'Traccia gli <b>assi isometrici</b>: l\'asse z verticale e gli assi x e y inclinati di <b>30°</b> rispetto all\'orizzontale (usa la squadra da 30°–60°). Sui tre assi le misure si riportano in vera grandezza.'
+    : mono
+    ? `Traccia gli assi dell'<b>assonometria monometrica</b>: z verticale, x e y inclinati di <b>${DR.mono}°</b> e <b>${90-DR.mono}°</b> rispetto all'orizzontale${DR.mono===45 ? ' (squadra da 45°)' : ' (squadra da 30°–60°)'}. Fra x e y c'è un angolo retto: la pianta resta in vera forma. Tutte le misure si riportano in vera grandezza.`
+    : 'Traccia gli assi dell\'<b>assonometria cavaliera</b>: x orizzontale, z verticale e y, la profondità, inclinato di <b>45°</b> (usa la squadra da 45°). Le misure sull\'asse y si <b>dimezzano</b>.'});
+  ax.forEach(([dir, name])=>{
+    const L0 = len[name] + ext, Pq = V.p(O.clone().addScaledVector(dir, L0)), Po = V.p(O);
+    add(pathOf(Po, Pq), 'dw-con', 0);
+    T.push({x:Pq[0] + (Pq[0]-Po[0])*0.04, y:Pq[1] + (Pq[1]-Po[1])*0.04 - 0.1, s:name, cls:'dw-lab', step:0, anchor:'middle', con:true});
+  });
+  // 1. parallelepipedo di ingombro
+  steps.push({t:`Disegna il <b>parallelepipedo di ingombro</b>, la "scatola" che contiene il solido, con linea sottile: larghezza ${fmt(W)} cm, profondità ${fmt(D)} cm${cav ? ' (nel disegno ' + fmt(D/2) + ' cm)' : ''}, altezza ${fmt(H)} cm. Il solido si costruisce dentro questa scatola.`});
+  const bx = [b.min.x, b.max.x], by = [b.min.y, b.max.y], bz = [b.min.z, b.max.z];
+  for(const y of by) for(const z of bz) add(pathOf(V.p(V3(bx[0],y,z)), V.p(V3(bx[1],y,z))), 'dw-con', 1);
+  for(const x of bx) for(const z of bz) add(pathOf(V.p(V3(x,by[0],z)), V.p(V3(x,by[1],z))), 'dw-con', 1);
+  for(const x of bx) for(const y of by) add(pathOf(V.p(V3(x,y,bz[0])), V.p(V3(x,y,bz[1]))), 'dw-con', 1);
+  // livelli
+  const tol = 1e-3, levels = [];
+  const lv = y=>{ let i = levels.findIndex(v=>Math.abs(v-y) < tol); if(i<0){ levels.push(y); } };
+  lines.forEach(g=>{ if(Math.abs(g.e.a.y - g.e.b.y) < tol) lv(g.e.a.y); });
+  levels.sort((p,q)=>p-q);
+  let s = 2;
+  const cls = g => g.vis ? 'dw-vis' : 'dw-hid';
+  if(!levels.length){
+    steps.push({t:'Il solido non ha spigoli: disegna il suo <b>contorno</b>. Nella sfera il contorno è una circonferenza.'});
+    lines.forEach(g=>add(pathOf(g.p, g.q), cls(g), s)); s++;
+  } else {
+    const stepOfLevel = [], upStep = [];
+    let belowStep = -1;
+    if(lines.some(g=>Math.abs(g.e.a.y - g.e.b.y) >= tol && Math.min(g.e.a.y, g.e.b.y) < levels[0] - tol)){
+      steps.push({t:`Parti dal <b>vertice in basso</b> (quota 0) e traccia le linee di contorno che salgono fino alla quota ${fmt(levels[0] - b.min.y)} cm.`});
+      belowStep = s++;
+    }
+    levels.forEach((y,i)=>{
+      const circ = F.circles.filter(c=>Math.abs(c.c.y - y) < tol && !c.sphere);
+      const q = fmt(y - b.min.y);
+      steps.push({t: i===0 && y - b.min.y < tol
+        ? `Disegna la <b>base</b> (quota 0).${circ.length ? ' ' + drEllipseText(mono, iso, true) : ''}`
+        : `Alla <b>quota ${q} cm</b> disegna gli spigoli e i contorni che stanno a questa altezza.${circ.length ? ' ' + drEllipseText(mono, iso, false) : ''}`});
+      circ.forEach(c=>drEllipseConstruction(c, y, V, E, s, mono, iso));
+      stepOfLevel[i] = s++;
+      const hasUp = lines.some(g=>Math.abs(g.e.a.y - g.e.b.y) >= tol && Math.abs(Math.min(g.e.a.y, g.e.b.y) - y) < tol + (i===levels.length-1 ? 1e9 : 0));
+      if(i < levels.length-1 || hasUp){
+        steps.push({t: i < levels.length-1
+          ? `Dalla quota ${q} cm traccia gli <b>spigoli che salgono</b> (e le linee di contorno delle superfici curve) fino alla quota ${fmt(levels[i+1] - b.min.y)} cm.`
+          : 'Traccia gli ultimi spigoli fino al <b>vertice</b> più alto.'});
+        upStep[i] = s++;
+      }
+    });
+    lines.forEach(g=>{
+      const hz = Math.abs(g.e.a.y - g.e.b.y) < tol;
+      let i;
+      if(hz){ i = levels.findIndex(v=>Math.abs(v - g.e.a.y) < tol); add(pathOf(g.p, g.q), cls(g), stepOfLevel[i]); return; }
+      const lo = Math.min(g.e.a.y, g.e.b.y);
+      if(belowStep >= 0 && lo < levels[0] - tol){ add(pathOf(g.p, g.q), cls(g), belowStep); return; }
+      i = 0; levels.forEach((v,j)=>{ if(v <= lo + tol) i = j; });
+      add(pathOf(g.p, g.q), cls(g), upStep[i] !== undefined ? upStep[i] : stepOfLevel[i]);
+    });
+  }
+  steps.push({t:'Cancella le linee di costruzione e ripassa: <b>linea continua grossa</b> per gli spigoli in vista, <b>tratteggio</b> per quelli nascosti.', final:true});
+  // riquadro
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const grow = p=>{ x0 = Math.min(x0,p[0]); y0 = Math.min(y0,p[1]); x1 = Math.max(x1,p[0]); y1 = Math.max(y1,p[1]); };
+  ax.forEach(([dir, name])=>grow(V.p(O.clone().addScaledVector(dir, len[name] + ext))));
+  grow(V.p(O));
+  for(const x of bx) for(const y of by) for(const z of bz) grow(V.p(V3(x,y,z)));
+  const pad = Math.max(W,H,D)*0.08 + 0.3;
+  return {E, T, steps, bbox:[x0-pad, y0-pad-(y1-y0)*0.12, x1+pad, y1+pad]};
+}
+
+/* ---- costruzione delle ellissi (circonferenze orizzontali in assonometria) ---- */
+function drEllMethod(mono, iso){
+  if(mono) return 'comp';
+  if(DR.ell==='ovale' && !iso) return 'rombo';
+  return DR.ell;
+}
+function drEllipseText(mono, iso, first){
+  const m = drEllMethod(mono, iso);
+  if(m==='comp') return first
+    ? 'Nella monometrica il piano orizzontale resta in vera forma: disegna il quadrato circoscritto, segna il centro e traccia la circonferenza con il <b>compasso</b>.'
+    : 'Anche qui la circonferenza si traccia con il <b>compasso</b>, puntando nel centro del quadrato circoscritto.';
+  const quad = iso ? 'rombo' : 'parallelogramma';
+  if(m==='otto') return `Circonferenza con il <b>metodo degli 8 punti</b>: disegna il ${quad} circoscritto, le sue mediane e le diagonali. Segna i 4 punti medi dei lati e, sulle diagonali, i 4 punti a circa 7/10 della distanza dal centro al vertice. Unisci gli 8 punti con una curva continua (a mano libera o con il curvilineo).`;
+  if(m==='ovale') return 'Circonferenza con l\'<b>ovale a quattro centri</b>: disegna il rombo circoscritto. Dai due vertici ottusi traccia i segmenti verso i punti medi dei lati opposti: dove si incrociano con la diagonale maggiore trovi i due centri piccoli. Con il <b>compasso</b> punta nei vertici ottusi per gli archi grandi e nei centri piccoli per gli archi piccoli.';
+  return first
+    ? `Una circonferenza in assonometria diventa un'<b>ellisse</b>: disegna prima il ${quad} in cui è inscritta (il quadrato circoscritto visto in assonometria) e poi l'ellisse tangente ai punti medi dei lati.`
+    : `Per le circonferenze usa di nuovo il ${quad} circoscritto.`;
+}
+function drEllipseConstruction(c, y, V, E, s, mono, iso){
+  const m = drEllMethod(mono, iso), add = (d, cls)=>E.push({d, cls, step:s}), dot = p=>E.push({dot:p, cls:'dw-con', step:s});
+  const sq = [V3(c.c.x-c.r,y,c.c.z-c.r), V3(c.c.x+c.r,y,c.c.z-c.r), V3(c.c.x+c.r,y,c.c.z+c.r), V3(c.c.x-c.r,y,c.c.z+c.r)].map(V.p);
+  for(let j=0;j<4;j++) add(pathOf(sq[j], sq[(j+1)%4]), 'dw-con');
+  const C = V.p(V3(c.c.x, y, c.c.z));
+  const mids = [0,1,2,3].map(j=>[(sq[j][0]+sq[(j+1)%4][0])/2, (sq[j][1]+sq[(j+1)%4][1])/2]);
+  if(m==='comp'){ dot(C); add(pathOf(C, V.p(V3(c.c.x+c.r, y, c.c.z))), 'dw-con'); E.push({arc:{c:C, full:true, r:Math.hypot(mids[0][0]-C[0], mids[0][1]-C[1])}, cls:'dw-con', step:s, tool:true}); return; }
+  if(m==='otto'){
+    add(pathOf(sq[0], sq[2]), 'dw-con'); add(pathOf(sq[1], sq[3]), 'dw-con');
+    add(pathOf(mids[0], mids[2]), 'dw-con'); add(pathOf(mids[1], mids[3]), 'dw-con');
+    mids.forEach(dot);
+    const k = Math.SQRT1_2*c.r;
+    [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([a,b])=>dot(V.p(V3(c.c.x + a*k, y, c.c.z + b*k))));
+    return;
+  }
+  if(m==='ovale'){
+    const sub = (p,q)=>[p[0]-q[0], p[1]-q[1]], dotp = (u,v)=>u[0]*v[0]+u[1]*v[1], dist = (p,q)=>Math.hypot(p[0]-q[0], p[1]-q[1]);
+    const inter = (p1,p2,p3,p4)=>{ const d = (p1[0]-p2[0])*(p3[1]-p4[1]) - (p1[1]-p2[1])*(p3[0]-p4[0]); if(Math.abs(d) < 1e-9) return null;
+      const t = ((p1[0]-p3[0])*(p3[1]-p4[1]) - (p1[1]-p3[1])*(p3[0]-p4[0]))/d; return [p1[0] + t*(p2[0]-p1[0]), p1[1] + t*(p2[1]-p1[1])]; };
+    const obt = [0,1,2,3].filter(j=>dotp(sub(sq[(j+3)%4], sq[j]), sub(sq[(j+1)%4], sq[j])) < 0);
+    if(obt.length !== 2) return;
+    const acute = [0,1,2,3].filter(j=>!obt.includes(j));
+    add(pathOf(sq[acute[0]], sq[acute[1]]), 'dw-con');
+    const centers = [];
+    obt.forEach(j=>{
+      const A = sq[j], M1 = mids[(j+1)%4], M2 = mids[(j+2)%4];
+      add(pathOf(A, M1), 'dw-con'); add(pathOf(A, M2), 'dw-con');
+      dot(A);
+      E.push({arc:{c:A, p1:M1, p2:M2}, cls:'dw-con', step:s, tool:true});
+      [M1, M2].forEach(Mx=>{ const P = inter(A, Mx, sq[acute[0]], sq[acute[1]]); if(P && !centers.some(q=>dist(q,P) < 1e-6)) centers.push(P); });
+    });
+    centers.forEach(P=>{
+      dot(P);
+      const near = mids.slice().sort((u,v)=>dist(u,P) - dist(v,P)).slice(0,2);
+      E.push({arc:{c:P, p1:near[0], p2:near[1]}, cls:'dw-con', step:s, tool:true});
+    });
+  }
+}
+
+/* ---- disegno SVG ---- */
+function drRender(){
+  const C = DR.cache; if(!C) return;
+  const [bx0, by0, bx1, by1] = C.bbox, k = 1000/(bx1-bx0), Wv = 1000, Hv = (by1-by0)*k;
+  const tp = s => s.replace(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g, (m,a,b)=>`${((+a-bx0)*k).toFixed(1)} ${((+b-by0)*k).toFixed(1)}`);
+  const tut = DR.step !== null, cur = DR.step, last = C.steps.length-1;
+  const finalView = !tut || cur === last;
+  const show = e=>{
+    if(tut && e.step > cur) return false;
+    if(e.cls==='dw-hid' && !DR.hid) return false;
+    if(e.cls==='dw-ref') return tut ? cur < last : DR.refs;
+    if(e.cls==='dw-con') return tut && cur < last;
+    if((e.cls==='dw-dim' || e.cls==='dw-dimx' || e.cls==='dw-dimt') && !tut && !DR.quote) return false;
+    return true;
+  };
+  const order = {'dw-con':0, 'dw-ref':1, 'dw-frame':2, 'dw-axis':3, 'dw-hid':4, 'dw-dimx':5, 'dw-dim':5, 'dw-vis':6};
+  const els = C.E.filter(show).sort((a,b)=>(order[a.cls]||0)-(order[b.cls]||0));
+  const gridStep = 0.5*k;
+  let out = `<defs><marker id="drArr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 1.5 L10 5 L0 8.5 z" class="dw-arrow"/></marker>
+    <pattern id="drGridP" width="${gridStep}" height="${gridStep}" patternUnits="userSpaceOnUse" x="${((0-bx0)*k)%gridStep}" y="${((0-by0)*k)%gridStep}"><path d="M${gridStep} 0 L0 0 0 ${gridStep}" class="dw-grid"/></pattern></defs>`;
+  if(DR.grid) out += `<rect x="0" y="0" width="${Wv}" height="${Hv}" fill="url(#drGridP)"/>`;
+  const T2 = p=>[+((p[0]-bx0)*k).toFixed(1), +((p[1]-by0)*k).toFixed(1)];
+  els.forEach(e=>{
+    const now = tut && e.step===cur && !finalView ? ' now' : '';
+    if(e.dot){ const P = T2(e.dot); out += `<circle cx="${P[0]}" cy="${P[1]}" r="4.5" class="dw-dot${e.cls==='dw-con' ? ' con' : ''}${now}"/>`; return; }
+    if(e.arc){
+      const a = e.arc, C = T2(a.c), cls = `${e.cls}${e.tool ? ' dw-tool' : ''}${now}`;
+      if(a.full){ out += `<circle cx="${C[0]}" cy="${C[1]}" r="${(a.r*k).toFixed(1)}" class="${cls}"/>`; return; }
+      const P1 = T2(a.p1), P2 = T2(a.p2), r = Math.hypot(P1[0]-C[0], P1[1]-C[1]).toFixed(1);
+      const cr = (P1[0]-C[0])*(P2[1]-C[1]) - (P1[1]-C[1])*(P2[0]-C[0]);
+      out += `<path d="M${P1[0]} ${P1[1]} A${r} ${r} 0 0 ${cr > 0 ? 1 : 0} ${P2[0]} ${P2[1]}" class="${cls}"/>`;
+      return;
+    }
+    out += `<path d="${tp(e.d)}" class="${e.cls}${now}"${e.arrows ? ' marker-start="url(#drArr)" marker-end="url(#drArr)"' : ''}/>`;
+  });
+  C.T.filter(t=>show({cls: t.con ? 'dw-con' : t.cls, step:t.step})).forEach(t=>{
+    const x = ((t.x-bx0)*k).toFixed(1), y = ((t.y-by0)*k).toFixed(1);
+    out += `<text x="${x}" y="${y}" class="${t.cls}${tut && t.step===cur && !finalView ? ' now' : ''}" text-anchor="${t.anchor||'start'}"${t.rot ? ` transform="rotate(${t.rot} ${x} ${y})"` : ''}>${t.s}</text>`;
+  });
+  const svg = $('#drSvg'); svg.setAttribute('viewBox', `0 0 ${Wv} ${Hv.toFixed(1)}`); svg.innerHTML = out;
+  $('#drTitle').textContent = drName();
+  $('#drSub').textContent = DR_VIEWS[DR.view];
+  drTutorial();
+  drMethodUI();
+}
+function drMethodUI(){
+  const box = $('#drMethod');
+  const opt = (key, val, label)=>`<button data-key="${key}" data-val="${val}" class="${DR[key]===val?'on':''}" aria-pressed="${DR[key]===val}">${label}</button>`;
+  let html = '<h3>Metodo di costruzione</h3>';
+  if(DR.view==='po'){
+    html += `<p class="small">Come si riportano le misure dalla pianta al profilo.</p>
+      <div class="seg" role="group" aria-label="Riporto delle misure">${opt('transfer','line45','Linea a 45°')}${opt('transfer','sq45','Squadra a 45°')}${opt('transfer','comp','Compasso')}</div>`;
+  } else if(DR.view==='mono'){
+    html += `<p class="small">Nella monometrica la pianta resta in vera forma: le circonferenze orizzontali si tracciano direttamente con il <b>compasso</b>.</p>`;
+  } else {
+    html += `<p class="small">Come si costruiscono le ellissi (le circonferenze viste in assonometria).</p>
+      <div class="seg" role="group" aria-label="Costruzione delle ellissi">${opt('ell','rombo', DR.view==='iso' ? 'Rombo' : 'Parallelogramma')}${opt('ell','otto','8 punti')}${DR.view==='iso' ? opt('ell','ovale','Ovale a 4 centri') : ''}</div>`;
+  }
+  html += `<p class="small">Le costruzioni si vedono nel tutorial${DR.view==='po' ? ' e con «Linee di richiamo»' : ''}.</p>`;
+  box.innerHTML = html;
+  box.querySelectorAll('button[data-key]').forEach(b=>b.onclick = ()=>{ DR[b.dataset.key] = b.dataset.val; drRefresh(); });
+}
+function drTutorial(){
+  const C = DR.cache, box = $('#drTut');
+  if(DR.step === null){
+    box.innerHTML = `<h3>Tutorial passo passo</h3><p class="small">Il disegno si costruisce un passaggio alla volta, come si fa in classe con matita, squadre e compasso.</p><button class="play" id="drStart" style="align-self:flex-start">Inizia il tutorial</button>`;
+    $('#drStart').onclick = ()=>{ DR.step = 0; drRender(); };
+    return;
+  }
+  const n = C.steps.length, st = C.steps[DR.step];
+  box.innerHTML = `<div class="calc-head"><h3>Tutorial</h3><span class="bar-status">Passo ${DR.step+1} di ${n}</span></div>
+    <p class="dr-step">${st.t}</p>
+    <div class="guide-nav"><button class="ghost" id="drPrev" ${DR.step===0?'disabled':''}>Indietro</button><button class="ghost" id="drExit">Esci</button><button class="play" id="drNext" ${DR.step>=n-1?'disabled':''}>Avanti</button></div>`;
+  $('#drPrev').onclick = ()=>{ if(DR.step>0){ DR.step--; drRender(); } };
+  $('#drNext').onclick = ()=>{ if(DR.step<n-1){ DR.step++; drRender(); } };
+  $('#drExit').onclick = ()=>{ DR.step = null; drRender(); };
+}
+function drRefresh(){
+  clearTimeout(DR.timer);
+  DR.timer = setTimeout(()=>{
+    DR.cache = drBuild();
+    if(DR.step !== null) DR.step = Math.min(DR.step, DR.cache.steps.length-1);
+    drRender();
+  }, 40);
+}
+function drPicker(){
+  $('#drPicker').innerHTML = DR_LIST.map(g=>`<div class="pick-group"><h4>${g.g}</h4><div class="pick-row">${
+    g.items.map(it=>{ const on = it.src===DR.src && it.k===DR.k, name = it.src==='comp' ? COMP.find(c=>c.k===it.k).name : (SHORT[it.k]||SOLIDS[it.k].name);
+      return `<button class="pick${on?' on':''}" data-src="${it.src}" data-k="${it.k}" aria-pressed="${on}">${name}</button>`; }).join('')
+  }</div></div>`).join('');
+  $('#drPicker').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>{ DR.src = b.dataset.src; DR.k = b.dataset.k; DR.step = null; drPicker(); drDims(); drRefresh(); });
+}
+function drDims(){
+  const def = DR.src==='comp' ? COMP.find(c=>c.k===DR.k) : SOLIDS[DR.k];
+  const d = DR.src==='comp' ? CO.dims[DR.k] : S.dims[DR.k];
+  let html = def.dims.map(x=>`<div class="dim"><label for="dr_${x.k}">${x.label}</label><output id="dro_${x.k}">${fmt(d[x.k])} cm</output><input type="range" id="dr_${x.k}" min="${x.min}" max="${Math.max(x.max, Math.ceil(d[x.k]))}" step="1" value="${d[x.k]}"></div>`).join('');
+  if(DR.src==='lab' && def.sides){
+    const n = S.sides[DR.k];
+    html += `<div class="sides"><span class="lbl">Poligono di base</span><div class="seg" role="group" aria-label="Numero di lati della base">${[3,4,5,6,8].map(k=>`<button data-n="${k}" class="${k===n?'on':''}" aria-pressed="${k===n}">${k}</button>`).join('')}</div></div>`;
+  }
+  $('#drDims').innerHTML = html;
+  def.dims.forEach(x=>$('#dr_'+x.k).addEventListener('input', e=>{
+    d[x.k] = +e.target.value;
+    if(DR.k==='foro'){ const maxR = Math.max(1, Math.floor((d.l-1)/2)); if(d.r > maxR){ d.r = maxR; $('#dr_r').value = d.r; $('#dro_r').textContent = d.r+' cm'; } }
+    $('#dro_'+x.k).textContent = fmt(d[x.k])+' cm'; drRefresh();
+  }));
+  $('#drDims').querySelectorAll('.sides button').forEach(b=>b.onclick = ()=>{ S.sides[DR.k] = +b.dataset.n; drDims(); drRefresh(); });
+}
+let drReady = false;
+function drShow(){
+  if(!drReady){
+    drReady = true;
+    const segOn = (box, b)=>box.querySelectorAll('button').forEach(x=>{ const on = x===b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+    const syncBar = ()=>{ const axo = DR.view!=='po'; $('#drAxo').hidden = !axo; $('#drRefsW').hidden = $('#drQuoteW').hidden = axo; $('#drMonoA').hidden = DR.view!=='mono'; };
+    $('#drView').querySelectorAll('button').forEach(b=>b.onclick = ()=>{ DR.view = b.dataset.v==='po' ? 'po' : DR.axo; DR.step = null; segOn($('#drView'), b); syncBar(); drRefresh(); });
+    $('#drAxo').querySelectorAll('button').forEach(b=>b.onclick = ()=>{ DR.axo = DR.view = b.dataset.a; DR.step = null; segOn($('#drAxo'), b); syncBar(); drRefresh(); });
+    $('#drMonoA').querySelectorAll('button').forEach(b=>b.onclick = ()=>{ DR.mono = +b.dataset.a; DR.step = null; $('#drMonoA').querySelectorAll('button').forEach(x=>{ const on = x===b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); drRefresh(); });
+    $('#drHid').onchange = e=>{ DR.hid = e.target.checked; drRender(); };
+    $('#drRefs').onchange = e=>{ DR.refs = e.target.checked; drRender(); };
+    $('#drQuote').onchange = e=>{ DR.quote = e.target.checked; drRender(); };
+    $('#drGrid').onchange = e=>{ DR.grid = e.target.checked; drRender(); };
+  }
+  drPicker(); drDims(); drRefresh();
+}
+
 /* viste per dispositivo */
 function detectDevice(){
   const w = window.innerWidth, coarse = matchMedia('(pointer: coarse)').matches;
@@ -2543,7 +3240,7 @@ selectSolid('cubo');
 computeBounds(); cam.dist = fitR/Math.sin(camera.fov*Math.PI/360)*1.1; cam.target.copy(fitC);
 requestAnimationFrame(loop);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>refreshHelpers());
-if(['#esercizi','#formule','#composti'].includes(location.hash)) showView(location.hash.slice(1));
+if(['#esercizi','#formule','#composti','#disegno'].includes(location.hash)) showView(location.hash.slice(1));
 })();
 </script>
 </body>

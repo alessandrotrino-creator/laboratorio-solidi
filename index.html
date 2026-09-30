@@ -882,6 +882,147 @@ function boxVerts(a,b,c){
   return out;
 }
 
+/* ---------- poligoni di base del prisma (regolari e non) ----------
+   ogni tipo: dims (misure dei lati), fix (mantiene la figura possibile), pts (vertici nel piano, [u,v], base sul davanti),
+   lines (righe di calcolo della base: perimetro, area ed eventuali passaggi), els (segmenti da evidenziare), note */
+const HB = 'h<sub>b</sub>', HT = 'h<sub>t</sub>';
+const sq = x => Math.sqrt(Math.max(0, x));
+function bLine(label, sym, f, s, val, unit){ return {label, sym, f, s:()=>s, val, unit}; }
+function fixIso(d, ch, B, L){ if(2*d[L] <= d[B]){ if(ch===L) d[B] = 2*d[L]-1; else d[L] = Math.floor(d[B]/2)+1; } }
+const PBASE = {
+  3:[
+    {k:'reg', name:'Equilatero', poly:'triangolo equilatero'},
+    {k:'iso', name:'Isoscele', poly:'triangolo isoscele',
+      dims:[{k:'b',label:'Base del triangolo',min:1,max:12,def:6},{k:'l',label:'Lato obliquo',min:1,max:12,def:5}],
+      fix:(d,ch)=>fixIso(d, ch, 'b', 'l'),
+      calc:d=>{ const {b,l}=d, hr=sq(l*l-b*b/4), h=r2(hr); return {h, p2:b+2*l, Ab:b*h/2, pts:[[0,0],[b,0],[b/2,h]], lines:[
+        bLine('Altezza del triangolo (Pitagora)', vv('hb',HB), `√(${vv('l','l')}² − (${vv('b','b')} : 2)²)`, `√(${fmt(l)}² − ${fmt(b/2)}²)`, hr, 'cm'),
+        bLine('Perimetro di base', '2p', `${vv('b','b')} + 2 · ${vv('l','l')}`, `${fmt(b)} + 2 · ${fmt(l)}`, b+2*l, 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `(${vv('b','b')} · ${vv('hb',HB)}) : 2`, `(${fmt(b)} · ${fmt(h)}) : 2`, b*h/2, 'cm²')],
+        els:[['b','Base del triangolo','b','',b,[0,0],[b,0]], ['l','Lato obliquo','l','',l,[b,0],[b/2,h]], ['hb','Altezza del triangolo','h','b',hr,[b/2,0],[b/2,h]]]}; },
+      note:()=>'L\'altezza divide il triangolo isoscele in due triangoli rettangoli uguali: si trova con il teorema di Pitagora, usando metà base.'},
+    {k:'ret', name:'Rettangolo', poly:'triangolo rettangolo',
+      dims:[{k:'c1',sym:'c<sub>1</sub>',label:'Cateto',min:1,max:12,def:4},{k:'c2',sym:'c<sub>2</sub>',label:'Altro cateto',min:1,max:12,def:3}],
+      calc:d=>{ const {c1,c2}=d, ir=Math.hypot(c1,c2), i=r2(ir); return {p2:c1+c2+i, Ab:c1*c2/2, pts:[[0,0],[c1,0],[0,c2]], lines:[
+        bLine('Ipotenusa (Pitagora)', vv('i','i'), `√(${vv('c1','c<sub>1</sub>')}² + ${vv('c2','c<sub>2</sub>')}²)`, `√(${fmt(c1)}² + ${fmt(c2)}²)`, ir, 'cm'),
+        bLine('Perimetro di base', '2p', `${vv('c1','c<sub>1</sub>')} + ${vv('c2','c<sub>2</sub>')} + ${vv('i','i')}`, `${fmt(c1)} + ${fmt(c2)} + ${fmt(i)}`, c1+c2+i, 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `(${vv('c1','c<sub>1</sub>')} · ${vv('c2','c<sub>2</sub>')}) : 2`, `(${fmt(c1)} · ${fmt(c2)}) : 2`, c1*c2/2, 'cm²')],
+        els:[['c1','Cateto','c','1',c1,[0,0],[c1,0]], ['c2','Altro cateto','c','2',c2,[0,0],[0,c2]], ['i','Ipotenusa','i','',ir,[c1,0],[0,c2]]]}; },
+      note:()=>'Nel triangolo rettangolo i due cateti sono la base e l\'altezza; l\'ipotenusa si trova con il teorema di Pitagora.'},
+    {k:'sca', name:'Scaleno', poly:'triangolo scaleno',
+      dims:[{k:'a',label:'Lato a (base)',min:1,max:12,def:7},{k:'b',label:'Lato b',min:1,max:12,def:5},{k:'c',label:'Lato c',min:1,max:12,def:6}],
+      fix:(d,ch)=>{ // disuguaglianza triangolare: ogni lato minore della somma degli altri due
+        const ks = ['a','b','c'], m = ks.reduce((p,q)=>d[q]>d[p]?q:p), rest = ks.filter(q=>q!==m), sum = d[rest[0]]+d[rest[1]];
+        if(d[m] < sum) return;
+        if(m===ch){ const o = d[rest[0]]>=d[rest[1]] ? rest[0] : rest[1]; d[o] = Math.min(12, d[o] + d[m] - sum + 1); if(d[m] >= d[rest[0]]+d[rest[1]]) d[m] = d[rest[0]]+d[rest[1]]-1; }
+        else d[m] = sum - 1;
+      },
+      calc:d=>{ const {a,b,c}=d, p2=a+b+c, p=p2/2, A=sq(p*(p-a)*(p-b)*(p-c)), x=(a*a+c*c-b*b)/(2*a), y=sq(c*c-x*x); return {p2, Ab:A, pts:[[0,0],[a,0],[x,y]], lines:[
+        bLine('Perimetro di base', '2p', `${vv('a','a')} + ${vv('b','b')} + ${vv('c','c')}`, `${fmt(a)} + ${fmt(b)} + ${fmt(c)}`, p2, 'cm'),
+        bLine('Semiperimetro', 'p', '2p : 2', `${fmt(p2)} : 2`, p, 'cm'),
+        bLine('Area di base (formula di Erone)', 'A<sub>b</sub>', `√(p · (p − ${vv('a','a')}) · (p − ${vv('b','b')}) · (p − ${vv('c','c')}))`, `√(${fmt(p)} · ${fmt(p-a)} · ${fmt(p-b)} · ${fmt(p-c)})`, A, 'cm²')],
+        els:[['a','Lato a','a','',a,[0,0],[a,0]], ['b','Lato b','b','',b,[a,0],[x,y]], ['c','Lato c','c','',c,[x,y],[0,0]], ['hb','Altezza relativa ad a','h','b',y,[x,0],[x,y]]]}; },
+      note:d=>(d.a===d.b||d.b===d.c||d.a===d.c ? 'Attenzione: con due lati uguali il triangolo non è più scaleno, è isoscele. ' : '') + 'Quando si conoscono i tre lati, l\'area si calcola con la formula di Erone, usando il semiperimetro p.'}
+  ],
+  4:[
+    {k:'reg', name:'Quadrato', poly:'quadrato'},
+    {k:'ret', name:'Rettangolo', poly:'rettangolo',
+      dims:[{k:'a',label:'Lato a',min:1,max:12,def:6},{k:'b',label:'Lato b',min:1,max:12,def:3}],
+      calc:d=>{ const {a,b}=d; return {p2:2*(a+b), Ab:a*b, pts:[[0,0],[a,0],[a,b],[0,b]], lines:[
+        bLine('Perimetro di base', '2p', `2 · (${vv('a','a')} + ${vv('b','b')})`, `2 · (${fmt(a)} + ${fmt(b)})`, 2*(a+b), 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `${vv('a','a')} · ${vv('b','b')}`, `${fmt(a)} · ${fmt(b)}`, a*b, 'cm²')],
+        els:[['a','Lato a','a','',a,[0,0],[a,0]], ['b','Lato b','b','',b,[a,0],[a,b]]]}; },
+      note:()=>'Un prisma retto con base rettangolare è un parallelepipedo rettangolo.'},
+    {k:'rombo', name:'Rombo', poly:'rombo',
+      dims:[{k:'D',label:'Diagonale maggiore',min:2,max:12,def:8},{k:'d',label:'Diagonale minore',min:1,max:11,def:6}],
+      fix:(d,ch)=>{ if(d.d >= d.D){ if(ch==='D') d.d = d.D-1; else d.D = d.d+1; } },
+      calc:d=>{ const {D}=d, dd=d.d, lr=Math.hypot(D/2,dd/2), l=r2(lr); return {p2:4*l, Ab:D*dd/2, pts:[[0,dd/2],[D/2,0],[D,dd/2],[D/2,dd]], lines:[
+        bLine('Lato (Pitagora)', vv('l','l'), `√((${vv('D','D')} : 2)² + (${vv('d','d')} : 2)²)`, `√(${fmt(D/2)}² + ${fmt(dd/2)}²)`, lr, 'cm'),
+        bLine('Perimetro di base', '2p', `4 · ${vv('l','l')}`, `4 · ${fmt(l)}`, 4*l, 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `(${vv('D','D')} · ${vv('d','d')}) : 2`, `(${fmt(D)} · ${fmt(dd)}) : 2`, D*dd/2, 'cm²')],
+        els:[['D','Diagonale maggiore','D','',D,[0,dd/2],[D,dd/2]], ['d','Diagonale minore','d','',dd,[D/2,0],[D/2,dd]], ['l','Lato','l','',lr,[D/2,0],[D,dd/2]]]}; },
+      note:()=>'Le diagonali del rombo sono perpendicolari e si tagliano a metà: ogni lato è l\'ipotenusa di un triangolo rettangolo con cateti D : 2 e d : 2.'},
+    {k:'par', name:'Parallelogramma', poly:'parallelogramma',
+      dims:[{k:'b',label:'Base',min:1,max:12,def:6},{k:'l',label:'Lato obliquo',min:2,max:12,def:4},{k:'hb',sym:HB,label:'Altezza del parallelogramma',min:1,max:11,def:3}],
+      fix:(d,ch)=>{ if(d.hb >= d.l){ if(ch==='l') d.hb = d.l-1; else d.l = d.hb+1; } },
+      calc:d=>{ const {b,l,hb}=d, s=sq(l*l-hb*hb); return {p2:2*(b+l), Ab:b*hb, pts:[[0,0],[b,0],[b+s,hb],[s,hb]], lines:[
+        bLine('Perimetro di base', '2p', `2 · (${vv('b','b')} + ${vv('l','l')})`, `2 · (${fmt(b)} + ${fmt(l)})`, 2*(b+l), 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `${vv('b','b')} · ${vv('hb',HB)}`, `${fmt(b)} · ${fmt(hb)}`, b*hb, 'cm²')],
+        els:[['b','Base','b','',b,[0,0],[b,0]], ['l','Lato obliquo','l','',l,[b,0],[b+s,hb]], ['hb','Altezza relativa alla base','h','b',hb,[s,0],[s,hb]]]}; },
+      note:()=>'L\'area del parallelogramma è base per altezza; il lato obliquo serve per il perimetro.'},
+    {k:'tiso', name:'Trapezio isoscele', poly:'trapezio isoscele',
+      dims:[{k:'B',label:'Base maggiore',min:2,max:12,def:8},{k:'b',label:'Base minore',min:1,max:11,def:4},{k:'l',label:'Lato obliquo',min:1,max:12,def:3}],
+      fix:(d,ch)=>{
+        if(d.b >= d.B){ if(ch==='B') d.b = d.B-1; else d.B = d.b+1; }
+        if(2*d.l <= d.B-d.b){ if(ch==='l') d.b = d.B-2*d.l+1; else d.l = Math.floor((d.B-d.b)/2)+1; }
+      },
+      calc:d=>{ const {B,b,l}=d, pr=(B-b)/2, hr=sq(l*l-pr*pr), h=r2(hr); return {p2:B+b+2*l, Ab:(B+b)*h/2, pts:[[0,0],[B,0],[(B+b)/2,h],[(B-b)/2,h]], lines:[
+        bLine('Proiezione del lato obliquo', 'p<sub>l</sub>', `(${vv('B','B')} − ${vv('b','b')}) : 2`, `(${fmt(B)} − ${fmt(b)}) : 2`, pr, 'cm'),
+        bLine('Altezza del trapezio (Pitagora)', vv('hb',HB), `√(${vv('l','l')}² − p<sub>l</sub>²)`, `√(${fmt(l)}² − ${fmt(pr)}²)`, hr, 'cm'),
+        bLine('Perimetro di base', '2p', `${vv('B','B')} + ${vv('b','b')} + 2 · ${vv('l','l')}`, `${fmt(B)} + ${fmt(b)} + 2 · ${fmt(l)}`, B+b+2*l, 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `((${vv('B','B')} + ${vv('b','b')}) · ${vv('hb',HB)}) : 2`, `((${fmt(B)} + ${fmt(b)}) · ${fmt(h)}) : 2`, (B+b)*h/2, 'cm²')],
+        els:[['B','Base maggiore','B','',B,[0,0],[B,0]], ['b','Base minore','b','',b,[(B-b)/2,h],[(B+b)/2,h]], ['l','Lato obliquo','l','',l,[B,0],[(B+b)/2,h]], ['hb','Altezza del trapezio','h','b',hr,[(B-b)/2,0],[(B-b)/2,h]]]}; },
+      note:()=>'L\'altezza e la proiezione del lato obliquo sono i cateti di un triangolo rettangolo che ha per ipotenusa il lato obliquo.'},
+    {k:'tret', name:'Trapezio rettangolo', poly:'trapezio rettangolo',
+      dims:[{k:'B',label:'Base maggiore',min:2,max:12,def:8},{k:'b',label:'Base minore',min:1,max:11,def:5},{k:'hb',sym:HB,label:'Altezza del trapezio (lato perpendicolare)',min:1,max:12,def:4}],
+      fix:(d,ch)=>{ if(d.b >= d.B){ if(ch==='B') d.b = d.B-1; else d.B = d.b+1; } },
+      calc:d=>{ const {B,b,hb}=d, lr=Math.hypot(hb,B-b), l=r2(lr); return {p2:B+b+hb+l, Ab:(B+b)*hb/2, pts:[[0,0],[B,0],[b,hb],[0,hb]], lines:[
+        bLine('Lato obliquo (Pitagora)', vv('l','l'), `√(${vv('hb',HB)}² + (${vv('B','B')} − ${vv('b','b')})²)`, `√(${fmt(hb)}² + ${fmt(B-b)}²)`, lr, 'cm'),
+        bLine('Perimetro di base', '2p', `${vv('B','B')} + ${vv('b','b')} + ${vv('hb',HB)} + ${vv('l','l')}`, `${fmt(B)} + ${fmt(b)} + ${fmt(hb)} + ${fmt(l)}`, B+b+hb+l, 'cm'),
+        bLine('Area di base', 'A<sub>b</sub>', `((${vv('B','B')} + ${vv('b','b')}) · ${vv('hb',HB)}) : 2`, `((${fmt(B)} + ${fmt(b)}) · ${fmt(hb)}) : 2`, (B+b)*hb/2, 'cm²')],
+        els:[['B','Base maggiore','B','',B,[0,0],[B,0]], ['b','Base minore','b','',b,[0,hb],[b,hb]], ['hb','Altezza del trapezio','h','b',hb,[0,0],[0,hb]], ['l','Lato obliquo','l','',lr,[B,0],[b,hb]]]}; },
+      note:()=>'Nel trapezio rettangolo l\'altezza è anche un lato. Il lato obliquo è l\'ipotenusa di un triangolo rettangolo con cateti h e B − b.'}
+  ],
+  5:[
+    {k:'reg', name:'Regolare', poly:'pentagono regolare'},
+    {k:'cas', name:'A casetta', poly:'pentagono a casetta',
+      dims:[{k:'b',label:'Base',min:1,max:12,def:6},{k:'a',label:'Lato verticale',min:1,max:12,def:4},{k:'l',label:'Lato obliquo (tetto)',min:1,max:12,def:4}],
+      fix:(d,ch)=>fixIso(d, ch, 'b', 'l'),
+      calc:d=>{ const {b,a,l}=d, tr=sq(l*l-b*b/4), t=r2(tr); return {p2:b+2*a+2*l, Ab:b*a+b*t/2, pts:[[0,0],[b,0],[b,a],[b/2,a+t],[0,a]], lines:[
+        bLine('Altezza del triangolo (Pitagora)', vv('ht',HT), `√(${vv('l','l')}² − (${vv('b','b')} : 2)²)`, `√(${fmt(l)}² − ${fmt(b/2)}²)`, tr, 'cm'),
+        bLine('Perimetro di base', '2p', `${vv('b','b')} + 2 · ${vv('a','a')} + 2 · ${vv('l','l')}`, `${fmt(b)} + 2 · ${fmt(a)} + 2 · ${fmt(l)}`, b+2*a+2*l, 'cm'),
+        bLine('Area di base (rettangolo + triangolo)', 'A<sub>b</sub>', `${vv('b','b')} · ${vv('a','a')} + (${vv('b','b')} · ${vv('ht',HT)}) : 2`, `${fmt(b)} · ${fmt(a)} + (${fmt(b)} · ${fmt(t)}) : 2`, b*a+b*t/2, 'cm²')],
+        els:[['b','Base','b','',b,[0,0],[b,0]], ['a','Lato verticale','a','',a,[b,0],[b,a]], ['l','Lato obliquo','l','',l,[b,a],[b/2,a+t]], ['ht','Altezza del triangolo','h','t',tr,[b/2,a],[b/2,a+t]]]}; },
+      note:()=>'Il pentagono "a casetta" si scompone in un rettangolo e un triangolo isoscele: l\'area è la somma delle due aree.'}
+  ],
+  6:[
+    {k:'reg', name:'Regolare', poly:'esagono regolare'},
+    {k:'all', name:'Allungato', poly:'esagono allungato',
+      dims:[{k:'a',label:'Lato lungo',min:1,max:12,def:6},{k:'b',label:'Larghezza',min:1,max:12,def:4},{k:'l',label:'Lato obliquo',min:1,max:12,def:3}],
+      fix:(d,ch)=>fixIso(d, ch, 'b', 'l'),
+      calc:d=>{ const {a,b,l}=d, tr=sq(l*l-b*b/4), t=r2(tr); return {p2:2*a+4*l, Ab:a*b+b*t, pts:[[t,0],[t+a,0],[2*t+a,b/2],[t+a,b],[t,b],[0,b/2]], lines:[
+        bLine('Altezza di ogni triangolo (Pitagora)', vv('ht',HT), `√(${vv('l','l')}² − (${vv('b','b')} : 2)²)`, `√(${fmt(l)}² − ${fmt(b/2)}²)`, tr, 'cm'),
+        bLine('Perimetro di base', '2p', `2 · ${vv('a','a')} + 4 · ${vv('l','l')}`, `2 · ${fmt(a)} + 4 · ${fmt(l)}`, 2*a+4*l, 'cm'),
+        bLine('Area di base (rettangolo + 2 triangoli)', 'A<sub>b</sub>', `${vv('a','a')} · ${vv('b','b')} + 2 · (${vv('b','b')} · ${vv('ht',HT)}) : 2`, `${fmt(a)} · ${fmt(b)} + 2 · (${fmt(b)} · ${fmt(t)}) : 2`, a*b+b*t, 'cm²')],
+        els:[['a','Lato lungo','a','',a,[t,0],[t+a,0]], ['b','Larghezza','b','',b,[t+a,0],[t+a,b]], ['l','Lato obliquo','l','',l,[t+a,0],[2*t+a,b/2]], ['ht','Altezza del triangolo','h','t',tr,[t+a,b/2],[2*t+a,b/2]]]}; },
+      note:()=>'L\'esagono allungato si scompone in un rettangolo e due triangoli isosceli uguali, uno per parte.'}
+  ],
+  8:[
+    {k:'reg', name:'Regolare', poly:'ottagono regolare'},
+    {k:'smu', name:'Smussato', poly:'ottagono smussato',
+      dims:[{k:'a',label:'Lunghezza del rettangolo',min:3,max:12,def:8},{k:'b',label:'Larghezza del rettangolo',min:3,max:12,def:6},{k:'c',label:'Taglio agli angoli',min:1,max:5,def:2}],
+      fix:(d,ch)=>{ if(2*d.c >= Math.min(d.a,d.b)){ if(ch==='c'){ d.a = Math.max(d.a, 2*d.c+1); d.b = Math.max(d.b, 2*d.c+1); } else d.c = Math.floor((Math.min(d.a,d.b)-1)/2); } },
+      calc:d=>{ const {a,b,c}=d, s=r2(c*1.414); return {p2:2*(a-2*c)+2*(b-2*c)+4*s, Ab:a*b-2*c*c, pts:[[c,0],[a-c,0],[a,c],[a,b-c],[a-c,b],[c,b],[0,b-c],[0,c]], lines:[
+        bLine('Lato obliquo (diagonale del quadratino)', vv('s','s'), `${vv('c','c')} · √2`, `${fmt(c)} · 1,414`, s, 'cm'),
+        bLine('Perimetro di base', '2p', `2 · (${vv('a','a')} − 2 · ${vv('c','c')}) + 2 · (${vv('b','b')} − 2 · ${vv('c','c')}) + 4 · ${vv('s','s')}`, `2 · ${fmt(a-2*c)} + 2 · ${fmt(b-2*c)} + 4 · ${fmt(s)}`, 2*(a-2*c)+2*(b-2*c)+4*s, 'cm'),
+        bLine('Area di base (rettangolo − 4 triangolini)', 'A<sub>b</sub>', `${vv('a','a')} · ${vv('b','b')} − 4 · (${vv('c','c')} · ${vv('c','c')}) : 2`, `${fmt(a)} · ${fmt(b)} − 4 · (${fmt(c)} · ${fmt(c)}) : 2`, a*b-2*c*c, 'cm²')],
+        els:[['a','Lunghezza del rettangolo','a','',a,[0,0],[a,0]], ['b','Larghezza del rettangolo','b','',b,[a,0],[a,b]], ['c','Taglio agli angoli','c','',c,[a-c,0],[a,0]], ['s','Lato obliquo','s','',s,[a-c,0],[a,c]]]}; },
+      note:()=>'L\'ottagono smussato è un rettangolo a cui si tagliano i 4 angoli: si toglie un triangolino rettangolo isoscele per ogni angolo.'}
+  ]
+};
+const PB = {type:{3:'reg',4:'reg',5:'reg',6:'reg',8:'reg'}, dims:{}};
+Object.keys(PBASE).forEach(n=>PBASE[n].forEach(t=>{ if(t.dims){ PB.dims[n+t.k] = {}; t.dims.forEach(x=>PB.dims[n+t.k][x.k] = x.def); } }));
+function pbType(n){ return PBASE[n].find(t=>t.k===PB.type[n]) || PBASE[n][0]; }
+function pbDims(n){ return PB.dims[n+pbType(n).k]; }
+/* base non regolare già pronta: calcoli e passaggio dal piano [u,v] allo spazio (base davanti, centrata) */
+function pbShape(n){
+  const t = pbType(n); if(t.k==='reg') return null;
+  const c = t.calc(pbDims(n)), us = c.pts.map(p=>p[0]), vs = c.pts.map(p=>p[1]);
+  const cu = (Math.min(...us)+Math.max(...us))/2, cv = (Math.min(...vs)+Math.max(...vs))/2;
+  c.t = t; c.at = (p, y)=>V3(p[0]-cu, y||0, cv-p[1]);
+  return c;
+}
+
 /* ---------- solidi di rotazione ---------- */
 const T = (x,y,z) => new THREE.Matrix4().makeTranslation(x,y,z);
 const Rx = a => new THREE.Matrix4().makeRotationX(a);
@@ -1014,13 +1155,24 @@ const SOLIDS = {
       {label:'Diagonale', sym:vv('d','d'), f:`√(${vv('a','a')}² + ${vv('b','b')}² + ${vv('c','c')}²)`, s:()=>`√(${fmt(a)}² + ${fmt(b)}² + ${fmt(c)}²)`, val:dg, unit:'cm', extra:true}]; },
     note:()=>'La diagonale si trova applicando due volte il teorema di Pitagora.'
   },
-  prisma:{ name:'Prisma regolare', sides:true, dims:[{k:'l',label:'Spigolo di base',min:1,max:10,def:4},{k:'h',label:'Altezza',min:1,max:12,def:6}],
-    build:(d,n)=>buildPoly([...ringVerts(n,d.l,0), ...ringVerts(n,d.l,d.h)], {parent:prismParent, colors:prismColors}),
-    elements:(d,n)=>{ const ap=d.l/(2*Math.tan(Math.PI/n)), l=d.l; return [
+  prisma:{ name:'Prisma', sides:true, baseTypes:true, dims:[{k:'l',label:'Spigolo di base',min:1,max:10,def:4},{k:'h',label:'Altezza',min:1,max:12,def:6}],
+    build:(d,n)=>{ const B = pbShape(n);
+      const verts = B ? [...B.pts.map(p=>B.at(p,0)), ...B.pts.map(p=>B.at(p,d.h))] : [...ringVerts(n,d.l,0), ...ringVerts(n,d.l,d.h)];
+      return buildPoly(verts, {parent:prismParent, colors:prismColors}); },
+    elements:(d,n)=>{ const B = pbShape(n);
+      if(B){ const p0 = B.pts[0];
+        return [...B.els.map(([k,label,main,sub,val,a,b])=>({k, label, main, sub, val, a:B.at(a), b:B.at(b)})),
+          {k:'h', label:'Altezza', main:'h', val:d.h, a:B.at(p0,0), b:B.at(p0,d.h)}]; }
+      const ap=d.l/(2*Math.tan(Math.PI/n)), l=d.l; return [
       {k:'l', label:'Spigolo di base', main:'l', val:l, a:V3(-l/2,0,ap), b:V3(l/2,0,ap)},
       {k:'ab', label:'Apotema di base', main:'a', sub:'b', val:r2(l*FISSO[n]), a:V3(0,0,0), b:V3(0,0,ap)},
       {k:'h', label:'Altezza', main:'h', val:d.h, a:V3(l/2,0,ap), b:V3(l/2,d.h,ap)}]; },
-    calc:(d,n)=>{ const {l,h}=d, f=FISSO[n], p2=n*l, ab=r2(l*f), Ab = n===4 ? l*l : p2*ab/2, Al=p2*h, At=Al+2*Ab, Vo=Ab*h; return [
+    calc:(d,n)=>{ const B = pbShape(n);
+      if(B){ const h=d.h, p2=r2(B.p2), Ab=r2(B.Ab), Al=p2*h, At=Al+2*Ab; return [...B.lines,
+        {label:'Area laterale', sym:'A<sub>l</sub>', f:`2p · ${vv('h','h')}`, s:()=>`${fmt(p2)} · ${fmt(h)}`, val:Al, unit:'cm²'},
+        {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>l</sub> + 2 · A<sub>b</sub>`, s:()=>`${fmt(Al)} + 2 · ${fmt(Ab)}`, val:At, unit:'cm²'},
+        {label:'Volume', sym:'V', f:`A<sub>b</sub> · ${vv('h','h')}`, s:()=>`${fmt(Ab)} · ${fmt(h)}`, val:Ab*h, unit:'cm³'}]; }
+      const {l,h}=d, f=FISSO[n], p2=n*l, ab=r2(l*f), Ab = n===4 ? l*l : p2*ab/2, Al=p2*h, At=Al+2*Ab, Vo=Ab*h; return [
       {label:'Perimetro di base', sym:'2p', f:`${n} · ${vv('l','l')}`, s:()=>`${n} · ${fmt(l)}`, val:p2, unit:'cm'},
       {label:'Apotema di base', sym:vv('ab','a<sub>b</sub>'), f:`${vv('l','l')} · ${fmt(f,3)}`, s:()=>`${fmt(l)} · ${fmt(f,3)}`, val:ab, unit:'cm', extra:n===4},
       n===4
@@ -1029,7 +1181,8 @@ const SOLIDS = {
       {label:'Area laterale', sym:'A<sub>l</sub>', f:`2p · ${vv('h','h')}`, s:()=>`${fmt(p2)} · ${fmt(h)}`, val:Al, unit:'cm²'},
       {label:'Area totale', sym:'A<sub>t</sub>', f:`A<sub>l</sub> + 2 · A<sub>b</sub>`, s:()=>`${fmt(Al)} + 2 · ${fmt(Ab)}`, val:At, unit:'cm²'},
       {label:'Volume', sym:'V', f:`A<sub>b</sub> · ${vv('h','h')}`, s:()=>`${fmt(Ab)} · ${fmt(h)}`, val:Vo, unit:'cm³'}]; },
-    note:(d,n)=>`Il numero ${fmt(FISSO[n],3)} è il numero fisso del ${POLYGON[n]}: moltiplicato per il lato dà l'apotema di base.`
+    note:(d,n)=>{ const B = pbShape(n); if(B) return B.t.note(pbDims(n)) + ' Le facce laterali sono rettangoli: l\'area laterale è il perimetro di base per l\'altezza.';
+      return `Il numero ${fmt(FISSO[n],3)} è il numero fisso del ${POLYGON[n]}: moltiplicato per il lato dà l'apotema di base.`; }
   },
   piramide:{ name:'Piramide regolare', sides:true, dims:[{k:'l',label:'Spigolo di base',min:1,max:10,def:6},{k:'h',label:'Altezza',min:1,max:12,def:4}],
     build:(d,n)=>buildPoly([...ringVerts(n,d.l,0), V3(0,d.h,0)], {parent:pyramidParent, colors:prismColors}),
@@ -1171,7 +1324,7 @@ function labelSprite(el, color){
   const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
   const fam = S.legible ? "'Atkinson Hyperlegible', Verdana, sans-serif" : "'Baloo 2', Nunito, sans-serif";
   const F1 = `italic 700 60px ${fam}`, F2 = `italic 700 36px ${fam}`, F3 = `700 60px ${fam}`;
-  const val = ' = ' + (approx(el.val) ? '≈ ' : '') + fmt(el.val) + ' cm';
+  const val = (approx(el.val) ? ' ≈ ' : ' = ') + fmt(el.val) + ' cm';
   ctx.font = F1; const w1 = ctx.measureText(el.main).width;
   ctx.font = F2; const w2 = el.sub ? ctx.measureText(el.sub).width + 2 : 0;
   ctx.font = F3; const w3 = ctx.measureText(val).width;
@@ -1195,7 +1348,7 @@ function refreshHelpers(){
   if(!active) return;
   const el = current.elements.find(e=>e.k===S.el); if(!el) return;
   const color = css('--hl') || '#D6336C';
-  const size = Math.max(...Object.values(S.dims[S.solid]));
+  const size = Math.max(...solidDimItems(S.solid).map(it=>it.o[it.x.k]));
   const rad = Math.max(0.05, size*0.012);
   const dir = new THREE.Vector3().subVectors(el.b, el.a), len = dir.length();
   const mat = new THREE.MeshBasicMaterial({color, depthTest:false, transparent:true});
@@ -1298,25 +1451,49 @@ function renderPicker(){
   }</div></div>`).join('');
   $('#picker').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>selectSolid(b.dataset.k));
 }
+/* misure del solido: per il prisma con base non regolare, prima i lati della base e poi l'altezza */
+function solidDimItems(k){
+  const def = SOLIDS[k], d = S.dims[k];
+  if(def.baseTypes){ const n = S.sides[k], t = pbType(n); if(t.dims){ const bd = pbDims(n); return [...t.dims.map(x=>({x, o:bd, fix:t.fix})), {x:{...def.dims[1], label:'Altezza del prisma'}, o:d}]; } }
+  return def.dims.map(x=>({x, o:d}));
+}
+function solidName(k){
+  const def = SOLIDS[k]; if(!def.sides) return def.name;
+  const n = S.sides[k], adj = {3:'triangolare',4:'quadrangolare',5:'pentagonale',6:'esagonale',8:'ottagonale'}[n];
+  if(k!=='prisma') return 'Piramide ' + adj;
+  const t = pbType(n); return t.k==='reg' ? `Prisma ${adj} regolare` : `Prisma ${adj} · base ${t.poly}`;
+}
+function sidesHTML(k){
+  const def = SOLIDS[k]; if(!def.sides) return '';
+  const n = S.sides[k];
+  let h = `<div class="sides"><span class="lbl">Numero di lati della base</span><div class="seg" role="group" aria-label="Numero di lati della base">${
+    [3,4,5,6,8].map(m=>`<button data-n="${m}" class="${m===n?'on':''}" aria-pressed="${m===n}">${m}</button>`).join('')}</div>`;
+  if(def.baseTypes){
+    const t = pbType(n);
+    h += `<span class="lbl">Tipo di poligono</span><div class="pick-row" role="group" aria-label="Tipo di poligono di base">${
+      PBASE[n].map(x=>`<button class="pick${x.k===t.k?' on':''}" data-t="${x.k}" aria-pressed="${x.k===t.k}">${x.name}</button>`).join('')}</div><small>Base: ${t.poly} · ${n} lati</small>`;
+  } else h += `<small>${POLYGON[n][0].toUpperCase()+POLYGON[n].slice(1)} · ${n} lati</small>`;
+  return h + '</div>';
+}
+function dimsHTML(items, inP, outP, showVar){
+  return items.map(({x,o})=>`<div class="dim"><label for="${inP}${x.k}">${x.label}${showVar?` <var>${x.sym||x.k}</var>`:''}</label><output id="${outP}${x.k}">${fmt(o[x.k])} cm</output><input type="range" id="${inP}${x.k}" min="${x.min}" max="${Math.max(x.max, Math.ceil(o[x.k]))}" step="1" value="${o[x.k]}"></div>`).join('');
+}
+function bindDims(box, k, items, inP, outP, onDim, onShape){
+  items.forEach(it=>box.querySelector('#'+inP+it.x.k).addEventListener('input', e=>{
+    it.o[it.x.k] = +e.target.value;
+    if(it.fix) it.fix(it.o, it.x.k);   // una misura impossibile corregge le altre (es. lato obliquo troppo corto)
+    items.forEach(j=>{ box.querySelector('#'+inP+j.x.k).value = j.o[j.x.k]; box.querySelector('#'+outP+j.x.k).textContent = fmt(j.o[j.x.k])+' cm'; });
+    onDim();
+  }));
+  box.querySelectorAll('.sides [data-n]').forEach(b=>b.onclick = ()=>{ S.sides[k] = +b.dataset.n; onShape(); });
+  box.querySelectorAll('.sides [data-t]').forEach(b=>b.onclick = ()=>{ PB.type[S.sides[k]] = b.dataset.t; onShape(); });
+}
 function renderDims(){
-  const def = SOLIDS[S.solid], d = S.dims[S.solid];
-  let html = def.dims.map(x=>`<div class="dim"><label for="d_${x.k}">${x.label} <var>${x.k}</var></label><output id="o_${x.k}">${fmt(d[x.k])} cm</output><input type="range" id="d_${x.k}" min="${x.min}" max="${Math.max(x.max, Math.ceil(d[x.k]))}" step="1" value="${d[x.k]}"></div>`).join('');
-  if(def.sides){
-    const n = S.sides[S.solid];
-    html += `<div class="sides"><span class="lbl">Poligono di base</span><div class="seg" role="group" aria-label="Numero di lati della base">${
-      [3,4,5,6,8].map(k=>`<button data-n="${k}" class="${k===n?'on':''}" aria-pressed="${k===n}">${k}</button>`).join('')
-    }</div><small>${POLYGON[n][0].toUpperCase()+POLYGON[n].slice(1)} · ${n} lati</small></div>`;
-  }
-  $('#dims').innerHTML = html;
-  def.dims.forEach(x=>{
-    $('#d_'+x.k).addEventListener('input', e=>{
-      d[x.k] = +e.target.value; $('#o_'+x.k).textContent = fmt(d[x.k])+' cm';
-      S.revealed.clear(); rebuild(); renderElements(); renderCalc();
-    });
-  });
-  $('#dims').querySelectorAll('.sides button').forEach(b=>b.onclick = ()=>{
-    S.sides[S.solid] = +b.dataset.n; S.revealed.clear(); rebuild(); renderDims(); renderElements(); renderCalc(); renderHeader();
-  });
+  const k = S.solid, items = solidDimItems(k);
+  $('#dims').innerHTML = sidesHTML(k) + dimsHTML(items, 'd_', 'o_', true);
+  bindDims($('#dims'), k, items, 'd_', 'o_',
+    ()=>{ S.revealed.clear(); rebuild(); renderElements(); renderCalc(); },
+    ()=>{ S.revealed.clear(); S.el = null; rebuild(); renderDims(); renderElements(); renderCalc(); renderHeader(); });
 }
 function renderElements(){
   $('#elements').innerHTML = current.elements.map(e=>`<button class="chip" data-k="${e.k}" aria-pressed="${S.el===e.k}"><span class="dot"></span>${e.label} <em>${e.main}${e.sub?`<sub>${e.sub}</sub>`:''}</em></button>`).join('');
@@ -1354,10 +1531,8 @@ function renderCalc(){
   markVars();
 }
 function renderHeader(){
-  const def = SOLIDS[S.solid], n = S.sides[S.solid];
-  let name = def.name;
-  if(def.sides){ const adj = {3:'triangolare',4:'quadrangolare',5:'pentagonale',6:'esagonale',8:'ottagonale'}[n]; name = (S.solid==='prisma'?'Prisma ':'Piramide ') + adj; }
-  $('#solidName').textContent = name;
+  const def = SOLIDS[S.solid];
+  $('#solidName').textContent = solidName(S.solid);
   let counts = '';
   if(current.counts) counts = `${current.counts.F} facce · ${current.counts.V} vertici · ${current.counts.S} spigoli`;
   else if(S.solid==='cilindro') counts = '2 basi circolari · 1 superficie laterale curva';
@@ -1866,7 +2041,7 @@ function openInCo(co){
 }
 function openInLab(lab){
   Object.assign(S.dims[lab.solid], lab.dims);
-  if(lab.sides) S.sides[lab.solid] = lab.sides;
+  if(lab.sides){ S.sides[lab.solid] = lab.sides; if(lab.solid==='prisma') PB.type[lab.sides] = 'reg'; }
   S.t = 0; $('#netT').value = 0;
   showView('solidi');
   selectSolid(lab.solid);
@@ -2197,7 +2372,6 @@ function expCavalieri(){
 /* =========================================================
    MODULO 4 · SOLIDI DI ROTAZIONE E COMPOSTI
    ========================================================= */
-const sq = x => Math.sqrt(x);
 const ROT = [
   {k:'rett', name:'Rettangolo', d:'attorno a un lato → cilindro', solid:'Cilindro',
     dims:[{k:'r',label:'Lato che ruota (raggio)',min:1,max:8,def:3},{k:'h',label:'Lato sull\'asse (altezza)',min:1,max:12,def:5}],
@@ -2707,9 +2881,7 @@ const DR_LIST = [
 const DR_VIEWS = {po:'Proiezioni ortogonali', iso:'Assonometria isometrica', mono:'Assonometria monometrica', cav:'Assonometria cavaliera'};
 function drName(){
   if(DR.src==='comp') return COMP.find(c=>c.k===DR.k).name;
-  const def = SOLIDS[DR.k];
-  if(def.sides){ const n = S.sides[DR.k]; return (DR.k==='prisma'?'Prisma ':'Piramide ') + {3:'triangolare',4:'quadrangolare',5:'pentagonale',6:'esagonale',8:'ottagonale'}[n]; }
-  return def.name;
+  return solidName(DR.k);
 }
 
 /* ---- modello a triangoli del solido chiuso ---- */
@@ -3166,20 +3338,19 @@ function drPicker(){
   $('#drPicker').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>{ DR.src = b.dataset.src; DR.k = b.dataset.k; DR.step = null; drPicker(); drDims(); drRefresh(); });
 }
 function drDims(){
-  const def = DR.src==='comp' ? COMP.find(c=>c.k===DR.k) : SOLIDS[DR.k];
-  const d = DR.src==='comp' ? CO.dims[DR.k] : S.dims[DR.k];
-  let html = def.dims.map(x=>`<div class="dim"><label for="dr_${x.k}">${x.label}</label><output id="dro_${x.k}">${fmt(d[x.k])} cm</output><input type="range" id="dr_${x.k}" min="${x.min}" max="${Math.max(x.max, Math.ceil(d[x.k]))}" step="1" value="${d[x.k]}"></div>`).join('');
-  if(DR.src==='lab' && def.sides){
-    const n = S.sides[DR.k];
-    html += `<div class="sides"><span class="lbl">Poligono di base</span><div class="seg" role="group" aria-label="Numero di lati della base">${[3,4,5,6,8].map(k=>`<button data-n="${k}" class="${k===n?'on':''}" aria-pressed="${k===n}">${k}</button>`).join('')}</div></div>`;
+  if(DR.src==='lab'){
+    const items = solidDimItems(DR.k);
+    $('#drDims').innerHTML = sidesHTML(DR.k) + dimsHTML(items, 'dr_', 'dro_', false);
+    bindDims($('#drDims'), DR.k, items, 'dr_', 'dro_', drRefresh, ()=>{ drDims(); drRefresh(); });
+    return;
   }
-  $('#drDims').innerHTML = html;
+  const def = COMP.find(c=>c.k===DR.k), d = CO.dims[DR.k];
+  $('#drDims').innerHTML = dimsHTML(def.dims.map(x=>({x, o:d})), 'dr_', 'dro_', false);
   def.dims.forEach(x=>$('#dr_'+x.k).addEventListener('input', e=>{
     d[x.k] = +e.target.value;
     if(DR.k==='foro'){ const maxR = Math.max(1, Math.floor((d.l-1)/2)); if(d.r > maxR){ d.r = maxR; $('#dr_r').value = d.r; $('#dro_r').textContent = d.r+' cm'; } }
     $('#dro_'+x.k).textContent = fmt(d[x.k])+' cm'; drRefresh();
   }));
-  $('#drDims').querySelectorAll('.sides button').forEach(b=>b.onclick = ()=>{ S.sides[DR.k] = +b.dataset.n; drDims(); drRefresh(); });
 }
 let drReady = false;
 function drShow(){

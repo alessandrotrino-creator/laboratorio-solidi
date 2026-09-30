@@ -1,7 +1,7 @@
 # CLAUDE.md — note per riprendere il lavoro
 
 Queste note servono a Claude (o a chiunque sviluppi) per ripartire da dove ci si è fermati.
-Ultimo aggiornamento: 27 settembre 2026.
+Ultimo aggiornamento: 30 settembre 2026.
 
 ## Chi e per cosa
 - Committente: docente di matematica e scienze, scuola secondaria di primo grado. Lingua di lavoro: **italiano**.
@@ -24,6 +24,9 @@ Ultimo aggiornamento: 27 settembre 2026.
 - **Metodo di costruzione** a scelta (scheda nel pannello, richiesta del docente): nelle proiezioni ortogonali il riporto pianta → profilo con *linea a 45°*, *squadra a 45°* (segmento per ogni punto) o *compasso* (archi centrati in O); nelle assonometrie le ellissi con *rombo/parallelogramma*, *8 punti* o *ovale a 4 centri* (solo isometrica); nella monometrica circonferenza col compasso. Stato: `DR.transfer`, `DR.ell`; funzioni `drEllMethod`, `drEllipseText`, `drEllipseConstruction`. Gli elementi del disegno possono essere segmenti (`d`), archi (`arc`) o punti (`dot`).
 - Interfaccia del disegno: due pulsanti principali **"Proiezioni ortogonali" / "Assonometria"**; con "Assonometria" compare la scelta Cavaliera / Isometrica / Monometrica (richiesta del docente). Nelle proiezioni le scritte dei piani sono per esteso: "PV · prospetto", "PL · profilo", "PO · pianta", vicino all'incrocio dei piani (il docente dubitava che il PV fosse in alto a sinistra: lo è, ma la scritta era poco visibile).
 
+- **Prisma con base qualsiasi** (richiesta del 30/09): prima si sceglie il numero di lati, *poi* il tipo di poligono, poi le misure. Tipi: 3 → equilatero, isoscele, rettangolo, scaleno (area con Erone); 4 → quadrato, rettangolo, rombo (diagonali), parallelogramma (base, lato, altezza), trapezio isoscele, trapezio rettangolo; 5 → regolare, a casetta; 6 → regolare, allungato; 8 → regolare, smussato. Le misure impossibili si correggono da sole (`fix`). La piramide resta solo regolare. Il docente può chiedere altri tipi: basta aggiungere una voce a `PBASE[n]`.
+- Assonometrie verificate il 30/09 misurando gli angoli a schermo: cavaliera 0°/45° (y dimezzato)/90°, isometrica 30°/30°/90° con misure uguali, monometrica 30°–60° o 45°–45° con x ⟂ y. L'SVG usa `preserveAspectRatio="xMidYMid meet"`, quindi niente deformazioni su nessun dispositivo.
+
 ## Mappa del codice (`index.html`, tutto dentro un'unica IIFE)
 
 | Sezione | Contenuto |
@@ -34,8 +37,9 @@ Ultimo aggiornamento: 27 settembre 2026.
 | `syncColors`, `PRESETS` | palette |
 | `hull`, `buildPoly` | poliedri: involucro convesso, albero di sviluppo, apertura animata |
 | `buildCylinder`, `buildCone`, `buildSphere` | solidi curvi e srotolamento |
-| `SOLIDS` | ogni solido: `dims`, `build`, `elements`, `calc`, `note` |
-| scena e UI laboratorio | `rebuild`, `refreshHelpers`, `labelSprite`, `renderCalc`, `renderHeader`, `selectSolid` |
+| `PBASE`, `PB`, `pbType`, `pbDims`, `pbShape` | poligoni di base del prisma: per ogni numero di lati i tipi con `dims`, `fix`, `calc(d)` → `pts` (vertici [u,v], lato di base sul davanti), `lines` (perimetro, area, passaggi), `els` (segmenti evidenziabili), `note`. Stato: `PB.type[n]`, `PB.dims[n+tipo]` |
+| `SOLIDS` | ogni solido: `dims`, `build`, `elements`, `calc`, `note` (il prisma usa `pbShape` quando la base non è regolare) |
+| scena e UI laboratorio | `rebuild`, `refreshHelpers`, `labelSprite`, `renderCalc`, `renderHeader`, `selectSolid`; misure condivise con il disegno: `solidDimItems`, `solidName`, `sidesHTML`, `dimsHTML`, `bindDims` |
 | **MODULO 2 · ESERCIZI** | `GENS` (`lvl`, `cat`, `make()` → `text`, `hint`, `asks`, `sol`, `lab` oppure `co`), `CATS`, `EX`, `renderEx`, `verify`, `openInLab`, `openInCo` |
 | `showView` | schede `solidi`, `esercizi`, `formule`, `composti`, `disegno` (+ ancore `#…`) |
 | **MODULO 3 · FORMULE** | `makeViewer`, `attachOrbit`, `makeVessel`, `EXPS`, `expCubetti`, `expTravaso`, `expCavalieri` |

@@ -2877,7 +2877,7 @@ function coCalc(){
    (proiezioni ortogonali col metodo europeo, assonometria isometrica e cavaliera,
     spigoli nascosti tratteggiati, tutorial passo passo)
    ========================================================= */
-const DR = {src:'lab', k:'cubo', view:'po', axo:'cav', mono:30, transfer:'line45', ell:'rombo', hid:true, refs:false, quote:true, grid:true, step:null, cache:null, timer:null};
+const DR = {src:'lab', k:'cubo', axTut:false, view:'po', axo:'cav', mono:30, transfer:'line45', ell:'rombo', hid:true, refs:false, quote:true, grid:true, step:null, cache:null, timer:null};
 const DR_LIST = [
   {g:'Solidi', items:['cubo','parallelepipedo','prisma','piramide','cilindro','cono','sfera','tetraedro','ottaedro','dodecaedro','icosaedro'].map(k=>({src:'lab', k}))},
   {g:'Solidi composti', items:COMP.map(c=>({src:'comp', k:c.k}))}
@@ -2900,20 +2900,6 @@ function drStack(b){
 const drRng = ns=>{ const a = [...new Set(ns)].sort((p,q)=>p-q), out = []; let i = 0; while(i < a.length){ let j = i; while(j+1 < a.length && a[j+1]===a[j]+1) j++; out.push(j > i ? `${drL(a[i])}–${drL(a[j])}` : `${drL(a[i])}`); i = j+1; } return out.join(', '); };
 const drRefName = r => ({cono:'Cono', cilindro:'Cilindro', piramide:'Piramide', cubo:'Cubo', prisma:'Prisma', sfera:'Sfera'})[r];
 function drInPart(pt, p, tol){ return p.y > pt.y0 - tol && p.y < pt.y1 + tol && (!pt.inR || Math.hypot(p.x, p.z) < pt.inR + 1e-2); }
-function drRecipe(pt, b, first){
-  const q0 = fmt(pt.y0 - b.min.y), q1 = fmt(pt.y1 - b.min.y);
-  const r = {
-    cil: `disegna l'ellisse alla quota ${q0} cm e quella alla quota ${q1} cm, poi le due <b>linee di contorno</b> verticali, tangenti alle ellissi`,
-    cone: `${first ? `disegna l'ellisse di base alla quota ${q0} cm, ` : ''}segna il <b>vertice</b> sull'asse alla quota ${q1} cm e traccia le due linee di contorno dal vertice, tangenti all'ellisse`,
-    coneDown: `segna il <b>vertice</b> sull'asse alla quota ${q0} cm, disegna l'ellisse alla quota ${q1} cm e traccia le due linee di contorno dal vertice, tangenti all'ellisse`,
-    pyr: `${first ? `disegna la base alla quota ${q0} cm, ` : ''}segna il <b>vertice</b> sopra il centro della base, alla quota ${q1} cm, e uniscilo ai vertici della base`,
-    pyrDown: `segna il <b>vertice</b> sotto il centro, alla quota ${q0} cm, disegna la figura alla quota ${q1} cm e unisci il vertice ai suoi vertici`,
-    box: `${first ? `disegna la base alla quota ${q0} cm, ` : ''}alza gli spigoli verticali fino alla quota ${q1} cm e chiudi la faccia superiore`,
-    semi: `il contorno della semisfera è una curva che parte dall'ellisse alla quota ${q0} cm e arriva fino alla quota ${q1} cm: tracciala con il curvilineo`,
-    hole: `sulla faccia sotto (quota ${q0} cm) e su quella sopra (quota ${q1} cm) il foro è un'ellisse: tracciale tutte e due; dentro il foro si vede solo un pezzo della parete`
-  }[pt.kind];
-  return r;
-}
 const DR_VIEWS = {po:'Proiezioni ortogonali', iso:'Assonometria isometrica', mono:'Assonometria monometrica', cav:'Assonometria cavaliera'};
 function drName(){
   if(DR.src==='comp') return COMP.find(c=>c.k===DR.k).name;
@@ -3106,8 +3092,8 @@ function drNumLabels(nums, proj, prime, step, T, E, off){
   return G;
 }
 const drList = items => `<ul>${items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-const LIST_MAX = 12;
-/* coppie di punti numerati unite da uno spigolo, divise in: in vista, nascoste, in parte nascoste */
+const LIST_MAX = 24;
+/* coppie di punti unite da uno spigolo, divise in: in vista, nascoste, in parte nascoste */
 function drPairs(edges, lines, NUM){
   const st = new Map();
   lines.forEach(g=>{ const k = drKey(g.e.a)+'|'+drKey(g.e.b); if(!st.has(k)) st.set(k, {v:false, h:false}); st.get(k)[g.vis ? 'v' : 'h'] = true; });
@@ -3121,54 +3107,69 @@ function drPairs(edges, lines, NUM){
   ['vis','hid','mix'].forEach(k=>out[k].sort((p,q)=>p[0]-q[0] || p[1]-q[1]));
   return out;
 }
-function drPairsText(P, first){
-  const f = a => a.map(([x,y])=>`${drL(x)}${drL(y)}`).join(', ');
-  const n = P.vis.length + P.hid.length + P.mix.length;
-  if(!n) return P.other ? 'Traccia le <b>linee di contorno</b> delle superfici curve.' : '';
-  if(n > 16) return `${first} con la <b>linea continua</b>; gli spigoli che non si vedono vanno <b>tratteggiati</b>.` + (P.other ? ' Traccia anche le linee di contorno delle superfici curve.' : '');
-  let t = P.vis.length ? `${first} con la <b>linea continua</b>: ${f(P.vis)}.` : '';
-  if(P.hid.length) t += ` Tratteggia gli spigoli <b>nascosti</b>: ${f(P.hid)}.`;
-  if(P.mix.length) t += ` In parte nascosti (continua dove si vede, tratteggio dietro): ${f(P.mix)}.`;
-  if(P.other) t += ' Traccia anche le linee di contorno delle superfici curve.';
-  return t.trim();
+const drSeg = a => a.map(([x,y])=>`${drL(x)}${drL(y)}`).join(', ');
+function drVisText(P, verb){
+  const n = P.vis.length + P.mix.length;
+  const curve = P.other ? ' Traccia anche le <b>linee di contorno</b> delle superfici curve (la parte che si vede).' : '';
+  if(!n) return P.other ? 'Traccia le <b>linee di contorno</b> della superficie curva: sono tangenti alle ellissi (nel cono partono dal vertice e toccano l\'ellisse di base). La parte che si vede va con la linea continua.' : '';
+  if(n > 20) return `${verb} con la <b>linea continua</b> gli spigoli che si vedono.` + curve;
+  const parts = []; if(P.vis.length) parts.push(drSeg(P.vis)); if(P.mix.length) parts.push(`la parte che si vede di ${drSeg(P.mix)}`);
+  return `${verb} con la <b>linea continua</b>: ${parts.join('; ')}.` + curve;
 }
+function drHidText(P){
+  const parts = []; if(P.hid.length) parts.push(drSeg(P.hid)); if(P.mix.length) parts.push(`la parte dietro di ${drSeg(P.mix)}`);
+  if(!parts.length) return 'Le parti <b>nascoste</b> delle linee di contorno, dietro al solido, si disegnano con il <b>tratteggio</b>.';
+  return 'Ora gli spigoli <b>nascosti</b>, quelli dietro al solido, si tracciano con il <b>tratteggio</b>' + (P.hid.length + P.mix.length <= 20 ? `: ${parts.join('; ')}.` : '.');
+}
+const drArt = n => /^(semisfera|piramide)/.test(n) ? 'la ' + n : 'il ' + n;
 
 function drBuildPO(M, F){
-  const b = M.box, W = b.max.x-b.min.x, H = b.max.y-b.min.y, D = b.max.z-b.min.z;
+  const b = M.box, W = b.max.x-b.min.x, H = b.max.y-b.min.y, D = b.max.z-b.min.z, tol = 1e-3;
   const m = Math.max(1, Math.round((Math.max(W,H,D)*0.32 + 0.6)*2)/2);   // distanza delle viste dalle linee dei piani: numero tondo, da misurare col righello
   const pv = v=>[-m - (b.max.x - v.x), -m - (v.y - b.min.y)];
   const po = v=>[-m - (b.max.x - v.x),  m + (v.z - b.min.z)];
   const pl = v=>[ m + (v.z - b.min.z), -m - (v.y - b.min.y)];
   const views = {pv:{d:V3(0,0,1), p:pv}, po:{d:V3(0,1,0), p:po}, pl:{d:V3(-1,0,0), p:pl}};
-  const L = {}; Object.keys(views).forEach(k=>{ L[k] = drLines(M, views[k]); });
   const E = [], T = [], steps = [];
   const add = (d, cls, step)=>E.push({d, cls, step});
   const txt = (x, y, s, cls, step, anchor)=>T.push({x, y, s, cls, step, anchor});
   const ext = Math.max(W,H,D)*0.12 + 0.25;
   const X0 = -(m + W + m), X1 = m + D + m, Y0 = -(m + H + m), Y1 = m + D + m;
+  const bbox = [X0-0.2, Y0-(Y1-Y0)*0.12-0.6, X1+0.3, Y1+0.3];
   const u = (X1 - X0 + 0.5)/1000, off = 20*u;   // 1 px del disegno
-  const STK = drStack(b), TR = DR.transfer, NUM = drNumber(F.pts, F.circles), lineCls = seg => seg.vis ? 'dw-vis' : 'dw-hid';
-  const hasHid = k => DR.hid && L[k].some(g=>!g.vis);
+  const TR = DR.transfer, lineCls = seg => seg.vis ? 'dw-vis' : 'dw-hid';
   let s = 0;
   const step = (t, tool, extra)=>{ steps.push(Object.assign({t, tool}, extra||{})); return s++; };
-  // piani
+  // il foglio: LT, verticale, linea a 45° o punto O
   const lo = Math.max(W,H,D)*0.045 + 0.12;
-  let k = step('Con la <b>riga</b> traccia la <b>linea di terra (LT)</b>: una retta orizzontale un po\' sopra la metà del foglio.', 'Riga, matita dura');
-  add(pathOf([X0,0],[X1,0]), 'dw-frame', k); txt(X0+0.15, -lo*0.6, 'LT', 'dw-lab', k, 'start');
-  k = step('Appoggia la <b>squadra</b> alla riga e traccia la <b>linea verticale</b>, perpendicolare alla LT. Il foglio è diviso in quattro parti: in alto a sinistra il <b>piano verticale</b> (PV, prospetto), in alto a destra il <b>piano laterale</b> (PL, profilo), in basso a sinistra il <b>piano orizzontale</b> (PO, pianta).', 'Riga e squadra');
-  add(pathOf([0,Y0],[0,Y1]), 'dw-frame', k);
-  txt(-lo*0.5, -lo*0.6, 'PV · prospetto', 'dw-lab', k, 'end'); txt(lo*0.5, -lo*0.6, 'PL · profilo', 'dw-lab', k, 'start'); txt(-lo*0.5, lo*1.5, 'PO · pianta', 'dw-lab', k, 'end');
-  if(TR==='line45'){
-    k = step('Nel quadrante in basso a destra appoggia la <b>squadra da 45°</b> alla riga, con il vertice nell\'incrocio delle due linee, e traccia la <b>linea a 45°</b>: servirà a portare le profondità dalla pianta al profilo.', 'Riga e squadra da 45°');
-    add(pathOf([0,0],[Math.min(X1,Y1), Math.min(X1,Y1)]), 'dw-ref', k);   // come le linee di richiamo: resta visibile con «Linee di richiamo»
-  } else if(TR==='comp'){
-    k = step('Segna il punto <b>O</b> nell\'incrocio fra la LT e la verticale: sarà il centro del <b>compasso</b> per portare le profondità dalla pianta al profilo.', 'Matita');
-    E.push({dot:[0,0], cls:'dw-frame', step:k}); txt(0.12, 0.45, 'O', 'dw-lab', k, 'start');
+  const frame = (k1, k2, k3)=>{
+    add(pathOf([X0,0],[X1,0]), 'dw-frame', k1); txt(X0+0.15, -lo*0.6, 'LT', 'dw-lab', k1, 'start');
+    add(pathOf([0,Y0],[0,Y1]), 'dw-frame', k2);
+    txt(-lo*0.5, -lo*0.6, 'PV · prospetto', 'dw-lab', k2, 'end'); txt(lo*0.5, -lo*0.6, 'PL · profilo', 'dw-lab', k2, 'start'); txt(-lo*0.5, lo*1.5, 'PO · pianta', 'dw-lab', k2, 'end');
+    if(TR==='line45') add(pathOf([0,0],[Math.min(X1,Y1), Math.min(X1,Y1)]), 'dw-ref', k3);   // come le linee di richiamo: resta visibile con «Linee di richiamo»
+    else if(TR==='comp'){ E.push({dot:[0,0], cls:'dw-frame', step:k3}); txt(0.12, 0.45, 'O', 'dw-lab', k3, 'start'); }
+  };
+  if(DR.axTut){
+    const k1 = step('Metti il foglio con il lato lungo in orizzontale. Con la <b>riga</b> traccia la <b>linea di terra (LT)</b>: una retta orizzontale un po\' sopra la metà del foglio, da un bordo all\'altro.', 'Riga, matita dura (H)');
+    const k2 = step('Appoggia la <b>squadra</b> alla riga, con un cateto sulla LT, e traccia la <b>linea verticale</b>, perpendicolare alla LT, un po\' a destra della metà del foglio. Il foglio è diviso in quattro parti: in alto a sinistra il <b>piano verticale</b> (PV), dove va il prospetto; in alto a destra il <b>piano laterale</b> (PL), dove va il profilo; in basso a sinistra il <b>piano orizzontale</b> (PO), dove va la pianta. Il quarto quadrante, in basso a destra, serve solo per le costruzioni.', 'Riga e squadra');
+    const k3 = step(TR==='line45'
+      ? 'Nel quadrante in basso a destra appoggia la <b>squadra da 45°</b> alla riga, con il vertice nell\'incrocio delle due linee, e traccia la <b>linea a 45°</b>. Servirà a portare le profondità dalla pianta al profilo: ogni orizzontale che arriva dalla pianta, incontrata la linea a 45°, diventa una verticale che sale nel profilo.'
+      : TR==='sq45'
+      ? 'Con il metodo della <b>squadra a 45°</b> la linea a 45° non si traccia: ogni misura si porterà dalla pianta al profilo appoggiando la squadra da 45° alla riga, punto per punto.'
+      : 'Segna il punto <b>O</b> nell\'incrocio fra la LT e la verticale: sarà il centro del <b>compasso</b>. Con un quarto di circonferenza centrato in O ogni misura della pianta passa nel profilo.', TR==='line45' ? 'Riga e squadra da 45°' : TR==='sq45' ? 'Squadra da 45°' : 'Matita, compasso');
+    frame(k1, k2, k3);
+    step('Il foglio è pronto. Ora scegli un solido e premi <b>«Inizia il tutorial»</b>: la pianta andrà nel PO, il prospetto nel PV e il profilo nel PL, tutti alla stessa distanza dalle due linee.', 'Matita', {final:true});
+    return {E, T, steps, bbox, axOnly:true};
   }
+  const L = {}; Object.keys(views).forEach(k=>{ L[k] = drLines(M, views[k]); });
+  const NUM = drNumber(F.pts, F.circles);
+  const hasHid = k => DR.hid && L[k].some(g=>!g.vis);
+  let k = step(`Prepara il foglio come nel tutorial <b>«Come si prepara il foglio»</b>: con riga e squadra traccia la <b>linea di terra (LT)</b> e la <b>linea verticale</b>${TR==='line45' ? ', poi con la squadra da 45° la <b>linea a 45°</b> nel quadrante in basso a destra' : TR==='comp' ? ' e segna il punto <b>O</b> nel loro incrocio' : ''}. In alto a sinistra c'è il PV (prospetto), in alto a destra il PL (profilo), in basso a sinistra il PO (pianta).`, TR==='line45' ? 'Riga, squadra e squadra da 45°' : 'Riga e squadra');
+  frame(k, k, k);
   // assi di simmetria
   const axes = drAxesFor(F);
   if(axes.length){
-    k = step('Le parti curve hanno un <b>asse di simmetria</b>: traccialo per primo con la <b>linea mista</b> (tratto lungo e punto), sottile. Nel prospetto e nel profilo è una verticale; in pianta è una croce nel centro della circonferenza.', 'Riga e squadra, linea mista');
+    k = step('Le parti curve hanno un <b>asse di simmetria</b>: traccialo per primo con la <b>linea mista</b> (tratto lungo e punto), sottile. Nel prospetto e nel profilo è una verticale; in pianta è una croce: due rette perpendicolari che si incrociano nel centro della circonferenza.', 'Riga e squadra, linea mista');
     axes.forEach(c=>{
       const top = V3(c.c.x, b.max.y, c.c.z), bot = V3(c.c.x, b.min.y, c.c.z);
       const a1 = pv(top), a2 = pv(bot); add(pathOf([a1[0], a1[1]-ext],[a2[0], a2[1]+ext]), 'dw-axis', k);
@@ -3177,17 +3178,25 @@ function drBuildPO(M, F){
     });
   }
   // pianta
-  k = step(`Con il <b>righello</b> misura <b>${fmt(m)} cm</b> sotto la LT e ${fmt(m)} cm a sinistra della verticale: lì c'è l'angolo in alto a destra del <b>rettangolo di ingombro</b> della pianta, largo <b>${fmt(W)} cm</b> e profondo <b>${fmt(D)} cm</b>. Traccialo leggero: è solo una guida. In pianta il davanti del solido è in basso, lontano dalla LT.`, 'Righello, riga e squadra');
+  k = step(`Con il <b>righello</b> misura <b>${fmt(m)} cm</b> sotto la LT e ${fmt(m)} cm a sinistra della verticale: lì c'è l'angolo in alto a destra del <b>rettangolo di ingombro</b> della pianta, largo <b>${fmt(W)} cm</b> e profondo <b>${fmt(D)} cm</b>. Traccialo leggero con riga e squadra: è solo una guida. In pianta il davanti del solido è in basso, lontano dalla LT.`, 'Righello, riga e squadra');
+  const XL = po(V3(b.min.x,0,b.min.z))[0], YT = po(V3(b.min.x,0,b.min.z))[1];
   { const A = po(V3(b.min.x,0,b.min.z)), B = po(V3(b.max.x,0,b.max.z)); add(pathOf(A,[B[0],A[1]]), 'dw-con', k); add(pathOf([B[0],A[1]],B), 'dw-con', k); add(pathOf(B,[A[0],B[1]]), 'dw-con', k); add(pathOf([A[0],B[1]],A), 'dw-con', k); }
   k = s;
   const GP = drNumLabels(NUM.list, po, '', k, T, E, off);
+  const pDesc = g=>{
+    const p = g.ps[0], dx = p.x - b.min.x, dz = p.z - b.min.z, t0 = dz < tol, t1 = Math.abs(dz - D) < tol, l0 = dx < tol, l1 = Math.abs(dx - W) < tol;
+    if((t0||t1) && (l0||l1)) return `è l'angolo ${t0 ? 'in alto' : 'in basso'} a ${l0 ? 'sinistra' : 'destra'} del rettangolo`;
+    if(t0||t1) return `sta sul lato ${t0 ? 'in alto' : 'in basso'} del rettangolo, a <b>${fmt(dx)} cm</b> dal lato sinistro`;
+    if(l0||l1) return `sta sul lato ${l0 ? 'sinistro' : 'destro'} del rettangolo, a <b>${fmt(dz)} cm</b> dal lato in alto`;
+    const q = po(p); add(pathOf([q[0], YT], q), 'dw-con', k); add(pathOf([XL, q[1]], q), 'dw-con', k);
+    return `traccia la verticale a <b>${fmt(dx)} cm</b> dal lato sinistro e l'orizzontale a <b>${fmt(dz)} cm</b> dal lato in alto: il punto è il loro <b>incrocio</b>`;
+  };
+  const listP = GP.map(g=>`<b>${g.label}</b>: ${pDesc(g)}`);
+  step(`Segna i <b>punti</b> della pianta. Si trovano con il righello partendo dal rettangolo di ingombro; quando un punto non sta sul bordo, lo trovi <b>incrociando una verticale e un'orizzontale</b> tracciate leggere. Scrivi accanto a ogni punto la sua lettera${GP.some(g=>g.ns.length>1) ? '; quando due punti, uno sopra l\'altro, dall\'alto coincidono, si scrivono insieme (per esempio A≡E)' : ''}.` +
+    (listP.length <= LIST_MAX ? drList(listP) : ''), 'Righello, riga e squadra');
   const circPO = [], seenC = new Set();
   F.circles.forEach(c=>{ const kk = `${Math.round(c.c.x*100)},${Math.round(c.c.z*100)},${Math.round(c.r*100)}`; if(seenC.has(kk)) return; seenC.add(kk); circPO.push(c); });
-  const dxT = p => fmt(p.x - b.min.x), dzT = p => fmt(p.z - b.min.z);
-  step(`Segna i <b>punti</b> della pianta misurando dal rettangolo: quanto stanno <b>a destra</b> del lato sinistro e quanto stanno <b>sotto</b> il lato in alto. Scrivi accanto la lettera di ogni punto${GP.some(g=>g.ns.length>1) ? '; quando due punti, uno sopra l\'altro, dall\'alto coincidono, si scrivono insieme (per esempio A≡E)' : ''}.` +
-    (GP.length <= LIST_MAX ? drList(GP.map(g=>`<b>${g.label}</b>: ${dxT(g.ps[0])} cm a destra, ${dzT(g.ps[0])} cm sotto`))
-      : STK ? ' I punti sono tanti: la pianta del composto si ottiene mettendo insieme le piante dei solidi che lo formano.' + drList(STK.map(pt=>{ const ns = NUM.list.filter(o=>drInPart(pt, o.p, 1e-3) && (pt.inR || !STK.some(q=>q.inR && drInPart(q, o.p, 1e-3)))).map(o=>o.n); return `<b>${pt.n}</b>${ns.length ? ` (punti ${drRng(ns)})` : ''}: come nella pianta del ${drRefName(pt.ref)}`; })) : ''), 'Righello, matita');
-  const circTxt = circPO.length ? ' Le circonferenze si tracciano con il <b>compasso</b>: ' + circPO.slice(0,4).map(c=>`centro ${dxT(c.c)} cm a destra e ${dzT(c.c)} cm sotto, apertura (raggio) ${fmt(c.r)} cm`).join('; ') + '.' : '';
+  const circTxt = circPO.length ? ' Le circonferenze si tracciano con il <b>compasso</b>: punta nell\'incrocio degli assi e apri fino ai punti segnati (' + circPO.slice(0,4).map(c=>`raggio ${fmt(c.r)} cm`).join('; ') + ').' : '';
   k = step('Unisci i punti con la <b>linea continua</b>: è la <b>pianta</b>, il solido visto dall\'alto.' + circTxt, circPO.length ? 'Riga e compasso' : 'Riga');
   L.po.forEach(g=>{ if(g.vis || !hasHid('po')) add(pathOf(g.p, g.q), lineCls(g), k); });
   if(hasHid('po')){ k = step('Gli spigoli che dall\'alto <b>non si vedono</b>, perché coperti da altre parti del solido, si disegnano con il <b>tratteggio</b>.', 'Riga'); L.po.forEach(g=>{ if(!g.vis) add(pathOf(g.p, g.q), 'dw-hid', k); }); }
@@ -3196,11 +3205,14 @@ function drBuildPO(M, F){
   const vx = new Set();
   NUM.list.forEach(o=>{ const a = po(o.p), kk = Math.round(a[0]*100); if(vx.has(kk)) return; vx.add(kk); add(pathOf(a, [a[0], Y0+0.3]), 'dw-ref', k); });
   k = s;
-  add(pathOf(pv(V3(b.min.x, b.min.y, 0)), pv(V3(b.max.x, b.min.y, 0))), 'dw-con', k);
-  const GV = drNumLabels(NUM.list, pv, '′', k, T, E, off);
-  const byH = new Map(); NUM.list.forEach(o=>{ const h = fmt(o.p.y - b.min.y); if(!byH.has(h)) byH.set(h, []); byH.get(h).push(drL(o.n)); });
-  step(`La base del prospetto sta <b>${fmt(m)} cm sopra la LT</b>, la stessa distanza della pianta: traccia lì una riga leggera. Sulle linee di richiamo segna l'<b>altezza</b> di ogni punto, misurata da questa riga, e scrivi la sua lettera con un apice (A′, B′…).` +
-    (byH.size <= LIST_MAX ? drList([...byH.entries()].sort((p,q)=>parseFloat(p[0].replace(',','.'))-parseFloat(q[0].replace(',','.'))).map(([h,ns])=>`a <b>${h} cm</b>: ${ns.map(n=>n+'′').join(', ')}`)) : ''), 'Righello');
+  const byH = new Map(); NUM.list.forEach(o=>{ const h = Math.round((o.p.y - b.min.y)*100)/100; if(!byH.has(h)) byH.set(h, []); byH.get(h).push(o); });
+  const hs = [...byH.keys()].sort((p,q)=>p-q);
+  const xa = pv(V3(b.min.x,0,0))[0] - ext*0.6, xb = pv(V3(b.max.x,0,0))[0] + ext*0.6;
+  hs.forEach(h=>add(pathOf([xa, -m-h], [xb, -m-h]), 'dw-con', k));
+  drNumLabels(NUM.list, pv, '′', k, T, E, off);
+  const listV = hs.map(h=>{ const gs = new Map(); byH.get(h).forEach(o=>{ const kk = Math.round(pv(o.p)[0]*200); if(!gs.has(kk)) gs.set(kk, []); gs.get(kk).push(drL(o.n)+'′'); }); return `riga a <b>${fmt(h)} cm</b>${h < tol ? ' (la base)' : ''}: ${[...gs.values()].map(a=>a.join('≡')).join(', ')}`; });
+  step(`La base del prospetto sta <b>${fmt(m)} cm sopra la LT</b>, alla stessa distanza della pianta: lì traccia una riga orizzontale leggera. Poi, misurando dalla base con il righello, traccia una riga orizzontale leggera per <b>ogni altezza</b>. Ogni punto del prospetto è l'<b>incrocio</b> fra la linea di richiamo che sale dal punto della pianta e la riga della sua altezza: scrivi la lettera con un apice (A′, B′…).` +
+    (listV.length <= LIST_MAX ? drList(listV) : ''), 'Righello, riga e squadra');
   k = step(`Unisci i punti con la <b>linea continua</b>: è il <b>prospetto</b>, il solido visto di fronte. Controlla le misure: largo ${fmt(W)} cm e alto ${fmt(H)} cm.`, 'Riga');
   L.pv.forEach(g=>{ if(g.vis || !hasHid('pv')) add(pathOf(g.p, g.q), lineCls(g), k); });
   if(hasHid('pv')){ k = step('Gli spigoli che di fronte <b>non si vedono</b> vanno <b>tratteggiati</b>.', 'Riga'); L.pv.forEach(g=>{ if(!g.vis) add(pathOf(g.p, g.q), 'dw-hid', k); }); }
@@ -3228,7 +3240,7 @@ function drBuildPO(M, F){
   const hy = new Set();
   NUM.list.forEach(o=>{ const a = pv(o.p), kk = Math.round(a[1]*100); if(hy.has(kk)) return; hy.add(kk); add(pathOf(a, [X1-0.3, a[1]]), 'dw-ref', k); });
   drNumLabels(NUM.list, pl, '″', k, T, E, off);
-  step('Da ogni punto del prospetto traccia una linea <b>orizzontale verso destra</b>. Dove incontra la verticale che viene dal punto della pianta con la <b>stessa lettera</b> trovi il punto del profilo: scrivi la lettera con due apici (A″, B″…).', 'Riga');
+  step('Da ogni punto del prospetto traccia una linea <b>orizzontale verso destra</b>, fino al piano laterale. Ogni punto del profilo è l\'<b>incrocio</b> fra l\'orizzontale che viene dal prospetto (per esempio da A′) e la verticale che viene dalla pianta dallo stesso punto (da A): scrivi la lettera con due apici (A″, B″…).', 'Riga');
   k = step(`Unisci i punti con la <b>linea continua</b>: è il <b>profilo</b>, il solido visto da sinistra. Controlla: è alto quanto il prospetto (${fmt(H)} cm) e profondo quanto la pianta (${fmt(D)} cm).`, 'Riga');
   L.pl.forEach(g=>{ if(g.vis || !hasHid('pl')) add(pathOf(g.p, g.q), lineCls(g), k); });
   if(hasHid('pl')){ k = step('Gli spigoli che da sinistra <b>non si vedono</b> vanno <b>tratteggiati</b>.', 'Riga'); L.pl.forEach(g=>{ if(!g.vis) add(pathOf(g.p, g.q), 'dw-hid', k); }); }
@@ -3248,7 +3260,7 @@ function drBuildPO(M, F){
   dim(pv(V3(b.min.x, b.min.y, 0)), pv(V3(b.min.x, b.max.y, 0)), -qo, H, false);
   dim(pl(V3(0, b.max.y, b.min.z)), pl(V3(0, b.max.y, b.max.z)), -qo, D, true);
   step('Cancella con la gomma le linee di richiamo, le linee di costruzione e le lettere dei punti. Poi <b>ripassa</b> il disegno: <b>linea continua grossa</b> per gli spigoli in vista, <b>tratteggio</b> per quelli nascosti, <b>tratto e punto</b> per gli assi.', 'Gomma, matita morbida (B)', {final:true});
-  return {E, T, steps, bbox:[X0-0.2, Y0-(Y1-Y0)*0.12-0.6, X1+0.3, Y1+0.3]};
+  return {E, T, steps, bbox};
 }
 function drBuildAxo(M, F){
   const b = M.box, W = b.max.x-b.min.x, H = b.max.y-b.min.y, D = b.max.z-b.min.z;
@@ -3258,7 +3270,7 @@ function drBuildAxo(M, F){
   const V = iso ? {d:V3(1,1,1).normalize(), p:v=>[v.dot(R)*K, -v.dot(U)*K]}
           : mono ? {d:V3(cy, 1, cx).normalize(), p:v=>[v.x*cx - v.z*cy, -(v.y - v.x*sx - v.z*sy)]}
                  : {d:V3(c45, c45, 1).normalize(), p:v=>[v.x - c45*v.z, -(v.y - c45*v.z)]};
-  const lines = drLines(M, V), E = [], T = [], steps = [];
+  const E = [], T = [], steps = [];
   const add = (d, cls, step)=>E.push({d, cls, step});
   const ext = Math.max(W,H,D)*0.35 + 0.5;
   // origine nello spigolo anteriore destro in basso: x verso sinistra (anche nella cavaliera, come d'uso), y in profondità, z in alto
@@ -3266,7 +3278,7 @@ function drBuildAxo(M, F){
   const ax = [[V3(-1,0,0),'x'],[V3(0,0,-1),'y'],[V3(0,1,0),'z']];
   const len = {x:W, y:D, z:H};
   const bx = [b.min.x, b.max.x], by = [b.min.y, b.max.y], bz = [b.min.z, b.max.z];
-  // riquadro (serve prima, per la grandezza dei numeri)
+  // riquadro (serve prima, per la grandezza delle lettere)
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   const grow = p=>{ x0 = Math.min(x0,p[0]); y0 = Math.min(y0,p[1]); x1 = Math.max(x1,p[0]); y1 = Math.max(y1,p[1]); };
   ax.forEach(([dir, name])=>grow(V.p(O.clone().addScaledVector(dir, len[name] + ext))));
@@ -3281,137 +3293,167 @@ function drBuildAxo(M, F){
     add(pathOf(Po, Pq), 'dw-con', st);
     T.push({x:Pq[0] + (Pq[0]-Po[0])*0.04, y:Pq[1] + (Pq[1]-Po[1])*0.04 - 0.1, s:name, cls:'dw-lab', step:st, anchor:'middle', con:true});
   };
-  // assi
-  const intro = iso ? 'Nell\'<b>assonometria isometrica</b> i tre assi formano fra loro angoli di 120° e su tutti e tre le misure si riportano in vera grandezza.'
-    : mono ? 'Nell\'<b>assonometria monometrica</b> gli assi x e y formano un angolo retto: la pianta resta in vera forma. Tutte le misure si riportano in vera grandezza.'
-    : 'Nell\'<b>assonometria cavaliera</b> la faccia davanti resta in vera forma; le profondità, sull\'asse y, si <b>dimezzano</b>.';
-  let k = step(`${intro} Segna l'<b>origine O</b> in basso a destra: lì starà lo spigolo anteriore destro della base. Appoggia la squadra alla riga e traccia da O l'<b>asse z</b>, verticale.`, 'Riga e squadra');
-  E.push({dot:V.p(O), cls:'dw-con', step:k}); T.push({x:V.p(O)[0] + off*0.6, y:V.p(O)[1] + off*1.2, s:'O', cls:'dw-lab', step:k, anchor:'start', con:true});
-  axLine('z', k);
+  const originMark = st=>{ E.push({dot:V.p(O), cls:'dw-con', step:st}); T.push({x:V.p(O)[0] + off*0.6, y:V.p(O)[1] + off*1.2, s:'O', cls:'dw-lab', step:st, anchor:'start', con:true}); };
   const sq3060 = 'Riga e squadra da 30°–60°', sq45 = 'Riga e squadra da 45°';
   const ang = {x: iso ? 30 : mono ? DR.mono : 0, y: iso ? 30 : mono ? 90 - DR.mono : 45};
   const toolOf = a => a===0 ? 'Riga' : a===45 ? sq45 : sq3060;
-  k = step(ang.x === 0 ? 'Con la <b>riga</b> traccia da O l\'<b>asse x</b>, orizzontale, verso sinistra.'
-    : `Appoggia alla riga la ${ang.x===45 ? '<b>squadra da 45°</b>' : '<b>squadra da 30°–60°</b>'} e traccia da O l'<b>asse x</b>, inclinato di <b>${ang.x}°</b> sull'orizzontale, verso sinistra.`, toolOf(ang.x));
-  axLine('x', k);
-  k = step(`Appoggia alla riga la ${ang.y===45 ? '<b>squadra da 45°</b>' : '<b>squadra da 30°–60°</b>'} e traccia da O l'<b>asse y</b>, inclinato di <b>${ang.y}°</b> sull'orizzontale, verso destra: è la direzione della profondità.${cav ? ' Ricorda: su questo asse ogni misura va <b>dimezzata</b>.' : ''}`, toolOf(ang.y));
-  axLine('y', k);
+  const sqName = a => a===45 ? '<b>squadra da 45°</b>' : '<b>squadra da 30°–60°</b>';
+  const rule = iso ? 'Su tutti e tre gli assi le misure si riportano in <b>vera grandezza</b>.'
+    : mono ? 'Su tutti e tre gli assi le misure si riportano in <b>vera grandezza</b>; x e y formano un angolo retto, perciò la pianta resta in vera forma.'
+    : 'Su x e z le misure si riportano in <b>vera grandezza</b>; sull\'asse y, la profondità, si <b>dimezzano</b>.';
+  // tutorial a parte: come si preparano gli assi
+  if(DR.axTut){
+    const intro = iso ? 'Nell\'<b>assonometria isometrica</b> i tre assi formano fra loro angoli di 120°.'
+      : mono ? `Nell'<b>assonometria monometrica</b> gli assi x e y sono inclinati di ${ang.x}° e ${ang.y}° e formano fra loro un angolo retto.`
+      : 'Nell\'<b>assonometria cavaliera</b> la faccia davanti del solido resta in vera forma: x è orizzontale e z verticale.';
+    let k = step(`${intro} Scegli dove mettere l'<b>origine O</b>: in basso a destra, lasciando spazio a sinistra e in alto per il solido. Lì starà lo spigolo anteriore destro della base.`, 'Matita');
+    originMark(k);
+    k = step('Appoggia la riga orizzontale sul foglio, e sopra la <b>squadra</b> con un cateto sulla riga. Facendo scorrere la squadra fino a O, traccia l\'<b>asse z</b>: la verticale che sale da O.', 'Riga e squadra');
+    axLine('z', k);
+    k = step(ang.x === 0 ? 'Con la <b>riga</b> traccia da O l\'<b>asse x</b>: orizzontale, verso sinistra.'
+      : `Tieni ferma la riga e appoggiale la ${sqName(ang.x)} dalla parte giusta: traccia da O l'<b>asse x</b>, inclinato di <b>${ang.x}°</b> sull'orizzontale, verso sinistra.`, toolOf(ang.x));
+    axLine('x', k);
+    k = step(`Gira la ${sqName(ang.y)} dall'altra parte e traccia da O l'<b>asse y</b>, inclinato di <b>${ang.y}°</b> sull'orizzontale, verso destra: è la direzione della profondità.`, toolOf(ang.y));
+    axLine('y', k);
+    step(`Gli assi sono pronti. ${rule} Per trovare un punto si misura da O lungo gli assi e si tracciano le <b>parallele agli assi</b> con la squadra che scorre sulla riga. Ora scegli un solido e premi <b>«Inizia il tutorial»</b>.`, 'Matita', {final:true});
+    return {E, T, steps, bbox, axOnly:true};
+  }
+  const lines = drLines(M, V);
+  let k = step(`Traccia gli <b>assi</b> come nel tutorial <b>«Come si preparano gli assi»</b>: da O, in basso a destra, l'asse z verticale, l'asse x ${ang.x ? `a ${ang.x}°` : 'orizzontale'} verso sinistra, l'asse y a ${ang.y}° verso destra. ${rule}`, toolOf(ang.y));
+  originMark(k); axLine('z', k); axLine('x', k); axLine('y', k);
   // scatola di ingombro
   const half = v => cav ? ` (nel disegno la metà: <b>${fmt(v/2)} cm</b>)` : '';
   k = step(`Con il righello riporta da O le misure della <b>scatola di ingombro</b>, il parallelepipedo che contiene il solido: <b>${fmt(W)} cm</b> sull'asse x, <b>${fmt(D)} cm</b> sull'asse y${half(D)}, <b>${fmt(H)} cm</b> sull'asse z.`, 'Righello');
   [V3(b.min.x, b.min.y, b.max.z), V3(b.max.x, b.min.y, b.min.z), V3(b.max.x, b.max.y, b.max.z)].forEach(p=>E.push({dot:V.p(p), cls:'dw-con', step:k}));
-  k = step(`Dai punti segnati sugli assi x e y traccia le <b>parallele</b> agli assi (fai scorrere la squadra sulla riga): si chiude la <b>base della scatola</b>${iso ? ', un rombo' : mono ? ', un rettangolo' : ', un parallelogramma'}. Linea sottile.`, iso || mono ? sq3060.replace('30°–60°', mono && DR.mono===45 ? '45°' : '30°–60°') : sq45);
+  k = step(`Dal punto segnato sull'asse x traccia la parallela all'asse y; dal punto segnato sull'asse y traccia la parallela all'asse x (fai scorrere la squadra sulla riga). Le due parallele si incrociano nel quarto vertice: la <b>base della scatola</b>${iso ? ', un rombo' : mono ? ', un rettangolo' : ', un parallelogramma'}, è chiusa. Linea sottile.`, iso ? sq3060 : mono ? (DR.mono===45 ? sq45 : sq3060) : sq45);
   for(const z of bz) add(pathOf(V.p(V3(bx[0],by[0],z)), V.p(V3(bx[1],by[0],z))), 'dw-con', k);
   for(const x of bx) add(pathOf(V.p(V3(x,by[0],bz[0])), V.p(V3(x,by[0],bz[1]))), 'dw-con', k);
   k = step(`Dai quattro vertici della base alza le <b>verticali</b>, alte ${fmt(H)} cm, e unisci le loro estremità con le parallele ai lati della base: la scatola è completa. Il solido si costruisce dentro.`, 'Riga e squadra');
   for(const x of bx) for(const z of bz) add(pathOf(V.p(V3(x,by[0],z)), V.p(V3(x,by[1],z))), 'dw-con', k);
   for(const z of bz) add(pathOf(V.p(V3(bx[0],by[1],z)), V.p(V3(bx[1],by[1],z))), 'dw-con', k);
   for(const x of bx) add(pathOf(V.p(V3(x,by[1],bz[0])), V.p(V3(x,by[1],bz[1]))), 'dw-con', k);
-  // punti e livelli
-  const NUM = drNumber(F.pts, F.circles), tol = 1e-3, levels = [];
+  // punti, quote e spigoli
+  const NUM = drNumber(F.pts, F.circles), tol = 1e-3, levels = [], yb = b.min.y;
   const lv = y=>{ if(!levels.some(v=>Math.abs(v-y) < tol)) levels.push(y); };
   // le quote vengono solo dagli spigoli veri orizzontali (i contorni apparenti delle superfici curve non fanno livello)
   lines.forEach(g=>{ if(g.e.kind==='f' && Math.abs(g.e.a.y - g.e.b.y) < tol) lv(g.e.a.y); });
   levels.sort((p,q)=>p-q);
   const cls = g => g.vis ? 'dw-vis' : 'dw-hid';
-  const coordX = p => fmt(b.max.x - p.x), coordY = p => fmt(b.max.z - p.z) + ' cm' + (cav && Math.abs(b.max.z - p.z) > tol ? ` (nel disegno ${fmt((b.max.z - p.z)/2)} cm)` : ''), coordZ = p => fmt(p.y - b.min.y);
-  const placeText = (os, withZ)=>{
-    if(!os.length || os.length > LIST_MAX) return '';
-    return drList(os.map(o=>{
-      const under = NUM.list.find(q=>q.n < o.n && q.p.y < o.p.y - tol && Math.abs(q.p.x-o.p.x) < tol && Math.abs(q.p.z-o.p.z) < tol);
-      if(under && withZ) return `<b>${drL(o.n)}</b>: esattamente sopra il punto ${drL(under.n)}, a ${coordZ(o.p)} cm di altezza`;
-      return `<b>${drL(o.n)}</b>: x = ${coordX(o.p)} cm, y = ${coordY(o.p)}${withZ ? `, z = ${coordZ(o.p)} cm` : ''}`;
-    }));
+  const STK = drStack(b);
+  const pieceAt = (ya, yc)=> STK ? STK.find(pt=>!pt.inR && pt.y0 < (ya+yc)/2 + tol && pt.y1 > (ya+yc)/2 - tol) : null;
+  /* come si trova un punto: misure lungo gli assi e incrocio delle parallele (con le linee di costruzione disegnate) */
+  const ys = dz => `${fmt(dz)} cm` + (cav && dz > tol ? ` (nel disegno ${fmt(dz/2)} cm)` : '');
+  const baseDesc = (p, name, st)=>{
+    const dx = b.max.x - p.x, dz = b.max.z - p.z, foot = V3(p.x, yb, p.z);
+    const nm = name ? name + ' ' : '';
+    if(dx < tol && dz < tol) return `${nm}sta nell'origine O`;
+    if(dz < tol) return `${nm}sta sull'asse x, a <b>${fmt(dx)} cm</b> da O`;
+    if(dx < tol) return `${nm}sta sull'asse y, a <b>${ys(dz)}</b> da O`;
+    const A = V3(p.x, yb, b.max.z), B = V3(b.max.x, yb, p.z);
+    add(pathOf(V.p(A), V.p(foot)), 'dw-con', st); add(pathOf(V.p(B), V.p(foot)), 'dw-con', st);
+    E.push({dot:V.p(A), cls:'dw-con', step:st}); E.push({dot:V.p(B), cls:'dw-con', step:st});
+    return `sull'asse x segna <b>${fmt(dx)} cm</b> e traccia la parallela all'asse y; sull'asse y segna <b>${ys(dz)}</b> e traccia la parallela all'asse x: ${nm}è il loro <b>incrocio</b>`;
   };
-  const numsAt = y => NUM.list.filter(o=>Math.abs(o.p.y - y) < tol);
+  const findPt = (o, st)=>{
+    const p = o.p, Ln = drL(o.n), z = p.y - yb;
+    const under = NUM.list.find(q=>q.n < o.n && q.p.y < p.y - tol && Math.abs(q.p.x-p.x) < tol && Math.abs(q.p.z-p.z) < tol);
+    if(under){ add(pathOf(V.p(under.p), V.p(p)), 'dw-con', st); return `<b>${Ln}</b>: sulla verticale che sale da ${drL(under.n)}, a <b>${fmt(z)} cm</b> di altezza`; }
+    if(z < tol) return `<b>${Ln}</b>: ${baseDesc(p, '', st)}`;
+    const foot = V3(p.x, yb, p.z); add(pathOf(V.p(foot), V.p(p)), 'dw-con', st); E.push({dot:V.p(foot), cls:'dw-con', step:st});
+    return `<b>${Ln}</b>: prima trova sulla base il punto che sta sotto (${baseDesc(p, 'il punto sotto', st)}); poi da lì sali in verticale di <b>${fmt(z)} cm</b>`;
+  };
   const labelNums = (os, st)=>os.forEach(o=>{ const q = V.p(o.p); E.push({dot:q, cls:'dw-con', step:st}); T.push({x:q[0] + off*0.5, y:q[1] - off*0.45, s:drL(o.n), cls:'dw-num', step:st, anchor:'start'}); });
+  const ptsStep = (os, head, st)=>{ const items = os.map(o=>findPt(o, st)); labelNums(os, st); return head + (items.length <= LIST_MAX ? drList(items) : ' Misura ogni punto da O lungo gli assi e trovalo come incrocio delle parallele agli assi.'); };
   const featOf = test => M.feat.filter(test);
   const isH = e => Math.abs(e.a.y - e.b.y) < tol;
-  const stack = drStack(b), pieceMode = stack && NUM.list.length > LIST_MAX;
-  if(pieceMode){
-    // composto con molti punti: un passo per ogni solido semplice, con il rimando al suo tutorial
-    const marked = new Set(), usedC = new Set(), stepOf = [];
-    const holeFirst = stack.map((pt,i)=>i).sort((i,j)=>(stack[j].inR ? 1 : 0) - (stack[i].inR ? 1 : 0));
-    const partOf = p => holeFirst.find(i=>drInPart(stack[i], p, tol));
-    stack.forEach((pt, i)=>{
-      const os = NUM.list.filter(o=>!marked.has(o.n) && partOf(o.p)===i);
-      labelNums(os, s); os.forEach(o=>marked.add(o.n));
-      const all = NUM.list.filter(o=>drInPart(pt, o.p, tol) && (pt.inR || !stack.some(q=>q.inR && drInPart(q, o.p, tol))));
-      const circ = F.circles.filter((c,ci)=>!c.sphere && !usedC.has(ci) && drInPart(pt, c.c, tol) && (!pt.inR || c.r < pt.inR + 1e-2) && (pt.inR || !stack.some(q=>q.inR && Math.abs(c.r - q.inR) < 1e-2)));
-      F.circles.forEach((c,ci)=>{ if(circ.includes(c)) usedC.add(ci); });
-      const shared = i > 0 && !pt.inR && Math.abs(stack[i-1].y1 - pt.y0) < tol;
-      stepOf[i] = step(`<b>${i+1}° pezzo: ${pt.n}</b>${pt.inR ? '' : `, dalla quota ${fmt(pt.y0 - b.min.y)} alla quota ${fmt(pt.y1 - b.min.y)} cm`}${all.length ? ` (punti ${drRng(all.map(o=>o.n))})` : ''}. Si disegna come nel tutorial del <b>${drRefName(pt.ref)}</b>: ${drRecipe(pt, b, !shared)}.` +
-        (shared ? ` La figura alla quota ${fmt(pt.y0 - b.min.y)} cm è in comune con il pezzo sotto: è già disegnata e non si ripete.` : '') +
-        ` Misura i punti da O lungo gli assi, come sempre${cav ? ' (profondità dimezzate)' : ''}; gli spigoli e i contorni nascosti vanno <b>tratteggiati</b>.` +
-        (circ.length ? ' ' + drEllipseText(mono, iso, i===0) : ''),
-        circ.length ? 'Righello, riga, squadra e compasso' : 'Righello, riga e squadra');
-      circ.forEach(c=>drEllipseConstruction(c, c.c.y, V, E, stepOf[i], mono, iso));
-    });
-    lines.forEach(g=>{ const mid = g.a3.clone().lerp(g.b3, 0.5), i = partOf(mid); add(pathOf(g.p, g.q), cls(g), stepOf[i===undefined ? stepOf.length-1 : i]); });
-  } else if(!levels.length){
-    k = step(iso && M.sphere ? `La sfera non ha spigoli: il suo contorno è una <b>circonferenza</b>. Punta il compasso nel centro della scatola, con apertura <b>${fmt(M.sphere.r*K)} cm</b> (nell'isometrica il raggio si allunga: r · 1,22).`
+  const isHz = g => g.e.kind==='f' && Math.abs(g.e.a.y - g.e.b.y) < tol;
+  /* passo "in vista" e, se servono, passo "nascosti" per un gruppo di segmenti */
+  const drawPair = (segs, P, headVis, tool, hidTxt)=>{
+    const kv = step(headVis, tool);
+    const hid = segs.filter(g=>!g.vis);
+    segs.forEach(g=>{ if(g.vis || !DR.hid) add(pathOf(g.p, g.q), cls(g), kv); });
+    if(DR.hid && hid.length){ const kh = step(hidTxt || drHidText(P), 'Riga'); hid.forEach(g=>add(pathOf(g.p, g.q), 'dw-hid', kh)); }
+    return kv;
+  };
+  if(!levels.length){
+    k = step(iso && M.sphere ? `La sfera non ha spigoli: il suo contorno è una <b>circonferenza</b>. Trova il centro della scatola incrociando le sue diagonali, poi punta lì il compasso con apertura <b>${fmt(M.sphere.r*K)} cm</b> (nell'isometrica il raggio si allunga: r · 1,22).`
       : 'Il solido non ha spigoli: il suo <b>contorno</b> è un\'ellisse. Tracciala dentro la scatola, a mano libera o con il curvilineo.', iso ? 'Compasso' : 'Curvilineo o mano libera');
     lines.forEach(g=>add(pathOf(g.p, g.q), cls(g), k));
   } else {
-    const off2 = (NUM.list.filter(o=>!levels.some(v=>Math.abs(v-o.p.y) < tol)));
-    let belowStep = -1;
-    const loose = off2.filter(o=>o.p.y < levels[0] - tol);
-    if(featOf(e=>!isH(e) && Math.min(e.a.y, e.b.y) < levels[0] - tol).length){
-      labelNums(loose, s);
-      belowStep = step(`Parti dal <b>vertice in basso</b> (quota 0): segna il punto misurando da O lungo gli assi.${placeText(loose, false)}Da lì traccia le linee che salgono fino alla quota ${fmt(levels[0] - b.min.y)} cm.`, 'Righello, riga');
+    const marked = new Set(); let lastPc = null;
+    const bandOf = g=>{ const lo = Math.min(g.e.a.y, g.e.b.y); if(lo < levels[0] - tol) return -1; let i = 0; levels.forEach((v,j)=>{ if(v <= lo + tol) i = j; }); return i; };
+    const rising = lines.filter(g=>!isHz(g));
+    // vertice sotto la prima quota (cono o piramide rovesciati)
+    const below = rising.filter(g=>bandOf(g) === -1);
+    if(below.length){
+      const loose = NUM.list.filter(o=>o.p.y < levels[0] - tol); loose.forEach(o=>marked.add(o.n));
+      k = s;
+      const pc = pieceAt(b.min.y, levels[0]); if(pc) lastPc = pc;
+      const t = ptsStep(loose, `${pc ? `Si comincia dal pezzo in basso, <b>${drArt(pc.n)}</b>. ` : ''}Parti dal <b>vertice in basso</b> (quota 0): segna il punto e scrivi la sua lettera.`, k);
+      step(t, 'Righello, riga e squadra');
+      const P = drPairs(featOf(e=>!isH(e) && Math.min(e.a.y, e.b.y) < levels[0] - tol), lines, NUM);
+      drawPair(below, P, drVisText(P, `Dal vertice sali fino alla quota ${fmt(levels[0] - b.min.y)} cm e traccia`) || `Dal vertice traccia le linee che salgono fino alla quota ${fmt(levels[0] - b.min.y)} cm.`, 'Riga');
     }
-    const stepJoin = [], stepUp = [], marked = new Set(loose.map(o=>o.n));
     levels.forEach((y, i)=>{
-      const q = fmt(y - b.min.y), os = numsAt(y).filter(o=>!marked.has(o.n)), base = i===0 && y - b.min.y < tol;
-      const circ = F.circles.filter(c=>Math.abs(c.c.y - y) < tol && !c.sphere);
-      if(os.length){
-        labelNums(os, s); os.forEach(o=>marked.add(o.n));
-        step(base
-          ? `Segna i <b>punti della base</b> e scrivi accanto la loro lettera. Ogni punto si trova misurando da O: prima lungo l'asse x, poi parallelamente all'asse y${cav ? ' (misura dimezzata)' : ''}.${placeText(os, false)}`
-          : `Porta la <b>quota ${q} cm</b> sulle verticali della scatola e segna i punti che stanno a questa altezza.${placeText(os, true)}`, 'Righello, riga e squadra');
-      }
-      const P = drPairs(featOf(e=>isH(e) && Math.abs(e.a.y - y) < tol), lines, NUM);
-      stepJoin[i] = step((base ? 'Disegna la <b>base</b>. ' : `Disegna la figura alla <b>quota ${q} cm</b>. `) + drPairsText(P, 'Unisci') + (circ.length ? ' ' + drEllipseText(mono, iso, base) : ''),
-        circ.length ? (drEllMethod(mono, iso)==='otto' ? 'Riga, curvilineo o mano libera' : 'Riga e compasso') : 'Riga');
-      circ.forEach(c=>drEllipseConstruction(c, y, V, E, stepJoin[i], mono, iso));
+      const q = fmt(y - b.min.y), base = i===0 && y - b.min.y < tol;
       const nY = i < levels.length-1 ? levels[i+1] : Infinity, nextY = isFinite(nY) ? nY : null;
-      const loOf = e => Math.min(e.a.y, e.b.y), hiOf = e => Math.max(e.a.y, e.b.y);
-      const riseE = featOf(e=>!isH(e) && loOf(e) > y - tol && loOf(e) < nY - tol);
-      const hasSmoothUp = lines.some(g=>{ if(g.e.kind!=='s') return false; const lo2 = Math.min(g.e.a.y, g.e.b.y); return lo2 > y - tol && lo2 < nY - tol; });
-      stepUp[i] = [];
-      if(riseE.length || hasSmoothUp || nextY!==null){
-        // si sale un'altezza alla volta: ogni altezza dove arrivano spigoli (vertici intermedi, livello successivo) è un passo
-        const cand = NUM.list.filter(o=>!marked.has(o.n) && o.p.y > y + tol && o.p.y < nY + tol && (nextY===null || Math.abs(o.p.y - nextY) < tol || riseE.some(e=>NUM.of(e.a)===o.n || NUM.of(e.b)===o.n)));
-        const hs = []; cand.forEach(o=>{ if(!hs.some(h=>Math.abs(h - o.p.y) < tol)) hs.push(o.p.y); }); hs.sort((p,q2)=>p-q2);
-        if(!hs.length) hs.push(nextY!==null ? nextY : Math.max(y, ...lines.map(g=>Math.max(g.a3.y, g.b3.y))));
-        let prev = y;
-        hs.forEach((h, j)=>{
-          const tops = cand.filter(o=>Math.abs(o.p.y - h) < tol);
-          if(tops.length){ labelNums(tops, s); tops.forEach(o=>marked.add(o.n)); }
-          const Pu = drPairs(riseE.filter(e=>Math.abs(hiOf(e) - h) < tol || (j===hs.length-1 && hiOf(e) > h)), lines, NUM);
-          if(hasSmoothUp && !Pu.other && j===hs.length-1) Pu.other = 1;
-          const unders = tops.map(o=>NUM.list.find(q2=>q2.n < o.n && q2.p.y < o.p.y - tol && Math.abs(q2.p.x-o.p.x) < tol && Math.abs(q2.p.z-o.p.z) < tol));
-          const straight = tops.length > 1 && unders.every(u2=>u2);
-          const last = nextY===null && j===hs.length-1;
-          const head = last && hs.length===1 ? 'Ora gli ultimi spigoli, fino al <b>vertice</b> più alto. ' : `Dalla quota ${fmt(prev - b.min.y)} cm sali alla <b>quota ${fmt(h - b.min.y)} cm</b>: `;
-          stepUp[i].push({h, st:step(head +
-            (straight ? `dai punti ${drRng(unders.map(u2=>u2.n))} alza le verticali alte <b>${fmt(h - unders[0].p.y)} cm</b> e trovi i punti ${drRng(tops.map(o=>o.n))}. `
-              : tops.length ? `${head.endsWith(': ') ? 'segna' : 'Segna'} ${tops.length > 1 ? 'i punti' : 'il punto'} ${drRng(tops.map(o=>o.n))} (misura da O come prima).${placeText(tops, true)}` : '') +
-            drPairsText(Pu, 'Traccia gli <b>spigoli che salgono</b>'), 'Riga e squadra')});
-          prev = h;
-        });
+      // i pezzi del composto che finiscono o cominciano qui
+      let pieceTxt = '';
+      if(STK){
+        const ends = STK.filter(pt=>!pt.inR && Math.abs(pt.y1 - y) < tol), starts = STK.filter(pt=>!pt.inR && Math.abs(pt.y0 - y) < tol && pt.y1 > y + tol);
+        if(ends.length && starts.length) pieceTxt = `Qui finisce ${drArt(ends[0].n)} e comincia ${drArt(starts[0].n)}: la figura a questa quota è in comune ai due pezzi. `;
+        else if(starts.length) pieceTxt = `Si comincia dal pezzo in basso, <b>${drArt(starts[0].n)}</b>. `;
+        if(starts.length) lastPc = starts[0];
+        else if(ends.length) pieceTxt = `Qui finisce ${drArt(ends[0].n)}. `;
       }
-    });
-    lines.forEach(g=>{
-      const hz = g.e.kind==='f' && Math.abs(g.e.a.y - g.e.b.y) < tol;
-      let i;
-      if(hz){ i = levels.findIndex(v=>Math.abs(v - g.e.a.y) < tol); add(pathOf(g.p, g.q), cls(g), stepJoin[i]); return; }
-      const lo = Math.min(g.e.a.y, g.e.b.y);
-      if(belowStep >= 0 && lo < levels[0] - tol){ add(pathOf(g.p, g.q), cls(g), belowStep); return; }
-      i = 0; levels.forEach((v,j)=>{ if(v <= lo + tol) i = j; });
-      const ups = stepUp[i] || [], hi = Math.max(g.e.a.y, g.e.b.y);
-      const u = ups.find(x=>x.h >= hi - tol) || ups[ups.length-1];
-      add(pathOf(g.p, g.q), cls(g), u ? u.st : stepJoin[i]);
+      const os = NUM.list.filter(o=>!marked.has(o.n) && Math.abs(o.p.y - y) < tol); os.forEach(o=>marked.add(o.n));
+      if(os.length){
+        k = s;
+        step(ptsStep(os, pieceTxt + (base ? `Segna i <b>punti della base</b> e scrivi accanto la loro lettera${cav ? '. Ricorda: le misure sull\'asse y si dimezzano' : ''}.` : `Porta la <b>quota ${q} cm</b> sulle verticali della scatola e segna i punti che stanno a questa altezza.`), k), 'Righello, riga e squadra');
+        pieceTxt = '';
+      }
+      // circonferenze: prima il quadrilatero circoscritto e la costruzione, poi l'ellisse
+      const circ = F.circles.filter(c=>Math.abs(c.c.y - y) < tol && !c.sphere);
+      if(circ.length){
+        const quadN = mono ? 'quadrato' : iso ? 'rombo' : 'parallelogramma', r0 = circ[0].r;
+        const kc = step(pieceTxt + `Costruisci la <b>circonferenza alla quota ${q} cm</b>: centro sull'asse, raggio <b>${fmt(r0)} cm</b>. Il ${quadN} circoscritto ha i lati lunghi ${fmt(2*r0)} cm${cav ? ` (quelli paralleli all'asse y, nel disegno, ${fmt(r0)} cm)` : ''}, paralleli agli assi x e y. ` + drEllipseText(mono, iso, true), drEllMethod(mono, iso)==='otto' ? 'Riga e squadra' : 'Riga, squadra e compasso');
+        circ.forEach(c=>drEllipseConstruction(c, y, V, E, kc, mono, iso));
+        pieceTxt = '';
+      }
+      const hz = lines.filter(g=>isHz(g) && Math.abs(g.e.a.y - y) < tol);
+      if(hz.length){
+        const P = drPairs(featOf(e=>isH(e) && Math.abs(e.a.y - y) < tol), lines, NUM);
+        if(circ.length) P.other = 0;   // le curve di questa quota sono le ellissi: se ne parla a parte
+        const onlyEll = circ.length && !P.vis.length && !P.mix.length && !P.hid.length;
+        const ellTxt = circ.length ? `Traccia l'<b>${mono ? 'circonferenza' : 'ellisse'}</b> ${mono ? 'con il compasso' : drEllMethod(mono, iso)==='otto' ? 'passando per gli 8 punti, con il curvilineo o a mano libera' : drEllMethod(mono, iso)==='ovale' ? 'con il compasso, puntando nei quattro centri trovati nel passo prima' : `tangente ai punti medi dei lati del ${iso ? 'rombo' : 'parallelogramma'}, a mano libera o con il curvilineo`}: la parte davanti, che si vede, con la linea continua.` : '';
+        drawPair(hz, P, pieceTxt + (base ? 'Disegna la <b>base</b>. ' : `Disegna la figura alla <b>quota ${q} cm</b>. `) + (onlyEll ? ellTxt : drVisText(P, 'Unisci') + (circ.length ? ' ' + ellTxt : '')),
+          circ.length ? (mono || drEllMethod(mono, iso)==='ovale' ? 'Riga e compasso' : 'Riga, curvilineo') : 'Riga', onlyEll ? `La parte dietro dell'${mono ? 'circonferenza' : 'ellisse'}, che non si vede, si disegna con il <b>tratteggio</b>.` : null);
+      }
+      // si sale un'altezza alla volta fino alla quota successiva (o al vertice più alto)
+      const band = rising.filter(g=>bandOf(g) === i);
+      const riseE = featOf(e=>!isH(e) && Math.min(e.a.y, e.b.y) > y - tol && Math.min(e.a.y, e.b.y) < nY - tol);
+      if(!band.length && nextY===null) return;
+      const cand = NUM.list.filter(o=>!marked.has(o.n) && o.p.y > y + tol && o.p.y < nY + tol && (nextY===null || Math.abs(o.p.y - nextY) < tol || riseE.some(e=>NUM.of(e.a)===o.n || NUM.of(e.b)===o.n)));
+      const hs = []; cand.forEach(o=>{ if(!hs.some(h=>Math.abs(h - o.p.y) < tol)) hs.push(o.p.y); }); hs.sort((p,q2)=>p-q2);
+      if(!hs.length) hs.push(nextY!==null ? nextY : Math.max(y, ...band.map(g=>Math.max(g.a3.y, g.b3.y))));
+      const subOf = g=>{ const hi = Math.max(g.e.a.y, g.e.b.y), j = hs.findIndex(h=>h >= hi - tol); return j < 0 ? hs.length-1 : j; };
+      let prev = y;
+      hs.forEach((h, j)=>{
+        const tops = cand.filter(o=>Math.abs(o.p.y - h) < tol); tops.forEach(o=>marked.add(o.n));
+        const pc = pieceAt(prev, h), newPc = pc && pc !== lastPc; if(pc) lastPc = pc;
+        const head = (newPc ? `Ora ${drArt(pc.n)}. ` : '') + (nextY===null && j===hs.length-1 && hs.length===1 ? 'Gli ultimi spigoli salgono fino al <b>vertice</b> più alto. ' : `Dalla quota ${fmt(prev - b.min.y)} cm si sale alla <b>quota ${fmt(h - b.min.y)} cm</b>. `);
+        if(tops.length){
+          k = s;
+          step(ptsStep(tops, head + `Segna ${tops.length > 1 ? 'i punti' : 'il punto'} ${drRng(tops.map(o=>o.n))}.`, k), 'Righello, riga e squadra');
+        }
+        const segs = band.filter(g=>subOf(g) === j);
+        if(segs.length){
+          const P = drPairs(riseE.filter(e=>subOf({e}) === j), lines, NUM);
+          if(segs.some(g=>g.e.kind==='s') && !P.other) P.other = 1;
+          drawPair(segs, P, (tops.length ? '' : head) + drVisText(P, 'Traccia gli <b>spigoli che salgono</b>'), 'Riga e squadra');
+        }
+        prev = h;
+      });
     });
   }
   step('Cancella con la gomma le linee di costruzione, la scatola e le lettere dei punti. Poi <b>ripassa</b>: <b>linea continua grossa</b> per gli spigoli in vista, <b>tratteggio</b> per quelli nascosti.', 'Gomma, matita morbida (B)', {final:true});
@@ -3486,7 +3528,7 @@ function drRender(){
     if(tut && e.step > cur) return false;
     if(e.cls==='dw-hid' && !DR.hid) return false;
     if(e.cls==='dw-ref') return tut ? cur < last : DR.refs;
-    if(e.cls==='dw-con') return tut && cur < last;
+    if(e.cls==='dw-con') return tut && (cur < last || C.axOnly);
     if(e.cls==='dw-num') return tut ? cur < last : (DR.view==='po' && DR.refs);
     if((e.cls==='dw-dim' || e.cls==='dw-dimx' || e.cls==='dw-dimt') && !tut && !DR.quote) return false;
     return true;
@@ -3541,17 +3583,18 @@ function drMethodUI(){
 function drTutorial(){
   const C = DR.cache, box = $('#drTut');
   if(DR.step === null){
-    box.innerHTML = `<h3>Tutorial passo passo</h3><p class="small">Il disegno si costruisce un passaggio alla volta, come si fa in classe con matita, squadre e compasso.</p><button class="play" id="drStart" style="align-self:flex-start">Inizia il tutorial</button>`;
+    box.innerHTML = `<h3>Tutorial passo passo</h3><p class="small">Il disegno si costruisce un passaggio alla volta, come si fa in classe con matita, squadre e compasso. Prima di tutto si preparano ${DR.view==='po' ? 'il foglio e le linee dei piani' : 'gli assi'}: c'è un tutorial apposta.</p><div class="pick-row"><button class="play" id="drStart">Inizia il tutorial</button><button class="ghost" id="drAxStart">${DR.view==='po' ? 'Come si prepara il foglio' : 'Come si preparano gli assi'}</button></div>`;
     $('#drStart').onclick = ()=>{ DR.step = 0; drRender(); };
+    $('#drAxStart').onclick = ()=>{ DR.axTut = true; DR.step = 0; drRefresh(); };
     return;
   }
   const n = C.steps.length, st = C.steps[DR.step];
-  box.innerHTML = `<div class="calc-head"><h3>Tutorial</h3><span class="bar-status">Passo ${DR.step+1} di ${n}</span></div>
+  box.innerHTML = `<div class="calc-head"><h3>${DR.axTut ? (DR.view==='po' ? 'Come si prepara il foglio' : 'Come si preparano gli assi') : 'Tutorial'}</h3><span class="bar-status">Passo ${DR.step+1} di ${n}</span></div>
     ${st.tool ? `<p class="dr-tool"><span>Strumenti</span>${st.tool}</p>` : ''}<div class="dr-step">${st.t}</div>
     <div class="guide-nav"><button class="ghost" id="drPrev" ${DR.step===0?'disabled':''}>Indietro</button><button class="ghost" id="drExit">Esci</button><button class="play" id="drNext" ${DR.step>=n-1?'disabled':''}>Avanti</button></div>`;
   $('#drPrev').onclick = ()=>{ if(DR.step>0){ DR.step--; drRender(); } };
   $('#drNext').onclick = ()=>{ if(DR.step<n-1){ DR.step++; drRender(); } };
-  $('#drExit').onclick = ()=>{ DR.step = null; drRender(); };
+  $('#drExit').onclick = ()=>{ DR.step = null; if(DR.axTut){ DR.axTut = false; drRefresh(); } else drRender(); };
 }
 function drRefresh(){
   clearTimeout(DR.timer);
@@ -3566,7 +3609,7 @@ function drPicker(){
     g.items.map(it=>{ const on = it.src===DR.src && it.k===DR.k, name = it.src==='comp' ? COMP.find(c=>c.k===it.k).name : (SHORT[it.k]||SOLIDS[it.k].name);
       return `<button class="pick${on?' on':''}" data-src="${it.src}" data-k="${it.k}" aria-pressed="${on}">${name}</button>`; }).join('')
   }</div></div>`).join('');
-  $('#drPicker').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>{ DR.src = b.dataset.src; DR.k = b.dataset.k; DR.step = null; drPicker(); drDims(); drRefresh(); });
+  $('#drPicker').querySelectorAll('.pick').forEach(b=>b.onclick = ()=>{ DR.src = b.dataset.src; DR.k = b.dataset.k; DR.step = null; DR.axTut = false; drPicker(); drDims(); drRefresh(); });
 }
 function drDims(){
   if(DR.src==='lab'){

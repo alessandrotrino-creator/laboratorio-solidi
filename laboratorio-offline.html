@@ -3204,14 +3204,15 @@ function drBuildAxo(M, F){
   const add = (d, cls, step)=>E.push({d, cls, step});
   const ext = Math.max(W,H,D)*0.35 + 0.5;
   // 0. assi
-  const O = cav ? V3(b.min.x, b.min.y, b.max.z) : V3(b.max.x, b.min.y, b.max.z);
-  const ax = cav ? [[V3(1,0,0),'x'],[V3(0,0,-1),'y'],[V3(0,1,0),'z']] : [[V3(-1,0,0),'x'],[V3(0,0,-1),'y'],[V3(0,1,0),'z']];
+  // origine nello spigolo anteriore destro in basso: x verso sinistra (anche nella cavaliera, come d'uso), y in profondità, z in alto
+  const O = V3(b.max.x, b.min.y, b.max.z);
+  const ax = [[V3(-1,0,0),'x'],[V3(0,0,-1),'y'],[V3(0,1,0),'z']];
   const len = {x:W, y:D, z:H};
   steps.push({t: iso
     ? 'Traccia gli <b>assi isometrici</b>: l\'asse z verticale e gli assi x e y inclinati di <b>30°</b> rispetto all\'orizzontale (usa la squadra da 30°–60°). Sui tre assi le misure si riportano in vera grandezza.'
     : mono
     ? `Traccia gli assi dell'<b>assonometria monometrica</b>: z verticale, x e y inclinati di <b>${DR.mono}°</b> e <b>${90-DR.mono}°</b> rispetto all'orizzontale${DR.mono===45 ? ' (squadra da 45°)' : ' (squadra da 30°–60°)'}. Fra x e y c'è un angolo retto: la pianta resta in vera forma. Tutte le misure si riportano in vera grandezza.`
-    : 'Traccia gli assi dell\'<b>assonometria cavaliera</b>: x orizzontale, z verticale e y, la profondità, inclinato di <b>45°</b> (usa la squadra da 45°). Le misure sull\'asse y si <b>dimezzano</b>.'});
+    : 'Traccia gli assi dell\'<b>assonometria cavaliera</b> partendo dall\'origine O, in basso a destra: x orizzontale verso sinistra, z verticale e y, la profondità, inclinato di <b>45°</b> verso destra (usa la squadra da 45°). Le misure sull\'asse y si <b>dimezzano</b>.'});
   ax.forEach(([dir, name])=>{
     const L0 = len[name] + ext, Pq = V.p(O.clone().addScaledVector(dir, L0)), Po = V.p(O);
     add(pathOf(Po, Pq), 'dw-con', 0);

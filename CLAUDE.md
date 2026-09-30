@@ -25,7 +25,8 @@ Ultimo aggiornamento: 30 settembre 2026.
 - Interfaccia del disegno: due pulsanti principali **"Proiezioni ortogonali" / "Assonometria"**; con "Assonometria" compare la scelta Cavaliera / Isometrica / Monometrica (richiesta del docente). Nelle proiezioni le scritte dei piani sono per esteso: "PV · prospetto", "PL · profilo", "PO · pianta", vicino all'incrocio dei piani (il docente dubitava che il PV fosse in alto a sinistra: lo è, ma la scritta era poco visibile).
 
 - **Prisma con base qualsiasi** (richiesta del 30/09): prima si sceglie il numero di lati, *poi* il tipo di poligono, poi le misure. Tipi: 3 → equilatero, isoscele, rettangolo, scaleno (area con Erone); 4 → quadrato, rettangolo, rombo (diagonali), parallelogramma (base, lato, altezza), trapezio isoscele, trapezio rettangolo; 5 → regolare, a casetta; 6 → regolare, allungato; 8 → regolare, smussato. Le misure impossibili si correggono da sole (`fix`). La piramide resta solo regolare. Il docente può chiedere altri tipi: basta aggiungere una voce a `PBASE[n]`.
-- Assonometrie verificate il 30/09 misurando gli angoli a schermo: cavaliera 0°/45° (y dimezzato)/90°, isometrica 30°/30°/90° con misure uguali, monometrica 30°–60° o 45°–45° con x ⟂ y. L'SVG usa `preserveAspectRatio="xMidYMid meet"`, quindi niente deformazioni su nessun dispositivo.
+- Verso degli assi (richiesta del docente, "come consuetudine"): in **tutte** le assonometrie, cavaliera compresa, l'origine O è lo spigolo anteriore destro in basso e **x va verso sinistra**, y in profondità verso destra, z in alto.
+- Assonometrie verificate il 30/09 misurando gli angoli a schermo: cavaliera x 180°/y 45° (dimezzato)/z 90°, isometrica 30°/30°/90° con misure uguali, monometrica 30°–60° o 45°–45° con x ⟂ y. L'SVG usa `preserveAspectRatio="xMidYMid meet"`, quindi niente deformazioni su nessun dispositivo.
 
 ## Mappa del codice (`index.html`, tutto dentro un'unica IIFE)
 

@@ -1113,7 +1113,10 @@ function buildCylinder(r, h){
     og.attributes.position.needsUpdate = true; og.computeBoundingSphere();
     top.set(T(0,h,-r).multiply(Rx(-Math.PI/2*t)).multiply(T(0,0,r)));
     bot.set(T(0,0,-r).multiply(Rx(Math.PI/2*t)).multiply(T(0,0,r)));
+    // tutto lo sviluppo si abbassa all'indietro: la base resta ferma e lo sviluppo steso è sul piano della base
+    group.matrix.copy(T(0,0,-r).multiply(Rx(-Math.PI/2*t)).multiply(T(0,0,r))); group.matrixWorldNeedsUpdate = true;
   }
+  group.matrixAutoUpdate = false;
   update(0);
   // linguette: una lungo il lato del rettangolo che si incolla, dentini intorno alle due basi
   const hT = Math.min(1, Math.max(0.3, 0.3*r)), iT = Math.min(hT, h*0.25), xE = Math.PI*r;
@@ -1153,7 +1156,10 @@ function buildCone(r, h){
     g.attributes.position.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere();
     og.attributes.position.needsUpdate = true; og.computeBoundingSphere();
     base.set(T(0,0,-r).multiply(Rx(thF*t)).multiply(T(0,0,r)));
+    // come nel cilindro: la base resta ferma e lo sviluppo steso si appoggia sul piano della base
+    group.matrix.copy(T(0,0,-r).multiply(Rx(-thF*t)).multiply(T(0,0,r))); group.matrixWorldNeedsUpdate = true;
   }
+  group.matrixAutoUpdate = false;
   update(0);
   // linguette: una lungo un raggio del settore, dentini intorno alla base
   const b1 = Math.atan2(-r, -h) - Math.atan2(-a, 0), cb1 = Math.cos(b1), sb1 = Math.sin(b1);
@@ -1487,7 +1493,7 @@ const ease = x => x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
 $('#netPlay').onclick = ()=>{
   const from = S.t, to = S.t > 0.5 ? 0 : 1, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dur = reduce ? 1 : 2600*Math.abs(to-from) + 200;
-  if(to===1){ if(current.netKind==='poly') setView(cam.goal.theta, 0.55); else setView(0, 1.3); }
+  if(to===1) setView(cam.goal.theta, 0.55);
   anim = {from, to, start:performance.now(), dur};
 };
 $('#netT').addEventListener('input', e=>{ anim = null; setT(e.target.value/1000, true); });

@@ -537,6 +537,7 @@ body[data-dev="phone"] .eq{font-size:1rem}
           <input type="range" id="netT" min="0" max="1000" value="0">
           <div class="ends"><span>Solido chiuso</span><span>Sviluppo steso</span></div>
         </div>
+        <label class="switch" title="Le linguette servono per incollare lo sviluppo disegnato su carta e chiudere il solido. Si vedono a sviluppo steso."><input type="checkbox" id="netTabs"><span>Linguette</span></label>
         <div class="net-slider opa-slider">
           <label for="opa">Trasparenza</label>
           <input type="range" id="opa" min="0" max="85" value="0">
@@ -698,7 +699,7 @@ const $ = s => document.querySelector(s);
 /* ---------- impostazioni ---------- */
 const S = {
   solid:'cubo', dims:{}, sides:{prisma:6, piramide:4},
-  t:0, pi:'sym', hidden:false, revealed:new Set(), el:null,
+  t:0, tabs:false, pi:'sym', hidden:false, revealed:new Set(), el:null,
   legible:false, simple:false, opacity:1, device:'auto',
   colors:{base:'#F2A33A', lat1:'#4A94E6', lat2:'#7CC0F2', curve:'#35B0A0'}
 };
@@ -932,7 +933,56 @@ function buildPoly(verts, opts){
     items.forEach((it,fi)=>{ it.mesh.matrix.copy(mats[fi]); it.line.matrix.copy(mats[fi]); it.mesh.matrixWorldNeedsUpdate = true; it.line.matrixWorldNeedsUpdate = true; });
   }
   update(0);
-  return {group, update, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
+
+  // linguette: una per ogni spigolo tagliato, sulla faccia dove non copre altre facce o linguette
+  const tabMats = matrices(info, order, 1), hinge = new Set();
+  for(let f=0; f<F; f++) if(f!==root) hinge.add(adj[f].find(x=>x.f===parent[f]).e);
+  const flat2 = P=>P.map(p=>[p.x, p.z]);
+  const shrink = P=>{ const cx = P.reduce((s,p)=>s+p[0],0)/P.length, cz = P.reduce((s,p)=>s+p[1],0)/P.length; return P.map(p=>[cx+(p[0]-cx)*0.95, cz+(p[1]-cz)*0.95]); };
+  const taken = faces.map((f,fi)=>shrink(flat2(f.idx.map(i=>verts[i].clone().applyMatrix4(tabMats[fi])))));
+  const nTab = new Array(F).fill(0), tabPolys = [];
+  edges.forEach(e=>{
+    if(e.faces.length!==2 || hinge.has(e)) return;
+    const A = verts[e.a], B = verts[e.b], L = A.distanceTo(B), u = new THREE.Vector3().subVectors(B,A).normalize();
+    const cand = [];
+    for(const k of [1, 0.6]) for(const fi of [...e.faces].sort((p,q)=>nTab[p]-nTab[q])){
+      const C = faces[fi].idx.reduce((s,i)=>s.add(verts[i]), V3(0,0,0)).divideScalar(faces[fi].idx.length);
+      const w = new THREE.Vector3().subVectors(A,C), nn = w.addScaledVector(u, -w.dot(u)).normalize();
+      const h = k*Math.min(1, 0.3*L), i = Math.min(h, 0.3*L);
+      const P = [A.clone(), B.clone(), B.clone().addScaledVector(u,-i).addScaledVector(nn,h), A.clone().addScaledVector(u,i).addScaledVector(nn,h)].map(p=>p.applyMatrix4(tabMats[fi]));
+      cand.push({fi, P});
+      const p2 = shrink(flat2(P));
+      if(!taken.some(q=>sat(p2,q))){ taken.push(p2); nTab[fi]++; tabPolys.push(P); return; }
+    }
+    nTab[cand[0].fi]++; tabPolys.push(cand[0].P);
+  });
+  const tabs = tabGroup(tabPolys); group.add(tabs);
+  return {group, update, tabs, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
+}
+/* linguette dello sviluppo (poligoni convessi già nella posizione dello sviluppo steso) */
+function tabGroup(polys){
+  const g = new THREE.Group(), mat = new THREE.MeshBasicMaterial({color:'#E3E7EC', side:THREE.DoubleSide});
+  polys.forEach(P=>{
+    const pos = []; for(let i=1;i<P.length-1;i++) pos.push(...P[0].toArray(), ...P[i].toArray(), ...P[i+1].toArray());
+    const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+    g.add(new THREE.Mesh(m, mat));
+    g.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(P), lineMat()));
+  });
+  g.visible = false;
+  return g;
+}
+/* dentini intorno a un cerchio di raggio r (piano xz, centro nell'origine), tranne vicino al punto
+   di attacco (0, 0, −r) dove toccherebbero la superficie laterale */
+function discTeeth(r, M){
+  const ht = Math.min(0.8, 0.3*r), n = Math.max(10, Math.round(2*Math.PI*r/1.1)), w = 2*Math.PI/n;
+  const skip = Math.acos(r/(r+ht)) + 0.06, out = [];
+  const P = (a, R)=>V3(R*Math.cos(a), 0, R*Math.sin(a)).applyMatrix4(M);
+  for(let k=1;k<n;k++){
+    if(Math.min(k, n-k)*w - 0.45*w < skip) continue;
+    const c = -Math.PI/2 + k*w;
+    out.push([P(c-0.45*w, r), P(c+0.45*w, r), P(c+0.25*w, r+ht), P(c-0.25*w, r+ht)]);
+  }
+  return out;
 }
 
 function prismColors(faces, adj){
@@ -1152,9 +1202,18 @@ function buildCylinder(r, h){
     og.attributes.position.needsUpdate = true; og.computeBoundingSphere();
     top.set(T(0,h,-r).multiply(Rx(-Math.PI/2*t)).multiply(T(0,0,r)));
     bot.set(T(0,0,-r).multiply(Rx(Math.PI/2*t)).multiply(T(0,0,r)));
+    // tutto lo sviluppo si abbassa all'indietro: la base resta ferma e lo sviluppo steso è sul piano della base
+    group.matrix.copy(T(0,0,-r).multiply(Rx(-Math.PI/2*t)).multiply(T(0,0,r))); group.matrixWorldNeedsUpdate = true;
   }
+  group.matrixAutoUpdate = false;
   update(0);
-  return {group, update, netKind:'curve'};
+  // linguette: una lungo il lato del rettangolo che si incolla, dentini intorno alle due basi
+  const hT = Math.min(1, Math.max(0.3, 0.3*r)), iT = Math.min(hT, h*0.25), xE = Math.PI*r;
+  const tabs = tabGroup([[V3(xE,0,-r), V3(xE+hT,iT,-r), V3(xE+hT,h-iT,-r), V3(xE,h,-r)],
+    ...discTeeth(r, T(0,h,-r).multiply(Rx(-Math.PI/2)).multiply(T(0,0,r))),
+    ...discTeeth(r, T(0,0,-r).multiply(Rx(Math.PI/2)).multiply(T(0,0,r)))]);
+  group.add(tabs);
+  return {group, update, tabs, netKind:'curve'};
 }
 function buildCone(r, h){
   const a = Math.hypot(r,h), Th = 2*Math.PI*r/a, N = 96, K = 12, group = new THREE.Group();
@@ -1186,9 +1245,20 @@ function buildCone(r, h){
     g.attributes.position.needsUpdate = true; g.computeVertexNormals(); g.computeBoundingSphere();
     og.attributes.position.needsUpdate = true; og.computeBoundingSphere();
     base.set(T(0,0,-r).multiply(Rx(thF*t)).multiply(T(0,0,r)));
+    // come nel cilindro: la base resta ferma e lo sviluppo steso si appoggia sul piano della base
+    group.matrix.copy(T(0,0,-r).multiply(Rx(-thF*t)).multiply(T(0,0,r))); group.matrixWorldNeedsUpdate = true;
   }
+  group.matrixAutoUpdate = false;
   update(0);
-  return {group, update, netKind:'curve'};
+  // linguette: una lungo un raggio del settore, dentini intorno alla base
+  const b1 = Math.atan2(-r, -h) - Math.atan2(-a, 0), cb1 = Math.cos(b1), sb1 = Math.sin(b1);
+  const F = (x, z)=>V3(x, h - z*sb1, z*cb1);
+  const ps = Th/2, E = rho=>[rho*Math.sin(ps), -rho*Math.cos(ps)], dx = Math.cos(ps), dz = Math.sin(ps);
+  const hT = Math.min(1, Math.max(0.3, 0.12*a)), iT = Math.min(hT, a*0.2), r0 = Math.min(a*0.3, 2*hT);
+  const tp = [[E(r0),0], [E(a),0], [E(a-iT),hT], [E(r0+iT),hT]].map(([p,k])=>F(p[0]+dx*k, p[1]+dz*k));
+  const tabs = tabGroup([tp, ...discTeeth(r, T(0,0,-r).multiply(Rx(thF)).multiply(T(0,0,r)))]);
+  group.add(tabs);
+  return {group, update, tabs, netKind:'curve'};
 }
 function buildSphere(r){
   const group = new THREE.Group();
@@ -1397,6 +1467,7 @@ function rebuild(){
   current = def.build(d, n);
   scene.add(current.group);
   current.update(current.netKind ? S.t : 0);
+  showTabs();
   current.elements = def.elements(d, n, current);
   if(S.el && !current.elements.find(e=>e.k===S.el)) S.el = null;
   boundsDirty = true;
@@ -1497,6 +1568,7 @@ function setT(t, fromSlider){
   S.t = Math.max(0, Math.min(1, t));
   if(!fromSlider) $('#netT').value = Math.round(S.t*1000);
   if(current && current.netKind) current.update(S.t);
+  showTabs();
   boundsDirty = true;
   refreshHelpers();
   updatePlayBtn();
@@ -1510,10 +1582,16 @@ const ease = x => x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
 $('#netPlay').onclick = ()=>{
   const from = S.t, to = S.t > 0.5 ? 0 : 1, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dur = reduce ? 1 : 2600*Math.abs(to-from) + 200;
-  if(to===1){ if(current.netKind==='poly') setView(cam.goal.theta, 0.55); else setView(0, 1.3); }
+  if(to===1) setView(cam.goal.theta, 0.55);
   anim = {from, to, start:performance.now(), dur};
 };
 $('#netT').addEventListener('input', e=>{ anim = null; setT(e.target.value/1000, true); });
+// linguette: si vedono solo a sviluppo steso; la spunta apre lo sviluppo se è chiuso
+function showTabs(){ if(current && current.tabs) current.tabs.visible = S.tabs && S.t > 0.999; }
+$('#netTabs').onchange = e=>{
+  S.tabs = e.target.checked; showTabs();
+  if(S.tabs && current && current.netKind && S.t < 0.999 && !(anim && anim.to===1)) $('#netPlay').click();
+};
 
 function loop(now){
   requestAnimationFrame(loop);
@@ -1646,7 +1724,7 @@ function renderHeader(){
   $('#legend').innerHTML = leg;
   const hasNet = !!current.netKind;
   $('#netNote').hidden = hasNet;
-  $('#netT').disabled = !hasNet; $('#netPlay').disabled = !hasNet;
+  $('#netT').disabled = !hasNet; $('#netPlay').disabled = !hasNet; $('#netTabs').disabled = !hasNet;
 }
 $('#fvsBtn').onclick = ()=>{ S.fvs = !S.fvs; renderHeader(); };
 function selectSolid(k){

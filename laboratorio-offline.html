@@ -995,27 +995,33 @@ function buildPoly(verts, opts){
   });
   const tabs = tabGroup(tabPolys); group.add(tabs);
 
-  // allineamento alla griglia (solo nel laboratorio): rotazione intorno all'asse verticale che mette
-  // un lato della base parallelo alla griglia e rende più compatto lo sviluppo; poi il vertice
-  // anteriore sinistro della base dà la posizione delle righe della griglia
+  // posizione sulla griglia (solo nel laboratorio): un vertice della base va nell'origine della griglia
+  // e il lato che parte da lì segue l'asse x positivo, con la base dietro (verso −z).
+  // Poliedri regolari (align): si sceglie il lato che rende più compatto lo sviluppo; gli altri
+  // solidi ruotano il meno possibile rispetto a come sono costruiti (lato di base sul davanti)
   const netPts = faces.flatMap((f,fi)=>f.idx.map(i=>verts[i].clone().applyMatrix4(tabMats[fi])));
   const rotY = (p, a)=>[p.x*Math.cos(a) + p.z*Math.sin(a), -p.x*Math.sin(a) + p.z*Math.cos(a)];
   const rb = faces[root].idx.map(i=>verts[i]);
-  let yRot = 0;
-  if(opts.align){
-    let best = Infinity;
-    rb.forEach((p,i)=>{
-      const q = rb[(i+1)%rb.length], a = Math.atan2(q.z-p.z, q.x-p.x);
-      for(const b of [a, a+Math.PI/2]){
-        const P = netPts.map(v=>rotY(v,b)), xs = P.map(v=>v[0]), zs = P.map(v=>v[1]);
-        const w = Math.max(...xs)-Math.min(...xs), dpt = Math.max(...zs)-Math.min(...zs), score = w*dpt*(w < dpt ? 1.15 : 1);
-        if(score < best - 1e-6){ best = score; yRot = b; }
+  const rc = rb.reduce((s,v)=>s.add(v), V3(0,0,0)).divideScalar(rb.length);
+  let yRot = 0, origin = [0,0], best = Infinity;
+  rb.forEach((p0,i)=>{
+    const p1 = rb[(i+1)%rb.length];
+    for(const [p,q] of [[p0,p1],[p1,p0]]){
+      const a = Math.atan2(q.z-p.z, q.x-p.x), o = rotY(p,a);
+      if(rotY(rc,a)[1] > o[1] - 1e-6) continue; // la base deve stare dietro al lato
+      let score;
+      if(opts.align){
+        const P = netPts.map(v=>rotY(v,a)), xs = P.map(v=>v[0]), zs = P.map(v=>v[1]);
+        const w = Math.max(...xs)-Math.min(...xs), dpt = Math.max(...zs)-Math.min(...zs);
+        score = w*dpt*(w < dpt ? 1.15 : 1);
+      } else {
+        const r = ((a % (2*Math.PI)) + 3*Math.PI) % (2*Math.PI) - Math.PI;
+        score = Math.abs(r) + 0.001*o[0]; // a parità, il lato più a sinistra
       }
-    });
-  }
-  const rbr = rb.map(v=>rotY(v, yRot)), zMax = Math.max(...rbr.map(v=>v[1]));
-  const gridRef = rbr.filter(v=>v[1] > zMax-1e-4).reduce((m,v)=>v[0] < m[0] ? v : m);
-  return {group, update, tabs, yRot, gridRef, alternatives, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
+      if(score < best - 1e-6){ best = score; yRot = a; origin = o; }
+    }
+  });
+  return {group, update, tabs, yRot, origin, alternatives, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
 }
 /* linguette dello sviluppo (poligoni convessi già nella posizione dello sviluppo steso) */
 function tabGroup(polys){
@@ -1271,7 +1277,7 @@ function buildCylinder(r, h){
     ...discTeeth(r, T(0,h,-r).multiply(Rx(-Math.PI/2)).multiply(T(0,0,r))),
     ...discTeeth(r, T(0,0,-r).multiply(Rx(Math.PI/2)).multiply(T(0,0,r)))]);
   group.add(tabs);
-  return {group, update, tabs, gridRef:[-xE, -r], netKind:'curve'};
+  return {group, update, tabs, netKind:'curve'};
 }
 function buildCone(r, h){
   const a = Math.hypot(r,h), Th = 2*Math.PI*r/a, N = 96, K = 12, group = new THREE.Group();
@@ -1316,7 +1322,7 @@ function buildCone(r, h){
   const tp = [[E(r0),0], [E(a),0], [E(a-iT),hT], [E(r0+iT),hT]].map(([p,k])=>F(p[0]+dx*k, p[1]+dz*k));
   const tabs = tabGroup([tp, ...discTeeth(r, T(0,0,-r).multiply(Rx(thF)).multiply(T(0,0,r)))]);
   group.add(tabs);
-  return {group, update, tabs, gridRef:[0, -r], netKind:'curve'};
+  return {group, update, tabs, netKind:'curve'};
 }
 function buildSphere(r){
   const group = new THREE.Group();
@@ -1507,11 +1513,11 @@ function applyTheme(){
   refreshHelpers();
   VIEWERS.forEach(v=>v.theme());
 }
-// la griglia (quadretti da 1 cm) passa per un vertice della base: le misure si contano sui quadretti
+// la griglia (quadretti da 1 cm) resta ferma con l'origine al centro: sono i solidi a spostarsi
+// (base circolare: centro nell'origine; poliedri: un vertice della base nell'origine, lato lungo x)
 function placeGrid(){
   if(!grid) return;
-  const r = (current && current.gridRef) || [0,0], fr = v=>v - Math.floor(v);
-  grid.position.x = fr(r[0]); grid.position.z = fr(r[1]);
+  grid.position.x = 0; grid.position.z = 0;
 }
 const VIEWERS = [];
 function resize(){
@@ -1543,10 +1549,10 @@ function rebuild(){
   current.update(current.netKind ? S.t : 0);
   showTabs();
   current.elements = def.elements(d, n, current);
-  if(current.yRot){
-    current.group.rotation.y = current.yRot;
-    current.elements = current.elements.map(e=>({...e, a:e.a.clone().applyAxisAngle(V3(0,1,0), current.yRot), b:e.b.clone().applyAxisAngle(V3(0,1,0), current.yRot)}));
-  }
+  const yR = current.yRot || 0, org = current.origin || [0,0];
+  current.off = V3(-org[0], 0, -org[1]);
+  current.group.rotation.y = yR; current.group.position.copy(current.off);
+  current.elements = current.elements.map(e=>({...e, a:e.a.clone().applyAxisAngle(V3(0,1,0), yR).add(current.off), b:e.b.clone().applyAxisAngle(V3(0,1,0), yR).add(current.off)}));
   placeGrid(); renderNetAlt();
   if(S.el && !current.elements.find(e=>e.k===S.el)) S.el = null;
   boundsDirty = true;
@@ -1602,7 +1608,7 @@ function refreshHelpers(){
   [el.a, el.b].forEach(p=>{ const s = new THREE.Mesh(new THREE.SphereGeometry(rad*2.1, 16, 12), mat.clone()); s.position.copy(p); s.renderOrder = 11; helpers.add(s); });
   const sp = labelSprite(el, color);
   const mid = el.a.clone().addScaledVector(dir, 0.5);
-  const out = V3(mid.x, 0, mid.z); if(out.length() < 0.01) out.set(1,0,0.6); out.normalize();
+  const out = V3(mid.x - current.off.x, 0, mid.z - current.off.z); if(out.length() < 0.01) out.set(1,0,0.6); out.normalize();
   const devK = {lim:1.35, phone:1.2, tablet:1.1}[document.body.dataset.dev] || 1;
   const k = Math.max(0.55, size*0.11) * devK;
   sp.position.copy(mid).addScaledVector(out, k*0.9).add(V3(0, k*0.5, 0));

@@ -113,6 +113,12 @@ var{font-style:italic;font-family:inherit}
 .play{display:inline-flex;align-items:center;gap:8px;border:0;background:var(--accent);color:var(--accent-ink);border-radius:11px;padding:9px 16px;font-weight:800;white-space:nowrap}
 .play svg{width:16px;height:16px}
 .play:disabled{opacity:.45;cursor:default}
+.net-alt{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.9rem}
+.net-alt[hidden]{display:none}
+.net-alt button{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:10px;min-width:38px;padding:6px 10px;font-weight:800;cursor:pointer}
+.net-alt button:disabled{opacity:.4;cursor:default}
+.net-alt small{display:block;font-weight:600;opacity:.75}
+body.touch .net-alt button{min-height:44px;min-width:44px}
 .net-slider{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .net-slider label{font-weight:800;font-family:var(--font-display);font-size:1.05rem}
 .ends{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);font-weight:700}
@@ -456,6 +462,11 @@ body[data-dev="phone"] .eq{font-size:1rem}
           <input type="range" id="netT" min="0" max="1000" value="0">
           <div class="ends"><span>Solido chiuso</span><span>Sviluppo steso</span></div>
         </div>
+        <div class="net-alt" id="netAlt" hidden>
+          <button id="netPrev" aria-label="Sviluppo precedente">◀</button>
+          <span id="netAltTxt">Sviluppo 1</span>
+          <button id="netNext" aria-label="Altro sviluppo">▶</button>
+        </div>
         <label class="switch" title="Le linguette servono per incollare lo sviluppo disegnato su carta e chiudere il solido. Si vedono a sviluppo steso."><input type="checkbox" id="netTabs"><span>Linguette</span></label>
         <div class="net-slider opa-slider">
           <label for="opa">Trasparenza</label>
@@ -610,7 +621,7 @@ const $ = s => document.querySelector(s);
 /* ---------- impostazioni ---------- */
 const S = {
   solid:'cubo', dims:{}, sides:{prisma:6, piramide:4},
-  t:0, tabs:false, pi:'sym', hidden:false, revealed:new Set(), el:null,
+  t:0, tabs:false, netAlt:{key:null, list:null, i:0}, pi:'sym', hidden:false, revealed:new Set(), el:null,
   legible:false, simple:false, opacity:1, device:'auto',
   colors:{base:'#F2A33A', lat1:'#4A94E6', lat2:'#7CC0F2', curve:'#35B0A0'}
 };
@@ -738,6 +749,7 @@ function lineMat(){ return edgeMat; }
 /* ---------- poliedri con sviluppo ---------- */
 function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 
+let NET_PICK = null; // albero di sviluppo scelto con ◀ ▶ (impostato solo da rebuild, durante la costruzione)
 function buildPoly(verts, opts){
   const faces = hull(verts), edges = edgeMap(faces);
   const F = faces.length;
@@ -804,23 +816,48 @@ function buildPoly(verts, opts){
   }
 
   // albero di sviluppo
+  function randTree(rnd){
+    const par = new Array(F).fill(-1), vis = new Array(F).fill(false); vis[root]=true;
+    const front = adj[root].map(x=>[root,x.f]);
+    while(front.length){
+      const k = Math.floor(rnd()*front.length); const [p,f] = front.splice(k,1)[0];
+      if(vis[f]) continue; vis[f]=true; par[f]=p; adj[f].forEach(x=>{ if(!vis[x.f]) front.push([f,x.f]); });
+    }
+    return par;
+  }
   let parent;
-  if(opts.parent){ parent = opts.parent(faces, adj, root); }
+  if(NET_PICK && NET_PICK.length===F) parent = NET_PICK.slice();
+  else if(opts.parent){ parent = opts.parent(faces, adj, root); }
   else {
     const rnd = mulberry(opts.seed||7);
     let best = null;
     for(let tries=0; tries<3000; tries++){
-      const par = new Array(F).fill(-1), vis = new Array(F).fill(false); vis[root]=true;
-      const front = adj[root].map(x=>[root,x.f]);
-      while(front.length){
-        const k = Math.floor(rnd()*front.length); const [p,f] = front.splice(k,1)[0];
-        if(vis[f]) continue; vis[f]=true; par[f]=p; adj[f].forEach(x=>{ if(!vis[x.f]) front.push([f,x.f]); });
-      }
-      const inf = hingeData(par), ord = orderOf(par);
+      const par = randTree(rnd);
       best = par;
-      if(!overlaps(inf, ord)) break;
+      if(!overlaps(hingeData(par), orderOf(par))) break;
     }
     parent = best;
+  }
+  // altri sviluppi: alberi casuali senza sovrapposizioni, scartando quelli uguali (anche ruotati o ribaltati)
+  // a uno già trovato; l'impronta sono le distanze fra i centri delle facce nello sviluppo steso
+  const fArea = faces.map(f=>{ const P = f.idx.map(i=>verts[i]); let a = 0; for(let i=1;i<P.length-1;i++) a += new THREE.Vector3().subVectors(P[i],P[0]).cross(new THREE.Vector3().subVectors(P[i+1],P[0])).length()/2; return a.toFixed(1); });
+  function netSig(par){
+    const mats = matrices(hingeData(par), orderOf(par), 1);
+    const cs = faces.map((f,fi)=>{ const c = f.idx.reduce((s,i)=>s.add(verts[i].clone().applyMatrix4(mats[fi])), V3(0,0,0)).divideScalar(f.idx.length); return [c.x, c.z]; });
+    const out = [];
+    for(let i=0;i<F;i++) for(let j=i+1;j<F;j++){ const [a,b] = [fArea[i], fArea[j]].sort(); out.push(Math.hypot(cs[i][0]-cs[j][0], cs[i][1]-cs[j][1]).toFixed(2)+'|'+a+'|'+b); }
+    return out.sort().join(',');
+  }
+  function alternatives(maxN){
+    const list = [parent.slice()], seen = new Set([netSig(parent)]), rnd = mulberry(20261005), t0 = performance.now();
+    for(let tries=0, idle=0; tries<10000 && idle<2500 && list.length<maxN && performance.now()-t0 < 1500; tries++){
+      const par = randTree(rnd);
+      if(overlaps(hingeData(par), orderOf(par))){ idle++; continue; }
+      const s = netSig(par);
+      if(seen.has(s)){ idle++; continue; }
+      seen.add(s); list.push(par); idle = 0;
+    }
+    return list;
   }
   const info = hingeData(parent), order = orderOf(parent);
 
@@ -868,7 +905,28 @@ function buildPoly(verts, opts){
     nTab[cand[0].fi]++; tabPolys.push(cand[0].P);
   });
   const tabs = tabGroup(tabPolys); group.add(tabs);
-  return {group, update, tabs, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
+
+  // allineamento alla griglia (solo nel laboratorio): rotazione intorno all'asse verticale che mette
+  // un lato della base parallelo alla griglia e rende più compatto lo sviluppo; poi il vertice
+  // anteriore sinistro della base dà la posizione delle righe della griglia
+  const netPts = faces.flatMap((f,fi)=>f.idx.map(i=>verts[i].clone().applyMatrix4(tabMats[fi])));
+  const rotY = (p, a)=>[p.x*Math.cos(a) + p.z*Math.sin(a), -p.x*Math.sin(a) + p.z*Math.cos(a)];
+  const rb = faces[root].idx.map(i=>verts[i]);
+  let yRot = 0;
+  if(opts.align){
+    let best = Infinity;
+    rb.forEach((p,i)=>{
+      const q = rb[(i+1)%rb.length], a = Math.atan2(q.z-p.z, q.x-p.x);
+      for(const b of [a, a+Math.PI/2]){
+        const P = netPts.map(v=>rotY(v,b)), xs = P.map(v=>v[0]), zs = P.map(v=>v[1]);
+        const w = Math.max(...xs)-Math.min(...xs), dpt = Math.max(...zs)-Math.min(...zs), score = w*dpt*(w < dpt ? 1.15 : 1);
+        if(score < best - 1e-6){ best = score; yRot = b; }
+      }
+    });
+  }
+  const rbr = rb.map(v=>rotY(v, yRot)), zMax = Math.max(...rbr.map(v=>v[1]));
+  const gridRef = rbr.filter(v=>v[1] > zMax-1e-4).reduce((m,v)=>v[0] < m[0] ? v : m);
+  return {group, update, tabs, yRot, gridRef, alternatives, faces, verts, edges, counts:{F, V:verts.length, S:edges.size}, netKind:'poly'};
 }
 /* linguette dello sviluppo (poligoni convessi già nella posizione dello sviluppo steso) */
 function tabGroup(polys){
@@ -1124,7 +1182,7 @@ function buildCylinder(r, h){
     ...discTeeth(r, T(0,h,-r).multiply(Rx(-Math.PI/2)).multiply(T(0,0,r))),
     ...discTeeth(r, T(0,0,-r).multiply(Rx(Math.PI/2)).multiply(T(0,0,r)))]);
   group.add(tabs);
-  return {group, update, tabs, netKind:'curve'};
+  return {group, update, tabs, gridRef:[-xE, -r], netKind:'curve'};
 }
 function buildCone(r, h){
   const a = Math.hypot(r,h), Th = 2*Math.PI*r/a, N = 96, K = 12, group = new THREE.Group();
@@ -1169,7 +1227,7 @@ function buildCone(r, h){
   const tp = [[E(r0),0], [E(a),0], [E(a-iT),hT], [E(r0+iT),hT]].map(([p,k])=>F(p[0]+dx*k, p[1]+dz*k));
   const tabs = tabGroup([tp, ...discTeeth(r, T(0,0,-r).multiply(Rx(thF)).multiply(T(0,0,r)))]);
   group.add(tabs);
-  return {group, update, tabs, netKind:'curve'};
+  return {group, update, tabs, gridRef:[0, -r], netKind:'curve'};
 }
 function buildSphere(r){
   const group = new THREE.Group();
@@ -1315,7 +1373,7 @@ const SOLIDS = {
 Object.keys(PLAT).forEach(k=>{
   const P = PLAT[k];
   SOLIDS[k] = { name:P.name, platonic:true, dims:[{k:'l',label:'Spigolo',min:1,max:8,def:k==='dodecaedro'?2:(k==='icosaedro'?3:4)}],
-    build:d=>buildPoly(restOnFace(scaleToEdge(platonicVerts(k), d.l)), {seed:P.seed, colors:greedyColors}),
+    build:d=>buildPoly(restOnFace(scaleToEdge(platonicVerts(k), d.l)), {seed:P.seed, colors:greedyColors, align:true}),
     elements:(d,n,built)=>{
       let bottom = built.faces.reduce((b,f)=> f.n.y < b.n.y ? f : b);
       let best = null;
@@ -1356,9 +1414,15 @@ function applyTheme(){
   edgeMat.color.set(css('--edge')||'#1B2640');
   if(grid){ scene.remove(grid); grid.geometry.dispose(); }
   grid = new THREE.GridHelper(60, 60, new THREE.Color(css('--grid-strong')||'#C3CFE0'), new THREE.Color(css('--grid')||'#DFE6F0'));
-  scene.add(grid); grid.position.y = minY - 0.01;
+  scene.add(grid); grid.position.y = minY - 0.01; placeGrid();
   refreshHelpers();
   VIEWERS.forEach(v=>v.theme());
+}
+// la griglia (quadretti da 1 cm) passa per un vertice della base: le misure si contano sui quadretti
+function placeGrid(){
+  if(!grid) return;
+  const r = (current && current.gridRef) || [0,0], fr = v=>v - Math.floor(v);
+  grid.position.x = fr(r[0]); grid.position.z = fr(r[1]);
 }
 const VIEWERS = [];
 function resize(){
@@ -1375,11 +1439,26 @@ function rebuild(){
   if(current){ scene.remove(current.group); disposeGroup(current.group); }
   faceMats = [];
   const def = SOLIDS[S.solid], d = S.dims[S.solid], n = S.sides[S.solid];
+  // sviluppo scelto: vale solo finché il solido (forma e misure) resta lo stesso
+  const NA = S.netAlt;
+  NET_PICK = NA.list && NA.i ? NA.list[NA.i] : null;
   current = def.build(d, n);
+  NET_PICK = null;
+  const key = current.verts ? S.solid + ':' + current.verts.map(v=>v.toArray().map(x=>x.toFixed(3)).join(' ')).join(';') : null;
+  if(key !== NA.key){
+    const picked = NA.list && NA.i;
+    Object.assign(NA, {key, list:null, i:0});
+    if(picked){ disposeGroup(current.group); faceMats = []; current = def.build(d, n); }
+  }
   scene.add(current.group);
   current.update(current.netKind ? S.t : 0);
   showTabs();
   current.elements = def.elements(d, n, current);
+  if(current.yRot){
+    current.group.rotation.y = current.yRot;
+    current.elements = current.elements.map(e=>({...e, a:e.a.clone().applyAxisAngle(V3(0,1,0), current.yRot), b:e.b.clone().applyAxisAngle(V3(0,1,0), current.yRot)}));
+  }
+  placeGrid(); renderNetAlt();
   if(S.el && !current.elements.find(e=>e.k===S.el)) S.el = null;
   boundsDirty = true;
   refreshHelpers();
@@ -1470,7 +1549,7 @@ canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointerc
 canvas.addEventListener('wheel', e=>{ e.preventDefault(); cam.zoom = Math.max(0.35, Math.min(3, cam.zoom*Math.exp(e.deltaY*0.0012))); }, {passive:false});
 function setView(theta, phi){ cam.goal.theta = cam.theta + (((theta - cam.theta) % (2*Math.PI)) + 3*Math.PI) % (2*Math.PI) - Math.PI; cam.goal.phi = phi; }
 $('#vFront').onclick = ()=>setView(0, 1.42);
-$('#vTop').onclick = ()=>setView(0, 0.05);
+$('#vTop').onclick = ()=>setView(0, 0.004);
 $('#vReset').onclick = ()=>{ setView(0.62, 1.05); cam.zoom = 1; };
 
 /* animazione dello sviluppo */
@@ -1497,6 +1576,30 @@ $('#netPlay').onclick = ()=>{
   anim = {from, to, start:performance.now(), dur};
 };
 $('#netT').addEventListener('input', e=>{ anim = null; setT(e.target.value/1000, true); });
+// altri sviluppi del poliedro: al massimo 11 da sfogliare (tutti quelli di cubo e ottaedro), il principale
+// sempre per primo; se il solido ne ha di più si scrive anche quanti sono in tutto
+const NET_TOTAL = {tetraedro:2, cubo:11, ottaedro:11, dodecaedro:43380, icosaedro:43380};
+const NET_MAX = 11;
+function renderNetAlt(){
+  const NA = S.netAlt, poly = current && current.netKind==='poly';
+  $('#netAlt').hidden = !poly; if(!poly) return;
+  const tot = NET_TOTAL[S.solid], len = NA.list ? NA.list.length : 0;
+  let txt = NA.list ? `Sviluppo ${NA.i+1} di ${len}` : 'Sviluppo principale';
+  if(tot && tot > NET_MAX) txt += `<small>in tutto sono ${tot.toLocaleString('it-IT')}</small>`;
+  else if(NA.list && len===1) txt = 'Un solo sviluppo';
+  $('#netAltTxt').innerHTML = txt;
+  $('#netPrev').disabled = !NA.list || len < 2;
+  $('#netNext').disabled = !!NA.list && len < 2;
+}
+function stepNet(k){
+  const NA = S.netAlt;
+  if(!NA.list){ NA.list = current.alternatives(NET_MAX); NA.i = 0; }
+  if(NA.list.length > 1){ NA.i = (NA.i + k + NA.list.length) % NA.list.length; anim = null; rebuild(); }
+  renderNetAlt();
+  if(S.t < 0.999 && !(anim && anim.to===1)) $('#netPlay').click();
+}
+$('#netPrev').onclick = ()=>stepNet(-1);
+$('#netNext').onclick = ()=>stepNet(1);
 // linguette: si vedono solo a sviluppo steso; la spunta apre lo sviluppo se è chiuso
 function showTabs(){ if(current && current.tabs) current.tabs.visible = S.tabs && S.t > 0.999; }
 $('#netTabs').onchange = e=>{

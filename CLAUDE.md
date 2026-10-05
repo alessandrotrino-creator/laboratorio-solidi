@@ -1,7 +1,7 @@
 # CLAUDE.md — note per riprendere il lavoro
 
 Queste note servono a Claude (o a chiunque sviluppi) per ripartire da dove ci si è fermati.
-Ultimo aggiornamento: 30 settembre 2026.
+Ultimo aggiornamento: 5 ottobre 2026.
 
 ## Chi e per cosa
 - Committente: docente di matematica e scienze, scuola secondaria di primo grado. Lingua di lavoro: **italiano**.
@@ -31,6 +31,7 @@ Ultimo aggiornamento: 30 settembre 2026.
 - **Ogni punto si trova come incrocio di linee** (richiesta del docente: "deve essere chiaro come trovare i punti, intersecando quali linee"), con le linee di costruzione disegnate: in pianta verticale a x cm dal lato sinistro × orizzontale a y cm dal lato in alto del rettangolo di ingombro; nel prospetto linea di richiamo × riga orizzontale dell'altezza; nel profilo orizzontale dal prospetto × verticale dalla pianta; in assonometria misura sull'asse x + parallela a y, misura sull'asse y + parallela a x, incrocio (poi verticale se il punto è in alto, o "sulla verticale che sale da A").
 - Passi separati per: costruzione del quadrilatero circoscritto (circonferenza, centro, raggio, lati) → ellisse → spigoli in vista → spigoli nascosti.
 - **Composti**: tutorial completo (la versione "per pezzi" è stata tolta: troppo sintetica, "non si capisce granché"); nei testi si dice quale pezzo si sta disegnando e dove finisce uno e comincia l'altro (`DR_STACK`, `drStack`, `pieceAt`).
+- **Linguette nello sviluppo piano** (richiesta del 05/10): spunta «Linguette» (`#netTabs`, `S.tabs`) accanto al cursore dello sviluppo; si vedono solo a sviluppo steso (se è chiuso, la spunta lo apre). Poliedri: una linguetta trapezoidale per ogni spigolo tagliato (S − F + 1), messa sulla faccia dove non copre altre facce o linguette (`buildPoly`, controllo con `sat`). Cilindro: una linguetta sul lato del rettangolo + dentini intorno alle due basi; cono: una linguetta su un raggio del settore + dentini intorno alla base (`discTeeth`, `tabGroup`). Altezza massima 1 cm.
 - Assonometrie verificate il 30/09 misurando gli angoli a schermo: cavaliera x 180°/y 45° (dimezzato)/z 90°, isometrica 30°/30°/90° con misure uguali, monometrica 30°–60° o 45°–45° con x ⟂ y. L'SVG usa `preserveAspectRatio="xMidYMid meet"`, quindi niente deformazioni su nessun dispositivo.
 
 ## Mappa del codice (`index.html`, tutto dentro un'unica IIFE)
